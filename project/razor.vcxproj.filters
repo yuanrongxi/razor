@@ -1,0 +1,114 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="common\mscc">
+      <UniqueIdentifier>{b1337c96-939d-499e-80cd-74c113525801}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="estimator">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\common\cf_crc32.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\cf_hash_map.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\cf_hex.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\cf_list.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\cf_mem_slab.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\cf_object_pool.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\cf_skiplist.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\cf_stream.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\cf_unwrapper.c">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\platform\windows\mscc.c">
+      <Filter>common\mscc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\estimator\inter_arrival.c">
+      <Filter>estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\estimator\trendline.c">
+      <Filter>estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\estimator\kalman_filter.c">
+      <Filter>estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\estimator\aimd_rate_control.c">
+      <Filter>estimator</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\common\cf_crc32.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\cf_hash_map.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\cf_hex.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\cf_list.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\cf_mem_slab.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\cf_object_pool.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\cf_platform.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\cf_skiplist.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\cf_stream.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\cf_unwrapper.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\estimator\inter_arrival.h">
+      <Filter>estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\estimator\trendline.h">
+      <Filter>estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\estimator\kalman_filter.h">
+      <Filter>estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\estimator\estimator_common.h">
+      <Filter>estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\estimator\aimd_rate_control.h">
+      <Filter>estimator</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
