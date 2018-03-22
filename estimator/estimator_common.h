@@ -1,5 +1,6 @@
 #ifndef __estimator_common_h_
 #define __estimator_common_h_
+#include <stdint.h>
 
 enum {
 	kBwNormal = 0,

@@ -127,7 +127,7 @@ void kalman_filter_update(kalman_filter_t* kalman, int64_t arrival_ts_delta, dou
 	kalman->prev_offset = kalman->offset;
 	kalman->offset = kalman->offset + K[1] * residual;
 
-	printf("kc = %f, km = %f, slope: %f, var noise = %f\n", K[0], K[1], kalman->slope, kalman->var_noise);
+	/*printf("kc = %f, km = %f, slope: %f, var noise = %f\n", K[0], K[1], kalman->slope, kalman->var_noise);*/
 }
 
 

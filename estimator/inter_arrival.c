@@ -25,7 +25,7 @@ static inline int inter_arrival_in_order(inter_arrival_t* arr, uint32_t ts)
 	if (arr->cur_ts_group.complete_ts == -1)
 		return 0;
 
-	if (arr->cur_ts_group.first_timestamp < ts)
+	if (arr->cur_ts_group.first_timestamp <= ts)
 		return 0;
 
 	return -1;
@@ -47,7 +47,7 @@ static inline int belongs_to_burst(inter_arrival_t* arr, uint32_t ts, int64_t ar
 		return 0;
 
 	pro_delta = (int)(arrival_ts_delta - ts_delta);
-	if (pro_delta < 0 && arrival_ts_delta < BURST_THRESHOLD_MS)
+	if (pro_delta < 0 && arrival_ts_delta <= BURST_THRESHOLD_MS)
 		return 0;
 
 	return -1;
