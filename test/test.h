@@ -3,6 +3,8 @@
 
 void test_trendline();
 void test_aimd();
+void test_inter_arrival();
+void test_detector();
 
 #endif
 

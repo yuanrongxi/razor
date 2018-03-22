@@ -24,9 +24,21 @@
     <ClCompile Include="aimd_test.c">
       <Filter>unit</Filter>
     </ClCompile>
+    <ClCompile Include="inter_arrival_test.c">
+      <Filter>unit</Filter>
+    </ClCompile>
+    <ClCompile Include="overuse_detector_test.c">
+      <Filter>unit</Filter>
+    </ClCompile>
+    <ClCompile Include="common_test.c">
+      <Filter>unit</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="test.h">
+      <Filter>unit</Filter>
+    </ClInclude>
+    <ClInclude Include="common_test.h">
       <Filter>unit</Filter>
     </ClInclude>
   </ItemGroup>

@@ -79,7 +79,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="aimd_test.c" />
+    <ClCompile Include="common_test.c" />
+    <ClCompile Include="inter_arrival_test.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="overuse_detector_test.c" />
     <ClCompile Include="trendline_test.c" />
   </ItemGroup>
   <ItemGroup>
@@ -88,6 +91,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="common_test.h" />
     <ClInclude Include="test.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

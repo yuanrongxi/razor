@@ -8,14 +8,6 @@
 #define AVGTIMEBETWEEN		10
 #define PACKET_COUNT		(WND_SIZE * 2 + 1)
 
-static inline double gaussian(double mean, double std)
-{
-	const double kPi = 3.14159265358979323846;
-	double u1 = (double)(rand()) * 1.0 / 0xFFFFFFFF;
-	double u2 = (double)(rand()) * 1.0 / 0xFFFFFFFF;
-	return mean + std * sqrt(-2 * log(u1)) * cos(2 * kPi * u2);
-}
-
 static inline void EXPECT_NEAR(double src, double dst, double delta)
 {
 	assert(dst <= src + delta && dst >= src - delta);
