@@ -63,6 +63,9 @@
     <ClCompile Include="..\estimator\aimd_rate_control.c">
       <Filter>estimator</Filter>
     </ClCompile>
+    <ClCompile Include="..\estimator\overuse_detector.c">
+      <Filter>estimator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\cf_crc32.h">
@@ -108,6 +111,9 @@
       <Filter>estimator</Filter>
     </ClInclude>
     <ClInclude Include="..\estimator\aimd_rate_control.h">
+      <Filter>estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\estimator\overuse_detector.h">
       <Filter>estimator</Filter>
     </ClInclude>
   </ItemGroup>

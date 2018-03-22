@@ -89,6 +89,7 @@
     <ClCompile Include="..\estimator\aimd_rate_control.c" />
     <ClCompile Include="..\estimator\inter_arrival.c" />
     <ClCompile Include="..\estimator\kalman_filter.c" />
+    <ClCompile Include="..\estimator\overuse_detector.c" />
     <ClCompile Include="..\estimator\trendline.c" />
   </ItemGroup>
   <ItemGroup>
@@ -106,6 +107,7 @@
     <ClInclude Include="..\estimator\estimator_common.h" />
     <ClInclude Include="..\estimator\inter_arrival.h" />
     <ClInclude Include="..\estimator\kalman_filter.h" />
+    <ClInclude Include="..\estimator\overuse_detector.h" />
     <ClInclude Include="..\estimator\trendline.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
