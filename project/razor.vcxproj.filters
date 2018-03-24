@@ -66,6 +66,12 @@
     <ClCompile Include="..\estimator\overuse_detector.c">
       <Filter>estimator</Filter>
     </ClCompile>
+    <ClCompile Include="..\estimator\remote_estimator_proxy.c">
+      <Filter>estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\estimator\sender_bandwidth_estimator.c">
+      <Filter>estimator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\cf_crc32.h">
@@ -114,6 +120,12 @@
       <Filter>estimator</Filter>
     </ClInclude>
     <ClInclude Include="..\estimator\overuse_detector.h">
+      <Filter>estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\estimator\remote_estimator_proxy.h">
+      <Filter>estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\estimator\sender_bandwidth_estimator.h">
       <Filter>estimator</Filter>
     </ClInclude>
   </ItemGroup>

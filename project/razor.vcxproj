@@ -90,6 +90,8 @@
     <ClCompile Include="..\estimator\inter_arrival.c" />
     <ClCompile Include="..\estimator\kalman_filter.c" />
     <ClCompile Include="..\estimator\overuse_detector.c" />
+    <ClCompile Include="..\estimator\remote_estimator_proxy.c" />
+    <ClCompile Include="..\estimator\sender_bandwidth_estimator.c" />
     <ClCompile Include="..\estimator\trendline.c" />
   </ItemGroup>
   <ItemGroup>
@@ -108,6 +110,8 @@
     <ClInclude Include="..\estimator\inter_arrival.h" />
     <ClInclude Include="..\estimator\kalman_filter.h" />
     <ClInclude Include="..\estimator\overuse_detector.h" />
+    <ClInclude Include="..\estimator\remote_estimator_proxy.h" />
+    <ClInclude Include="..\estimator\sender_bandwidth_estimator.h" />
     <ClInclude Include="..\estimator\trendline.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
