@@ -6,9 +6,13 @@
 #define SKIPLIST_MAXDEPTH	8
 
 typedef union{
+	int8_t		i8;
 	uint8_t		u8;
+	int16_t		i16;
 	uint16_t	u16;
+	int32_t		i32;
 	uint32_t	u32;
+	int64_t		i64;
 	uint64_t	u64;
 	void*		ptr;			/*custom context, such as: string*/
 }skiplist_item_t;
@@ -56,6 +60,16 @@ skiplist_iter_t*		skiplist_first(skiplist_t* sl);
 /*traverse skiplist*/
 #define SKIPLIST_FOREACH(sl, iter)	\
 	for(iter = sl->entries[0]; iter != NULL; iter = iter->next[0])
+
+int						id8_compare(skiplist_item_t k1, skiplist_item_t k2);
+int						id16_compare(skiplist_item_t k1, skiplist_item_t k2);
+int						id32_compare(skiplist_item_t k1, skiplist_item_t k2);
+int						id64_compare(skiplist_item_t k1, skiplist_item_t k2);
+
+int						idu8_compare(skiplist_item_t k1, skiplist_item_t k2);
+int						idu16_compare(skiplist_item_t k1, skiplist_item_t k2);
+int						idu32_compare(skiplist_item_t k1, skiplist_item_t k2);
+int						idu64_compare(skiplist_item_t k1, skiplist_item_t k2);
 
 #endif
 

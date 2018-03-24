@@ -223,4 +223,86 @@ size_t skiplist_size(skiplist_t* sl)
 	return sl->size;
 }
 
+int idu64_compare(skiplist_item_t k1, skiplist_item_t k2)
+{
+	if (k1.u64 > k2.u64)
+		return 1;
+	else if (k1.u64 < k2.u64)
+		return -1;
+	else
+		return 0;
+}
+
+int idu32_compare(skiplist_item_t k1, skiplist_item_t k2)
+{
+	if (k1.u32 > k2.u32)
+		return 1;
+	else if (k1.u32 < k2.u32)
+		return -1;
+	else
+		return 0;
+}
+
+int idu16_compare(skiplist_item_t k1, skiplist_item_t k2)
+{
+	if (k1.u16 > k2.u16)
+		return 1;
+	else if (k1.u16 < k2.u16)
+		return -1;
+	else
+		return 0;
+}
+
+int idu8_compare(skiplist_item_t k1, skiplist_item_t k2)
+{
+	if (k1.u8 > k2.u8)
+		return 1;
+	else if (k1.u8 < k2.u8)
+		return -1;
+	else
+		return 0;
+}
+
+int id64_compare(skiplist_item_t k1, skiplist_item_t k2)
+{
+	if (k1.i64 > k2.i64)
+		return 1;
+	else if (k1.i64 < k2.i64)
+		return -1;
+	else
+		return 0;
+}
+
+int id32_compare(skiplist_item_t k1, skiplist_item_t k2)
+{
+	if (k1.i32 > k2.i32)
+		return 1;
+	else if (k1.i32 < k2.i32)
+		return -1;
+	else
+		return 0;
+}
+
+int id16_compare(skiplist_item_t k1, skiplist_item_t k2)
+{
+	if (k1.i16 > k2.i16)
+		return 1;
+	else if (k1.i16 < k2.i16)
+		return -1;
+	else
+		return 0;
+}
+
+int id8_compare(skiplist_item_t k1, skiplist_item_t k2)
+{
+	if (k1.i8 > k2.i8)
+		return 1;
+	else if (k1.i8 < k2.i8)
+		return -1;
+	else
+		return 0;
+}
+
+
+
 
