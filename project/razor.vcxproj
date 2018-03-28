@@ -86,12 +86,15 @@
     <ClCompile Include="..\common\cf_stream.c" />
     <ClCompile Include="..\common\cf_unwrapper.c" />
     <ClCompile Include="..\common\platform\windows\mscc.c" />
+    <ClCompile Include="..\estimator\ack_bitrate_estimator.c" />
     <ClCompile Include="..\estimator\aimd_rate_control.c" />
+    <ClCompile Include="..\estimator\bitrate_controller.c" />
     <ClCompile Include="..\estimator\inter_arrival.c" />
     <ClCompile Include="..\estimator\kalman_filter.c" />
     <ClCompile Include="..\estimator\overuse_detector.c" />
     <ClCompile Include="..\estimator\remote_estimator_proxy.c" />
     <ClCompile Include="..\estimator\sender_bandwidth_estimator.c" />
+    <ClCompile Include="..\estimator\sender_history.c" />
     <ClCompile Include="..\estimator\trendline.c" />
   </ItemGroup>
   <ItemGroup>
@@ -105,13 +108,16 @@
     <ClInclude Include="..\common\cf_skiplist.h" />
     <ClInclude Include="..\common\cf_stream.h" />
     <ClInclude Include="..\common\cf_unwrapper.h" />
+    <ClInclude Include="..\estimator\ack_bitrate_estimator.h" />
     <ClInclude Include="..\estimator\aimd_rate_control.h" />
+    <ClInclude Include="..\estimator\bitrate_controller.h" />
     <ClInclude Include="..\estimator\estimator_common.h" />
     <ClInclude Include="..\estimator\inter_arrival.h" />
     <ClInclude Include="..\estimator\kalman_filter.h" />
     <ClInclude Include="..\estimator\overuse_detector.h" />
     <ClInclude Include="..\estimator\remote_estimator_proxy.h" />
     <ClInclude Include="..\estimator\sender_bandwidth_estimator.h" />
+    <ClInclude Include="..\estimator\sender_history.h" />
     <ClInclude Include="..\estimator\trendline.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

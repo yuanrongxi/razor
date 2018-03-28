@@ -72,6 +72,15 @@
     <ClCompile Include="..\estimator\sender_bandwidth_estimator.c">
       <Filter>estimator</Filter>
     </ClCompile>
+    <ClCompile Include="..\estimator\bitrate_controller.c">
+      <Filter>estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\estimator\sender_history.c">
+      <Filter>estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\estimator\ack_bitrate_estimator.c">
+      <Filter>estimator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\cf_crc32.h">
@@ -126,6 +135,15 @@
       <Filter>estimator</Filter>
     </ClInclude>
     <ClInclude Include="..\estimator\sender_bandwidth_estimator.h">
+      <Filter>estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\estimator\bitrate_controller.h">
+      <Filter>estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\estimator\sender_history.h">
+      <Filter>estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\estimator\ack_bitrate_estimator.h">
       <Filter>estimator</Filter>
     </ClInclude>
   </ItemGroup>
