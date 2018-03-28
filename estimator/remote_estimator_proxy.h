@@ -21,7 +21,7 @@ typedef struct
 	skiplist_t*		arrival_times;
 	cf_unwrapper_t	unwrapper;
 
-	uint8_t			feelback_sequence;
+	uint32_t		feelback_sequence;
 
 }estimator_proxy_t;
 

@@ -6,7 +6,7 @@
 
 typedef struct
 {
-	uint32_t ts;
+	int64_t ts;
 	uint32_t bitrate;
 }min_bitrate_t;
 

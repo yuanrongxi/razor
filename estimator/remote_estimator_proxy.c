@@ -16,6 +16,8 @@ estimator_proxy_t* estimator_proxy_create(size_t packet_size, uint32_t ssrc)
 	proxy->arrival_times = skiplist_create(id64_compare, NULL, NULL);
 
 	init_unwrapper16(&proxy->unwrapper);
+
+	return proxy;
 }
 
 void estimator_proxy_destroy(estimator_proxy_t* proxy)
@@ -31,7 +33,7 @@ void estimator_proxy_destroy(estimator_proxy_t* proxy)
 	free(proxy);
 }
 
-#define MAX_IDS_NUM 1000
+#define MAX_IDS_NUM 100
 void estimator_proxy_incoming(estimator_proxy_t* proxy, int64_t arrival_ts, uint32_t ssrc, uint16_t seq)
 {
 	int64_t sequence, ids[MAX_IDS_NUM];
@@ -89,7 +91,7 @@ static int proxy_bulid_feelback_packet(estimator_proxy_t* proxy, bin_stream_t* s
 		return -1;
 	
 	/*feelback信息进行打包*/
-	mach_uint32_write(strm, proxy->ssrc);						/*ssrc*/
+	mach_uint16_write(strm, proxy->feelback_sequence++);			/*ssrc*/
 	mach_uint16_write(strm, proxy->wnd_start_seq & 0xffff);		/*base*/
 	size = SU_MIN(size, MAX_FEELBACK_COUNT);
 	mach_uint16_write(strm, size);
