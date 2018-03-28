@@ -19,7 +19,7 @@ static void cap_bitrate_to_threshold(sender_estimation_t* est, int64_t cur_ts, u
 sender_estimation_t* sender_estimation_create(uint32_t min_bitrate, uint32_t max_bitrate)
 {
 	sender_estimation_t* estimator = calloc(1, sizeof(sender_estimation_t));
-	estimator->max_conf_bitrate = min_bitrate;
+	estimator->min_conf_bitrate = min_bitrate;
 	estimator->max_conf_bitrate = max_bitrate;
 	estimator->has_decreased_since_last_fraction_loss = -1;
 	estimator->last_feelback_ts = -1;
@@ -37,7 +37,7 @@ sender_estimation_t* sender_estimation_create(uint32_t min_bitrate, uint32_t max
 	return estimator;
 }
 
-void sender_estimator_destroy(sender_estimation_t* estimator)
+void sender_estimation_destroy(sender_estimation_t* estimator)
 {
 	if(estimator != NULL)
 		free(estimator);
@@ -74,13 +74,13 @@ void sender_estimation_set_bitrates(sender_estimation_t* est, uint32_t send_bitr
 void sender_estimation_update_remb(sender_estimation_t* est, int64_t cur_ts, uint32_t bitrate)
 {
 	est->bwe_incoming = bitrate;
-	cap_bitrate_to_threshold(est, cur_ts, bitrate);
+	cap_bitrate_to_threshold(est, cur_ts, est->curr_bitrate);
 }
 
 void sender_estimation_update_delay_base(sender_estimation_t* est, int64_t cur_ts, uint32_t bitrate)
 {
 	est->delay_base_bitrate = bitrate;
-	cap_bitrate_to_threshold(est, cur_ts, bitrate);
+	cap_bitrate_to_threshold(est, cur_ts, est->curr_bitrate);
 }
 
 /*更新接收端汇报的丢包延迟数据*/
@@ -117,7 +117,7 @@ void sender_estimation_update_block(sender_estimation_t* est, uint8_t fraction_l
 
 int sender_estimation_is_start_phare(sender_estimation_t* est, int64_t cur_ts)
 {
-	if (est->first_report_ts == -1 || cur_ts > est->first_report_ts > k_start_phase_ms)
+	if (est->first_report_ts == -1 || cur_ts < est->first_report_ts + k_start_phase_ms)
 		return 0;
 	return -1;
 }
@@ -195,6 +195,7 @@ void sender_estimation_update(sender_estimation_t* est, int64_t cur_ts)
 			est->end_index = est->begin_index = 0;
 			est->min_bitrates[est->end_index].ts = cur_ts;
 			est->min_bitrates[est->end_index].bitrate = est->curr_bitrate;
+			est->end_index++;
 
 			cap_bitrate_to_threshold(est, cur_ts, new_bitrate);
 			return;
