@@ -78,11 +78,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ack_bitrate_estimator_test.c" />
     <ClCompile Include="aimd_test.c" />
     <ClCompile Include="common_test.c" />
     <ClCompile Include="inter_arrival_test.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="overuse_detector_test.c" />
+    <ClCompile Include="sender_bandwidth_estimator_test.c" />
+    <ClCompile Include="sender_history_test.c" />
     <ClCompile Include="trendline_test.c" />
   </ItemGroup>
   <ItemGroup>

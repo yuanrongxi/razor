@@ -33,6 +33,15 @@
     <ClCompile Include="common_test.c">
       <Filter>unit</Filter>
     </ClCompile>
+    <ClCompile Include="sender_bandwidth_estimator_test.c">
+      <Filter>unit</Filter>
+    </ClCompile>
+    <ClCompile Include="sender_history_test.c">
+      <Filter>unit</Filter>
+    </ClCompile>
+    <ClCompile Include="ack_bitrate_estimator_test.c">
+      <Filter>unit</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="test.h">
