@@ -36,7 +36,7 @@ uint32_t ack_estimator_bitrate_bps(ack_bitrate_estimator_t* est)
 	if (est->bitrate_estimate < 0)
 		return 0;
 
-	return est->bitrate_estimate * 1000;
+	return (uint32_t)(est->bitrate_estimate * 1000);
 }
 
 void ack_estimator_set_alrended(ack_bitrate_estimator_t* est, int64_t ts)
