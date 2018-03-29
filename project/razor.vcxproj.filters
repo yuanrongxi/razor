@@ -81,6 +81,9 @@
     <ClCompile Include="..\estimator\ack_bitrate_estimator.c">
       <Filter>estimator</Filter>
     </ClCompile>
+    <ClCompile Include="..\estimator\delay_base_bwe.c">
+      <Filter>estimator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\cf_crc32.h">
@@ -144,6 +147,9 @@
       <Filter>estimator</Filter>
     </ClInclude>
     <ClInclude Include="..\estimator\ack_bitrate_estimator.h">
+      <Filter>estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\estimator\delay_base_bwe.h">
       <Filter>estimator</Filter>
     </ClInclude>
   </ItemGroup>
