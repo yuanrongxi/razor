@@ -43,7 +43,7 @@ void aimd_set_start_bitrate(aimd_rate_controller_t* aimd, uint32_t bitrate)
 int64_t aimd_get_feelback_interval(aimd_rate_controller_t* aimd)
 {
 	/*计算feelback只占5%的带宽负荷下，发送feelback的时间间隔*/
-	int64_t interval = DEFAULT_FEELBACK_SIZE * 8 * 1000 / ((0.05 * aimd->curr_rate) + 0.5);
+	int64_t interval = (int64_t)(DEFAULT_FEELBACK_SIZE * 8 * 1000 / ((0.05 * aimd->curr_rate) + 0.5));
 	interval = SU_MAX(SU_MIN(MAX_FEELBACK_INTERVAL, interval), MIN_FELLBACK_INTERVAL);
 
 	return interval;
@@ -67,6 +67,12 @@ void aimd_set_rtt(aimd_rate_controller_t* aimd, uint32_t rtt)
 	aimd->rtt = rtt;
 }
 
+void aimd_set_min_bitrate(aimd_rate_controller_t* aimd, uint32_t bitrate)
+{
+	aimd->min_rate = bitrate;
+	aimd->curr_rate = SU_MAX(aimd->min_rate, aimd->curr_rate);
+}
+
 static uint32_t clamp_bitrate(aimd_rate_controller_t* aimd, uint32_t new_bitrate, uint32_t coming_rate)
 {
 	const uint32_t max_bitrate_bps = 3 * coming_rate / 2 + 10000;
@@ -83,7 +89,7 @@ static uint32_t multiplicative_rate_increase(int64_t cur_ts, int64_t last_ts, ui
 	uint32_t ts_since;
 
 	if (last_ts > -1) {
-		ts_since = SU_MIN(cur_ts - last_ts, 1000);
+		ts_since = SU_MIN((uint32_t)(cur_ts - last_ts), 1000);
 		alpha = pow(alpha, ts_since / 1000.0);
 	}
 
@@ -188,7 +194,7 @@ static uint32_t aimd_change_bitrate(aimd_rate_controller_t* aimd, uint32_t new_b
 		break;
 
 	case kRcDecrease:
-		new_bitrate = aimd->beta * input->incoming_bitrate + 0.5;
+		new_bitrate = (uint32_t)(aimd->beta * input->incoming_bitrate + 0.5);
 		if (new_bitrate > aimd->curr_rate){
 			if (aimd->region != kRcMaxUnknown)
 				new_bitrate = (uint32_t)(aimd->avg_max_bitrate_kbps * 1000 * aimd->beta + 0.5f);
@@ -225,7 +231,7 @@ uint32_t aimd_update(aimd_rate_controller_t* aimd, rate_control_input_t* input, 
 		int64_t kInitializationTimeMs = 5000;
 
 		if (aimd->time_first_incoming_estimate < 0){ /*确定第一次update的时间戳*/
-			if (input->incoming_bitrate)
+			if (input->incoming_bitrate > 0)
 				aimd->time_first_incoming_estimate = cur_ts;
 		}
 		else if (cur_ts - aimd->time_first_incoming_estimate > kInitializationTimeMs && input->incoming_bitrate > 0){ /*5秒后进行将统计到的带宽作为初始化带宽*/

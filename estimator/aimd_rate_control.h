@@ -38,6 +38,7 @@ int64_t						aimd_get_feelback_interval(aimd_rate_controller_t* aimd);
 
 int							aimd_time_reduce_further(aimd_rate_controller_t* aimd, int64_t cur_ts, uint32_t incoming_rate);
 void						aimd_set_rtt(aimd_rate_controller_t* aimd, uint32_t rtt);
+void						aimd_set_min_bitrate(aimd_rate_controller_t* aimd, uint32_t bitrate);
 uint32_t					aimd_update(aimd_rate_controller_t* aimd, rate_control_input_t* input, int64_t cur_ts);
 void						aimd_set_estimate(aimd_rate_controller_t* aimd, int bitrate, int64_t cur_ts);
 int							aimd_get_near_max_inc_rate(aimd_rate_controller_t* aimd);
