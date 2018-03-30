@@ -8,7 +8,7 @@ aimd_rate_controller_t* aimd_create(uint32_t max_rate, uint32_t min_rate)
 	aimd->max_rate = max_rate;
 	aimd->min_rate = min_rate;
 
-	aimd->curr_rate = 10 * 1024;
+	aimd->curr_rate = 0;
 
 	aimd->avg_max_bitrate_kbps = -1.0f;
 	aimd->var_max_bitrate_kbps = 0.4f;
@@ -225,16 +225,15 @@ static uint32_t aimd_change_bitrate(aimd_rate_controller_t* aimd, uint32_t new_b
 }
 
 /*更新一次输入的带宽，进行aimd带宽调整*/
+#define k_initialization_ts 5000
 uint32_t aimd_update(aimd_rate_controller_t* aimd, rate_control_input_t* input, int64_t cur_ts)
 {
 	if (aimd->inited == -1){
-		int64_t kInitializationTimeMs = 5000;
-
 		if (aimd->time_first_incoming_estimate < 0){ /*确定第一次update的时间戳*/
 			if (input->incoming_bitrate > 0)
 				aimd->time_first_incoming_estimate = cur_ts;
 		}
-		else if (cur_ts - aimd->time_first_incoming_estimate > kInitializationTimeMs && input->incoming_bitrate > 0){ /*5秒后进行将统计到的带宽作为初始化带宽*/
+		else if (cur_ts - aimd->time_first_incoming_estimate > k_initialization_ts && input->incoming_bitrate > 0){ /*5秒后进行将统计到的带宽作为初始化带宽*/
 			aimd->curr_rate = input->incoming_bitrate;
 			aimd->inited = 0;
 		}

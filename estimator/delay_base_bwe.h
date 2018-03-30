@@ -49,7 +49,7 @@ typedef struct
 delay_base_bwe_t*			delay_bwe_create();
 void						delay_bwe_destroy(delay_base_bwe_t* bwe);
 
-bwe_result_t				delay_bwe_incoming(delay_base_bwe_t* bwe, packet_feedback_t packets[], int packets_num, uint32_t acked_bitrate);
+bwe_result_t				delay_bwe_incoming(delay_base_bwe_t* bwe, packet_feedback_t packets[], int packets_num, uint32_t acked_bitrate, int64_t now_ts);
 
 void						delay_bwe_rtt_update(delay_base_bwe_t* bwe, uint32_t rtt);
 int							delay_bwe_last_estimate(delay_base_bwe_t* bwe, uint32_t* bitrate);
