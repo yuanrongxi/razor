@@ -42,6 +42,9 @@
     <ClCompile Include="ack_bitrate_estimator_test.c">
       <Filter>unit</Filter>
     </ClCompile>
+    <ClCompile Include="delay_base_bwe_test.c">
+      <Filter>unit</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="test.h">

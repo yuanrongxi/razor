@@ -8,6 +8,7 @@ void test_detector();
 void test_sender_bandwidth_estimator();
 void test_sender_history();
 void test_ack_bitrate_estimator();
+void test_delay_base_bwe();
 
 #endif
 
