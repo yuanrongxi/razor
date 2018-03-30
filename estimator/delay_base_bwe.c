@@ -22,7 +22,7 @@ delay_base_bwe_t* delay_bwe_create()
 	bwe->trendline_smoothing_coeff = k_trendline_smoothing_coeff;
 	bwe->trendline_threshold_gain = k_trendline_threshold_gain;
 
-	bwe->rate_control = aimd_create(k_min_bitrate, k_max_bitrate);
+	bwe->rate_control = aimd_create(k_max_bitrate, k_min_bitrate);
 	bwe->detector = overuse_create();
 
 	return bwe;
@@ -147,11 +147,9 @@ static bwe_result_t delay_bwe_maybe_update(delay_base_bwe_t* bwe, int overusing,
 	return result;
 }
 
-bwe_result_t delay_bwe_incoming(delay_base_bwe_t* bwe, packet_feedback_t packets[], int packets_num, uint32_t acked_bitrate)
+bwe_result_t delay_bwe_incoming(delay_base_bwe_t* bwe, packet_feedback_t packets[], int packets_num, uint32_t acked_bitrate, int64_t now_ts)
 {
 	int i, overusing, delayed_feedback, recovered_from_overuse, prev_state;
-
-	int64_t now_ts;
 
 	bwe_result_t result;
 	init_bwe_result_null(result);
@@ -163,8 +161,6 @@ bwe_result_t delay_bwe_incoming(delay_base_bwe_t* bwe, packet_feedback_t packets
 	delayed_feedback = 0;
 	recovered_from_overuse = -1;
 	prev_state = bwe->detector->state;
-
-	now_ts = GET_SYS_MS();
 
 	for (i = 0; i < packets_num; ++i){
 		if (packets[i].send_ts < bwe->first_ts)
