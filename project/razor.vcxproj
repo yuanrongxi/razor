@@ -47,7 +47,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\common;..\estimator;..\pacing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -97,6 +97,9 @@
     <ClCompile Include="..\estimator\sender_bandwidth_estimator.c" />
     <ClCompile Include="..\estimator\sender_history.c" />
     <ClCompile Include="..\estimator\trendline.c" />
+    <ClCompile Include="..\pacing\alr_detector.c" />
+    <ClCompile Include="..\pacing\interval_budget.c" />
+    <ClCompile Include="..\pacing\pacer_queue.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\cf_crc32.h" />
@@ -121,6 +124,9 @@
     <ClInclude Include="..\estimator\sender_bandwidth_estimator.h" />
     <ClInclude Include="..\estimator\sender_history.h" />
     <ClInclude Include="..\estimator\trendline.h" />
+    <ClInclude Include="..\pacing\alr_detector.h" />
+    <ClInclude Include="..\pacing\interval_budget.h" />
+    <ClInclude Include="..\pacing\pacer_queue.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -16,6 +16,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="pacing">
+      <UniqueIdentifier>{83eb2e2e-78c1-45ec-a967-4145fd0d3fd3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -84,6 +87,15 @@
     <ClCompile Include="..\estimator\delay_base_bwe.c">
       <Filter>estimator</Filter>
     </ClCompile>
+    <ClCompile Include="..\pacing\interval_budget.c">
+      <Filter>pacing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pacing\alr_detector.c">
+      <Filter>pacing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pacing\pacer_queue.c">
+      <Filter>pacing</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\cf_crc32.h">
@@ -151,6 +163,15 @@
     </ClInclude>
     <ClInclude Include="..\estimator\delay_base_bwe.h">
       <Filter>estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pacing\interval_budget.h">
+      <Filter>pacing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pacing\alr_detector.h">
+      <Filter>pacing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pacing\pacer_queue.h">
+      <Filter>pacing</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
