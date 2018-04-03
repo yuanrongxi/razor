@@ -9,6 +9,8 @@ void test_sender_bandwidth_estimator();
 void test_sender_history();
 void test_ack_bitrate_estimator();
 void test_delay_base_bwe();
+void test_interval_budget();
+void test_pacer_queue();
 
 #endif
 

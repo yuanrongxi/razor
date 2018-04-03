@@ -52,7 +52,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../common;../estimator;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../common;../estimator;../pacing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -82,9 +82,11 @@
     <ClCompile Include="aimd_test.c" />
     <ClCompile Include="common_test.c" />
     <ClCompile Include="delay_base_bwe_test.c" />
+    <ClCompile Include="interval_budget.c" />
     <ClCompile Include="inter_arrival_test.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="overuse_detector_test.c" />
+    <ClCompile Include="pacer_queue_test.c" />
     <ClCompile Include="sender_bandwidth_estimator_test.c" />
     <ClCompile Include="sender_history_test.c" />
     <ClCompile Include="trendline_test.c" />

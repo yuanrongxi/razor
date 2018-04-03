@@ -45,6 +45,12 @@
     <ClCompile Include="delay_base_bwe_test.c">
       <Filter>unit</Filter>
     </ClCompile>
+    <ClCompile Include="interval_budget.c">
+      <Filter>unit</Filter>
+    </ClCompile>
+    <ClCompile Include="pacer_queue_test.c">
+      <Filter>unit</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="test.h">

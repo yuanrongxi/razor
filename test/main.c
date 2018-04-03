@@ -15,7 +15,9 @@ int main(int argc, const char* argv[])
 	/*test_sender_bandwidth_estimator();*/
 	/*test_sender_history();*/
 	/*test_ack_bitrate_estimator();*/
-	test_delay_base_bwe();
+	/*test_delay_base_bwe();*/
+	/*test_interval_budget();*/
+	test_pacer_queue();
 
 	return 0;
 }
