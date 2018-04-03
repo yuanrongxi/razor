@@ -98,7 +98,7 @@ static inline bwe_result_t delay_bwe_long_feedback_delay(delay_base_bwe_t* bwe, 
 	bwe_result_t result;
 	init_bwe_result_null(result);
 
-	aimd_set_estimate(bwe->rate_control, bwe->rate_control->curr_rate / 2, arrival_ts);
+	aimd_set_estimate(bwe->rate_control, bwe->rate_control->curr_rate * 3 / 4, arrival_ts);
 	result.updated = 0;
 	result.probe = -1;
 	result.bitrate = bwe->rate_control->curr_rate;
@@ -132,8 +132,8 @@ static bwe_result_t delay_bwe_maybe_update(delay_base_bwe_t* bwe, int overusing,
 			result.updated = delay_bwe_upate(bwe, now_ts, acked_bitrate, overusing, &result.bitrate);
 		}
 		else if (acked_bitrate == 0 && bwe->rate_control->inited == 0 
-			&& aimd_time_reduce_further(bwe->rate_control, now_ts, bwe->rate_control->curr_rate / 2 - 1) == 0){ /*带宽过载且没统计到新的acked带宽，进行减半处理*/
-			aimd_set_estimate(bwe->rate_control, bwe->rate_control->curr_rate / 2, now_ts);
+			&& aimd_time_reduce_further(bwe->rate_control, now_ts, bwe->rate_control->curr_rate * 3 / 4 - 1) == 0){ /*带宽过载且没统计到新的acked带宽，进行减半处理*/
+			aimd_set_estimate(bwe->rate_control, bwe->rate_control->curr_rate * 3 / 4, now_ts);
 			result.updated = 0;
 			result.probe = -1;
 			result.bitrate = bwe->rate_control->curr_rate;
