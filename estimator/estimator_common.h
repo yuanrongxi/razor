@@ -1,6 +1,7 @@
 #ifndef __estimator_common_h_
 #define __estimator_common_h_
 #include <stdint.h>
+#include "cf_stream.h"
 
 enum {
 	kBwNormal = 0,
@@ -47,9 +48,28 @@ typedef struct
 		(p).send_ts = -1;		\
 		(p).sequence_number = 0;\
 		(p).payload_size = 0;	\
-	} while (0)
+		} while (0)
+
+
+typedef struct
+{
+	uint16_t		seq;
+	int64_t			ts;
+}feedback_sample_t;
+
+#define MAX_FEELBACK_COUNT 128
+typedef struct
+{
+	uint16_t				base_seq;
+	int64_t					min_ts;
+
+	uint8_t				samples_num;
+	feedback_sample_t	samples[MAX_FEELBACK_COUNT];
+}feedback_msg_t;
+
+void	feedback_msg_encode(bin_stream_t* strm, feedback_msg_t* msg);
+void	feedback_msg_decode(bin_stream_t* strm, feedback_msg_t* msg);
 
 #endif
-
 
 

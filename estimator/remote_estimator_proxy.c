@@ -3,6 +3,7 @@
 #define DEFAULT_PROXY_INTERVAL_TIME 100
 #define BACK_WINDOWS_MS 500
 
+
 estimator_proxy_t* estimator_proxy_create(size_t packet_size, uint32_t ssrc)
 {
 	estimator_proxy_t* proxy = calloc(1, sizeof(estimator_proxy_t));
@@ -58,11 +59,11 @@ void estimator_proxy_incoming(estimator_proxy_t* proxy, int64_t arrival_ts, uint
 			if (iter->key.i64 < sequence && arrival_ts >= iter->val.i64 + BACK_WINDOWS_MS && num < MAX_IDS_NUM)
 				ids[num++] = iter->key.i64;
 		}
+	}
 
-		for (i = 0; i < num; ++i){
-			key.i64 = sequence;
-			skiplist_remove(proxy->arrival_times, key);
-		}
+	for (i = 0; i < num; ++i){
+		key.i64 = sequence;
+		skiplist_remove(proxy->arrival_times, key);
 	}
 
 	if (proxy->wnd_start_seq == -1)
@@ -78,45 +79,49 @@ void estimator_proxy_incoming(estimator_proxy_t* proxy, int64_t arrival_ts, uint
 	skiplist_insert(proxy->arrival_times, key, val);
 }
 
-#define MAX_FEELBACK_COUNT 200
 static int proxy_bulid_feelback_packet(estimator_proxy_t* proxy, bin_stream_t* strm)
 {
-	uint16_t size, i, detla;
 	skiplist_iter_t* iter;
+	int64_t new_start_seq = -1;
 
-	int64_t min_ts = 0xffffffffffffffff;
+	feedback_msg_t msg;
 
-	size = skiplist_size(proxy->arrival_times);
-	if (proxy->max_arrival_seq <= proxy->wnd_start_seq && size == 0)
+	if (proxy->max_arrival_seq <= proxy->wnd_start_seq &&  skiplist_size(proxy->arrival_times) == 0)
 		return -1;
 	
-	/*feelback信息进行打包*/
-	mach_uint16_write(strm, proxy->feelback_sequence++);			/*ssrc*/
-	mach_uint16_write(strm, proxy->wnd_start_seq & 0xffff);		/*base*/
-	size = SU_MIN(size, MAX_FEELBACK_COUNT);
-	mach_uint16_write(strm, size);
+	msg.min_ts = -1;
+	msg.samples_num = 0;
+	msg.base_seq = proxy->wnd_start_seq;
 
-	/*找到最早到达的报文时间戳*/
 	SKIPLIST_FOREACH(proxy->arrival_times, iter){
-		if (min_ts > iter->val.i64)
-			min_ts = iter->val.i64;
+
+		if (iter->key.i64 >= proxy->wnd_start_seq){
+			/*找到最早到达的报文时间戳*/
+			if (msg.min_ts == -1 || msg.min_ts > iter->val.i64)
+				msg.min_ts = iter->val.i64;
+
+			msg.samples[msg.samples_num].seq = (iter->key.i64 & 0xffff);
+			msg.samples[msg.samples_num].ts = iter->val.i64;
+			msg.samples_num++;
+
+			/*更新下一个feelback的起始位置*/
+			new_start_seq = iter->key.i64 + 1;
+
+			if (msg.samples_num >= MAX_FEELBACK_COUNT)
+				break;
+		}
 	}
 
-	i = 0;
-	SKIPLIST_FOREACH(proxy->arrival_times, iter){
-		if (++i >= size)
-			break;
+	/*进行到达时间序列编码*/
+	if (msg.samples_num > 0){
+		feedback_msg_encode(strm, &msg);
+		proxy->wnd_start_seq = new_start_seq;
 
-		/*将序号和时间戳打包到网络报文中发送给发送方*/
-		mach_uint16_write(strm, iter->key.i64 & 0xffff);
-		detla = iter->val.i64 - min_ts;
-		mach_uint16_write(strm, detla);
-
-		/*更新下一个feelback的起始位置*/
-		proxy->wnd_start_seq = iter->key.i64 + 1;
+		return 0;
 	}
+	
+	return -1;
 
-	return 0;
 }
 
 int estimator_proxy_heartbeat(estimator_proxy_t* proxy, int64_t cur_ts, bin_stream_t* strm)
@@ -139,6 +144,8 @@ void estimator_proxy_bitrate_changed(estimator_proxy_t* proxy, uint32_t bitrate)
 	proxy->send_interval_ms = SU_MAX(SU_MIN(proxy->send_interval_ms, kMaxSendIntervalMs), kMinSendIntervalMs);
 
 }
+
+
 
 
 
