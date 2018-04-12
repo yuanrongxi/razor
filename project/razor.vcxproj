@@ -76,6 +76,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\cc\sender_congestion_controller.c" />
     <ClCompile Include="..\common\cf_crc32.c" />
     <ClCompile Include="..\common\cf_hash_map.c" />
     <ClCompile Include="..\common\cf_hex.c" />
@@ -90,6 +91,9 @@
     <ClCompile Include="..\estimator\aimd_rate_control.c" />
     <ClCompile Include="..\estimator\bitrate_controller.c" />
     <ClCompile Include="..\estimator\delay_base_bwe.c" />
+    <ClCompile Include="..\estimator\estimator_common.c" />
+    <ClCompile Include="..\estimator\feedback_adapter.c" />
+    <ClCompile Include="..\estimator\feedback_adapter.h" />
     <ClCompile Include="..\estimator\inter_arrival.c" />
     <ClCompile Include="..\estimator\kalman_filter.c" />
     <ClCompile Include="..\estimator\overuse_detector.c" />
@@ -100,8 +104,10 @@
     <ClCompile Include="..\pacing\alr_detector.c" />
     <ClCompile Include="..\pacing\interval_budget.c" />
     <ClCompile Include="..\pacing\pacer_queue.c" />
+    <ClCompile Include="..\pacing\pace_sender.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\cc\sender_congestion_controller.h" />
     <ClInclude Include="..\common\cf_crc32.h" />
     <ClInclude Include="..\common\cf_hash_map.h" />
     <ClInclude Include="..\common\cf_hex.h" />
@@ -127,6 +133,7 @@
     <ClInclude Include="..\pacing\alr_detector.h" />
     <ClInclude Include="..\pacing\interval_budget.h" />
     <ClInclude Include="..\pacing\pacer_queue.h" />
+    <ClInclude Include="..\pacing\pace_sender.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

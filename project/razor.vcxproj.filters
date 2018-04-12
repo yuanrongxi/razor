@@ -1,10 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
     <Filter Include="common">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
@@ -18,6 +14,10 @@
     </Filter>
     <Filter Include="pacing">
       <UniqueIdentifier>{83eb2e2e-78c1-45ec-a967-4145fd0d3fd3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="cc">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -96,6 +96,21 @@
     <ClCompile Include="..\pacing\pacer_queue.c">
       <Filter>pacing</Filter>
     </ClCompile>
+    <ClCompile Include="..\pacing\pace_sender.c">
+      <Filter>pacing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\estimator\feedback_adapter.h">
+      <Filter>estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\estimator\feedback_adapter.c">
+      <Filter>estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\estimator\estimator_common.c">
+      <Filter>estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\cc\sender_congestion_controller.c">
+      <Filter>cc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\cf_crc32.h">
@@ -172,6 +187,12 @@
     </ClInclude>
     <ClInclude Include="..\pacing\pacer_queue.h">
       <Filter>pacing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pacing\pace_sender.h">
+      <Filter>pacing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cc\sender_congestion_controller.h">
+      <Filter>cc</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
