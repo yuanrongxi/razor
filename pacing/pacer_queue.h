@@ -5,7 +5,7 @@
 #include "cf_skiplist.h"
 #include "cf_list.h"
 
-#define k_max_pace_queue_ms			500			/*pacer queue缓冲的最大延迟*/
+#define k_max_pace_queue_ms			1000			/*pacer queue缓冲的最大延迟*/
 
 typedef struct
 {
