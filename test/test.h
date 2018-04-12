@@ -1,6 +1,7 @@
 #ifndef __test_04774_h_
 #define __test_04774_h_
 
+void test_unwrapper();
 void test_trendline();
 void test_aimd();
 void test_inter_arrival();
@@ -11,6 +12,7 @@ void test_ack_bitrate_estimator();
 void test_delay_base_bwe();
 void test_interval_budget();
 void test_pacer_queue();
+void test_pace();
 
 #endif
 

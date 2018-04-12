@@ -87,9 +87,11 @@
     <ClCompile Include="main.c" />
     <ClCompile Include="overuse_detector_test.c" />
     <ClCompile Include="pacer_queue_test.c" />
+    <ClCompile Include="pace_sender_test.c" />
     <ClCompile Include="sender_bandwidth_estimator_test.c" />
     <ClCompile Include="sender_history_test.c" />
     <ClCompile Include="trendline_test.c" />
+    <ClCompile Include="unwrapper_test.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\project\razor.vcxproj">
