@@ -27,19 +27,10 @@
     <ClCompile Include="..\common\cf_crc32.c">
       <Filter>common</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\cf_hash_map.c">
-      <Filter>common</Filter>
-    </ClCompile>
     <ClCompile Include="..\common\cf_hex.c">
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="..\common\cf_list.c">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\cf_mem_slab.c">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\cf_object_pool.c">
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="..\common\cf_skiplist.c">
@@ -99,36 +90,33 @@
     <ClCompile Include="..\pacing\pace_sender.c">
       <Filter>pacing</Filter>
     </ClCompile>
-    <ClCompile Include="..\estimator\feedback_adapter.h">
-      <Filter>estimator</Filter>
-    </ClCompile>
-    <ClCompile Include="..\estimator\feedback_adapter.c">
-      <Filter>estimator</Filter>
-    </ClCompile>
     <ClCompile Include="..\estimator\estimator_common.c">
       <Filter>estimator</Filter>
     </ClCompile>
     <ClCompile Include="..\cc\sender_congestion_controller.c">
       <Filter>cc</Filter>
     </ClCompile>
+    <ClCompile Include="..\estimator\rate_stat.c">
+      <Filter>estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\estimator\feedback_adapter.h">
+      <Filter>estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\estimator\feedback_adapter.c">
+      <Filter>estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\estimator\remote_bitrate_estimator.c">
+      <Filter>estimator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\cf_crc32.h">
-      <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\cf_hash_map.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="..\common\cf_hex.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="..\common\cf_list.h">
-      <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\cf_mem_slab.h">
-      <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\cf_object_pool.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="..\common\cf_platform.h">
@@ -193,6 +181,12 @@
     </ClInclude>
     <ClInclude Include="..\cc\sender_congestion_controller.h">
       <Filter>cc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\estimator\remote_bitrate_estimator.h">
+      <Filter>estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\estimator\rate_stat.h">
+      <Filter>estimator</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

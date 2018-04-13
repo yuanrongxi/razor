@@ -78,11 +78,8 @@
   <ItemGroup>
     <ClCompile Include="..\cc\sender_congestion_controller.c" />
     <ClCompile Include="..\common\cf_crc32.c" />
-    <ClCompile Include="..\common\cf_hash_map.c" />
     <ClCompile Include="..\common\cf_hex.c" />
     <ClCompile Include="..\common\cf_list.c" />
-    <ClCompile Include="..\common\cf_mem_slab.c" />
-    <ClCompile Include="..\common\cf_object_pool.c" />
     <ClCompile Include="..\common\cf_skiplist.c" />
     <ClCompile Include="..\common\cf_stream.c" />
     <ClCompile Include="..\common\cf_unwrapper.c" />
@@ -97,6 +94,8 @@
     <ClCompile Include="..\estimator\inter_arrival.c" />
     <ClCompile Include="..\estimator\kalman_filter.c" />
     <ClCompile Include="..\estimator\overuse_detector.c" />
+    <ClCompile Include="..\estimator\rate_stat.c" />
+    <ClCompile Include="..\estimator\remote_bitrate_estimator.c" />
     <ClCompile Include="..\estimator\remote_estimator_proxy.c" />
     <ClCompile Include="..\estimator\sender_bandwidth_estimator.c" />
     <ClCompile Include="..\estimator\sender_history.c" />
@@ -109,11 +108,8 @@
   <ItemGroup>
     <ClInclude Include="..\cc\sender_congestion_controller.h" />
     <ClInclude Include="..\common\cf_crc32.h" />
-    <ClInclude Include="..\common\cf_hash_map.h" />
     <ClInclude Include="..\common\cf_hex.h" />
     <ClInclude Include="..\common\cf_list.h" />
-    <ClInclude Include="..\common\cf_mem_slab.h" />
-    <ClInclude Include="..\common\cf_object_pool.h" />
     <ClInclude Include="..\common\cf_platform.h" />
     <ClInclude Include="..\common\cf_skiplist.h" />
     <ClInclude Include="..\common\cf_stream.h" />
@@ -126,6 +122,8 @@
     <ClInclude Include="..\estimator\inter_arrival.h" />
     <ClInclude Include="..\estimator\kalman_filter.h" />
     <ClInclude Include="..\estimator\overuse_detector.h" />
+    <ClInclude Include="..\estimator\rate_stat.h" />
+    <ClInclude Include="..\estimator\remote_bitrate_estimator.h" />
     <ClInclude Include="..\estimator\remote_estimator_proxy.h" />
     <ClInclude Include="..\estimator\sender_bandwidth_estimator.h" />
     <ClInclude Include="..\estimator\sender_history.h" />
