@@ -13,6 +13,7 @@ void test_delay_base_bwe();
 void test_interval_budget();
 void test_pacer_queue();
 void test_pace();
+void test_rate_stat();
 
 #endif
 

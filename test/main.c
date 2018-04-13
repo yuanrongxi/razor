@@ -7,7 +7,7 @@ int main(int argc, const char* argv[])
 {
 	srand(time(NULL));
 	
-	test_unwrapper();
+	/*test_unwrapper();*/
 
 	/*test_trendline();*/
 	/*test_aimd();*/
@@ -21,6 +21,8 @@ int main(int argc, const char* argv[])
 	/*test_interval_budget();*/
 	/*test_pacer_queue();*/
 	/*test_pace();*/
+	
+	test_rate_stat();
 
 	return 0;
 }
