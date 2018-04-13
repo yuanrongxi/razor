@@ -49,6 +49,7 @@ int64_t aimd_get_feelback_interval(aimd_rate_controller_t* aimd)
 	return interval;
 }
 
+/*判断aimd控制器是否可以进行网络带宽调节*/
 int aimd_time_reduce_further(aimd_rate_controller_t* aimd, int64_t cur_ts, uint32_t incoming_rate)
 {
 	int64_t reduce_interval = SU_MAX(SU_MIN(200, aimd->rtt), 10);
