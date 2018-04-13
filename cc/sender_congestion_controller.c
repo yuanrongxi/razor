@@ -3,6 +3,8 @@
 #define k_max_queue_ms		250
 #define k_min_bitrate_bps	10000
 
+#define k_max_feedback_size 1472
+
 sender_cc_t* sender_cc_create(void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms)
 {
 	sender_cc_t* cc = calloc(1, sizeof(sender_cc_t));
@@ -17,6 +19,8 @@ sender_cc_t* sender_cc_create(void* trigger, bitrate_changed_func bitrate_cb, vo
 	feedback_adapter_init(&cc->adapter);
 
 	delay_bwe_set_min_bitrate(cc->bwe, k_min_bitrate_bps);
+
+	bin_stream_init(&cc->strm);
 
 	return cc;
 }
@@ -48,11 +52,14 @@ void sender_cc_destroy(sender_cc_t* cc)
 
 	feedback_adapter_destroy(&cc->adapter);
 
+	bin_stream_destroy(&cc->strm);
+
 	free(cc);
 }
 
-void sender_cc_heartbeat(sender_cc_t* cc, int64_t now_ts)
+void sender_cc_heartbeat(sender_cc_t* cc)
 {
+	int64_t now_ts = GET_SYS_MS();
 	/*进行pace发送*/
 	pace_try_transmit(cc->pacer, now_ts);
 
@@ -61,9 +68,9 @@ void sender_cc_heartbeat(sender_cc_t* cc, int64_t now_ts)
 
 }
 
-void sender_cc_add_pace_packet(sender_cc_t* cc, uint32_t packet_id, int retrans, size_t size, int64_t now_ts)
+void sender_cc_add_pace_packet(sender_cc_t* cc, uint32_t packet_id, int retrans, size_t size)
 {
-	pace_insert_packet(cc->pacer, packet_id, retrans, size, now_ts);
+	pace_insert_packet(cc->pacer, packet_id, retrans, size, GET_SYS_MS());
 }
 
 void sender_on_send_packet(sender_cc_t* cc, uint16_t seq, size_t size)
@@ -73,13 +80,19 @@ void sender_on_send_packet(sender_cc_t* cc, uint16_t seq, size_t size)
 	/*todo:进行RTT周期内是否发送码率溢出，可以不实现*/
 }
 
-void sender_on_feedback(sender_cc_t* cc, bin_stream_t* strm)
+void sender_on_feedback(sender_cc_t* cc, uint8_t* feedback, int feedback_size)
 {
-	int i, cur_alr;
+	int cur_alr;
 	bwe_result_t bwe_result;
 	int64_t now_ts;
+	bin_stream_t strm;
 
-	if(feedback_on_feedback(&cc->adapter, strm) <= 0)
+	if (feedback_size < k_max_feedback_size)
+		return;
+
+	bin_stream_resize(&cc->strm, feedback_size);
+
+	if (feedback_on_feedback(&cc->adapter, &strm) <= 0)
 		return;
 
 	now_ts = GET_SYS_MS();
