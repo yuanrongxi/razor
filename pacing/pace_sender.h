@@ -3,8 +3,7 @@
 
 #include "alr_detector.h"
 #include "pacer_queue.h"
-
-typedef void(*pace_send_func)(void* handler, uint32_t seq, int retrans, size_t size);
+#include "razor_api.h"
 
 typedef struct
 {

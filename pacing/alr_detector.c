@@ -20,7 +20,7 @@ void alr_detector_bytes_sent(alr_detector_t* alr, size_t bytes, int64_t delta_ts
 {
 	int percent;
 	use_budget(&alr->budget, bytes);
-	increase_budget(&alr->budget, delta_ts);
+	increase_budget(&alr->budget, (int)delta_ts);
 
 	percent = budget_level_precent(&alr->budget);
 	/*½øĞĞalr started tsÅĞ¶¨*/

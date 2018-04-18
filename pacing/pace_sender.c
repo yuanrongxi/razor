@@ -102,11 +102,12 @@ static int pace_send(pace_sender_t* pace, packet_event_t* ev)
 
 void pace_try_transmit(pace_sender_t* pace, int64_t now_ts)
 {
-	int64_t elapsed_ms;
-	int target_bitrate_kbps, sent_bytes;
+	int elapsed_ms;
+	uint32_t target_bitrate_kbps;
+	int sent_bytes;
 	packet_event_t* ev;
 
-	elapsed_ms = now_ts - pace->last_update_ts;
+	elapsed_ms = (int)(now_ts - pace->last_update_ts);
 
 	if (elapsed_ms < k_min_packet_limit_ms)
 		return;
