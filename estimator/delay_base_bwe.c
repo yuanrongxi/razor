@@ -82,7 +82,7 @@ static void delay_bwe_process(delay_base_bwe_t* bwe, packet_feedback_t* packet, 
 
 	bwe->last_seen_ms = now_ts;
 
-	timestamp = packet->send_ts - bwe->first_ts;
+	timestamp = (uint32_t)(packet->send_ts - bwe->first_ts);
 	if (inter_arrival_compute_deltas(bwe->inter_arrival, timestamp, packet->arrival_ts, now_ts, packet->payload_size,
 		&ts_delta, &t_delta, &size_delta) == 0){
 		/*进行斜率计算*/
@@ -214,6 +214,11 @@ void delay_bwe_set_start_bitrate(delay_base_bwe_t* bwe, uint32_t bitrate)
 void delay_bwe_set_min_bitrate(delay_base_bwe_t* bwe, uint32_t min_bitrate)
 {
 	aimd_set_min_bitrate(bwe->rate_control, min_bitrate);
+}
+
+void delay_bwe_set_max_bitrate(delay_base_bwe_t* bwe, uint32_t max_bitrate)
+{
+	aimd_set_max_bitrate(bwe->rate_control, max_bitrate);
 }
 
 int64_t delay_bwe_expected_period(delay_base_bwe_t* bwe)

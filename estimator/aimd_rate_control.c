@@ -74,13 +74,19 @@ void aimd_set_min_bitrate(aimd_rate_controller_t* aimd, uint32_t bitrate)
 	aimd->curr_rate = SU_MAX(aimd->min_rate, aimd->curr_rate);
 }
 
+void aimd_set_max_bitrate(aimd_rate_controller_t* aimd, uint32_t bitrate)
+{
+	aimd->max_rate = bitrate;
+	aimd->curr_rate = SU_MIN(aimd->max_rate, aimd->curr_rate);
+}
+
 static uint32_t clamp_bitrate(aimd_rate_controller_t* aimd, uint32_t new_bitrate, uint32_t coming_rate)
 {
 	const uint32_t max_bitrate_bps = 3 * coming_rate / 2 + 10000;
 	if (new_bitrate > aimd->curr_rate && new_bitrate > max_bitrate_bps)
 		new_bitrate = SU_MAX(aimd->curr_rate, max_bitrate_bps);
 
-	return SU_MAX(new_bitrate, aimd->min_rate);
+	return SU_MIN(SU_MAX(new_bitrate, aimd->min_rate), aimd->max_rate);
 }
 
 /*计算一次带宽的增量,一般是用于初期增长阶段，有点象慢启动*/
@@ -191,7 +197,6 @@ static uint32_t aimd_change_bitrate(aimd_rate_controller_t* aimd, uint32_t new_b
 			new_bitrate += multiplicative_rate_increase(cur_ts, aimd->time_last_bitrate_change, new_bitrate);
 
 		aimd->time_last_bitrate_change = cur_ts;
-
 		break;
 
 	case kRcDecrease:

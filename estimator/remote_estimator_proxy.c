@@ -79,62 +79,57 @@ void estimator_proxy_incoming(estimator_proxy_t* proxy, int64_t arrival_ts, uint
 	skiplist_insert(proxy->arrival_times, key, val);
 }
 
-static int proxy_bulid_feelback_packet(estimator_proxy_t* proxy, bin_stream_t* strm)
+static int proxy_bulid_feelback_packet(estimator_proxy_t* proxy, feedback_msg_t* msg)
 {
 	skiplist_iter_t* iter;
 	int64_t new_start_seq = -1;
 
-	feedback_msg_t msg;
-
 	if (proxy->max_arrival_seq <= proxy->wnd_start_seq &&  skiplist_size(proxy->arrival_times) == 0)
 		return -1;
 	
-	msg.min_ts = -1;
-	msg.samples_num = 0;
-	msg.base_seq = proxy->wnd_start_seq;
+	msg->min_ts = -1;
+	msg->samples_num = 0;
+	msg->base_seq = proxy->wnd_start_seq;
 
 	SKIPLIST_FOREACH(proxy->arrival_times, iter){
 
 		if (iter->key.i64 >= proxy->wnd_start_seq){
 			/*找到最早到达的报文时间戳*/
-			if (msg.min_ts == -1 || msg.min_ts > iter->val.i64)
-				msg.min_ts = iter->val.i64;
+			if (msg->min_ts == -1 || msg->min_ts > iter->val.i64)
+				msg->min_ts = iter->val.i64;
 
-			msg.samples[msg.samples_num].seq = (iter->key.i64 & 0xffff);
-			msg.samples[msg.samples_num].ts = iter->val.i64;
-			msg.samples_num++;
+			msg->samples[msg->samples_num].seq = (iter->key.i64 & 0xffff);
+			msg->samples[msg->samples_num].ts = iter->val.i64;
+			msg->samples_num++;
 
 			/*更新下一个feelback的起始位置*/
 			new_start_seq = iter->key.i64 + 1;
 
-			if (msg.samples_num >= MAX_FEELBACK_COUNT)
+			if (msg->samples_num >= MAX_FEELBACK_COUNT)
 				break;
 		}
 	}
 
 	/*进行到达时间序列编码*/
-	if (msg.samples_num > 0){
-		feedback_msg_encode(strm, &msg);
+	if (msg->samples_num > 0){
 		proxy->wnd_start_seq = new_start_seq;
-
 		return 0;
 	}
 	
 	return -1;
-
 }
 
-int estimator_proxy_heartbeat(estimator_proxy_t* proxy, int64_t cur_ts, bin_stream_t* strm)
+int estimator_proxy_heartbeat(estimator_proxy_t* proxy, int64_t cur_ts, feedback_msg_t* msg)
 {
 	if (cur_ts >= proxy->hb_ts + proxy->send_interval_ms){
 		proxy->hb_ts = cur_ts;
-		return proxy_bulid_feelback_packet(proxy, strm);
+		return proxy_bulid_feelback_packet(proxy, msg);
 	}
 	return -1;
 }
 
 #define kMaxSendIntervalMs 250
-#define kMinSendIntervalMs 50
+#define kMinSendIntervalMs 100
 
 /*码率发生变化时重新评估发送间隔时间*/
 void estimator_proxy_bitrate_changed(estimator_proxy_t* proxy, uint32_t bitrate)

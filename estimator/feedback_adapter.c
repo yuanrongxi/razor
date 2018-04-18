@@ -57,23 +57,19 @@ static inline void feedback_qsort(feedback_adapter_t* adapter)
 	qsort(adapter->packets, adapter->num, sizeof(packet_feedback_t), feedback_packet_comp);
 }
 
-int feedback_on_feedback(feedback_adapter_t* adapter, bin_stream_t* strm)
+int feedback_on_feedback(feedback_adapter_t* adapter, feedback_msg_t* msg)
 {
 	int32_t i, feedback_rtt;
-	feedback_msg_t msg;
 
 	int64_t now_ts;
 
 	now_ts = GET_SYS_MS();
 	feedback_rtt = -1;
 
-	/*解码得到反馈序列*/
-	feedback_msg_decode(strm, &msg);
-
 	adapter->num = 0;
-	for (i = 0; i < msg.samples_num; i++){
+	for (i = 0; i < msg->samples_num; i++){
 		/*根据反馈的SEQ获取对应的报文发送信息，计算反馈RTT,更新报文到达时刻*/
-		if (sender_history_get(adapter->hist, msg.samples[i].seq, &adapter->packets[adapter->num]) == 0){
+		if (sender_history_get(adapter->hist, msg->samples[i].seq, &adapter->packets[adapter->num]) == 0){
 			/*计算反馈RTT*/
 			if (adapter->packets[adapter->num].send_ts > 0){
 				feedback_rtt = SU_MAX(now_ts - adapter->packets[adapter->num].send_ts, feedback_rtt);
@@ -81,7 +77,7 @@ int feedback_on_feedback(feedback_adapter_t* adapter, bin_stream_t* strm)
 			}
 
 			/*更新到达的值*/
-			adapter->packets[adapter->num].arrival_ts = msg.samples[i].ts;
+			adapter->packets[adapter->num].arrival_ts = msg->samples[i].ts;
 			adapter->num++;
 		}
 	}

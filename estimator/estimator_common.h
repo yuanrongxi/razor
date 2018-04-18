@@ -57,12 +57,25 @@ typedef struct
 	int64_t			ts;
 }feedback_sample_t;
 
+enum
+{
+	remb_msg = 0x01,
+	loss_info_msg = 0x02,
+	proxy_ts_msg = 0x04,
+};
+
 #define MAX_FEELBACK_COUNT 128
 typedef struct
 {
-	uint16_t				base_seq;
+	uint8_t					flag;
+	/*remb_msg*/
+	uint32_t				remb;
+	/*loss info msg*/
+	uint8_t					fraction_loss;
+	int						packet_num;
+	/*proxy_ts_msg*/
+	int64_t					base_seq;
 	int64_t					min_ts;
-
 	uint8_t				samples_num;
 	feedback_sample_t	samples[MAX_FEELBACK_COUNT];
 }feedback_msg_t;

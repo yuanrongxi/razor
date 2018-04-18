@@ -23,7 +23,7 @@ void				feedback_adapter_destroy(feedback_adapter_t* adapter);
 void				feedback_add_packet(feedback_adapter_t* adapter, uint16_t seq, size_t size);
 
 /*解码网络来的feedback，并解析成packet_feedback结构序列，这个数据是remote estimator proxy反馈过来的*/
-int					feedback_on_feedback(feedback_adapter_t* adapter, bin_stream_t* strm);
+int					feedback_on_feedback(feedback_adapter_t* adapter, feedback_msg_t* msg);
 
 
 #endif

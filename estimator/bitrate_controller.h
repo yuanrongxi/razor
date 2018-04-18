@@ -2,8 +2,7 @@
 #define __bitrate_controller_h_
 
 #include "sender_bandwidth_estimator.h"
-
-typedef void(*bitrate_changed_func)(void* trigger, uint32_t bitrate, uint8_t fraction_loss, uint32_t rtt);
+#include "razor_api.h"
 
 /*发送端码率控制器，会根据REMB/base delay和网络反馈报文调节和控制发送带宽*/
 typedef struct

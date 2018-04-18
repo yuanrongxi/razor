@@ -184,7 +184,7 @@ void sender_estimation_update(sender_estimation_t* est, int64_t cur_ts)
 {
 	uint32_t new_bitrate = est->curr_bitrate, pos;
 	int64_t time_since_packet_report_ms, time_since_feedback_ms;
-	float loss;
+	double loss;
 
 	/*如果是开始阶段且网络没有发生丢包，我们取REMB和delay base中大者为当前的决策带宽*/
 	if (est->last_fraction_loss == 0 && sender_estimation_is_start_phare(est, cur_ts) == 0){
@@ -219,7 +219,7 @@ void sender_estimation_update(sender_estimation_t* est, int64_t cur_ts)
 		/*网络发送丢包率 < 2%时，进行码率上升*/
 		if (est->curr_bitrate < est->bitrate_threshold || loss < est->low_loss_threshold){
 			pos = est->begin_index % MIN_HISTORY_ARR_SIZE;
-			new_bitrate = est->min_bitrates[pos].bitrate * 1.08 + 0.5 + 1000; /*1000是防止min_bitrate太小造成叠加无效*/
+			new_bitrate = (uint32_t)(est->min_bitrates[pos].bitrate * 1.08 + 0.5 + 1000); /*1000是防止min_bitrate太小造成叠加无效*/
 		}
 		else if (est->curr_bitrate > est->bitrate_threshold){ /*码率过载，根据丢包率进行码率下降调整*/
 			/* 2% < loss < 10%*/
@@ -231,7 +231,7 @@ void sender_estimation_update(sender_estimation_t* est, int64_t cur_ts)
 					est->last_decrease_ts = cur_ts;
 					est->has_decreased_since_last_fraction_loss = 0;
 
-					new_bitrate = est->curr_bitrate * (512 - est->last_fraction_loss) / 512.0f;
+					new_bitrate = (uint32_t)(est->curr_bitrate * (512 - est->last_fraction_loss) / 512.0f);
 				}
 			}
 		}

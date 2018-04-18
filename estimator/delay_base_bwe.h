@@ -55,6 +55,7 @@ void						delay_bwe_rtt_update(delay_base_bwe_t* bwe, uint32_t rtt);
 int							delay_bwe_last_estimate(delay_base_bwe_t* bwe, uint32_t* bitrate);
 void						delay_bwe_set_start_bitrate(delay_base_bwe_t* bwe, uint32_t bitrate);
 void						delay_bwe_set_min_bitrate(delay_base_bwe_t* bwe, uint32_t min_bitrate);
+void						delay_bwe_set_max_bitrate(delay_base_bwe_t* bwe, uint32_t max_bitrate);
 
 int64_t						delay_bwe_expected_period(delay_base_bwe_t* bwe);
 

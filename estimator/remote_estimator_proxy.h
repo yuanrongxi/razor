@@ -29,7 +29,7 @@ estimator_proxy_t*	estimator_proxy_create(size_t packet_size, uint32_t ssrc);
 void				estimator_proxy_destroy(estimator_proxy_t* proxy);
 
 void				estimator_proxy_incoming(estimator_proxy_t* proxy, int64_t arrival_ts, uint32_t ssrc, uint16_t seq);
-int					estimator_proxy_heartbeat(estimator_proxy_t* proxy, int64_t cur_ts, bin_stream_t* strm);
+int					estimator_proxy_heartbeat(estimator_proxy_t* proxy, int64_t cur_ts, feedback_msg_t* msg);
 void				estimator_proxy_bitrate_changed(estimator_proxy_t* proxy, uint32_t bitrate);
 
 
