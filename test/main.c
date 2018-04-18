@@ -22,7 +22,9 @@ int main(int argc, const char* argv[])
 	/*test_pacer_queue();*/
 	/*test_pace();*/
 	
-	test_rate_stat();
+	/*test_rate_stat();*/
+	/*test_rbe();*/
+	test_loss_stat();
 
 	return 0;
 }

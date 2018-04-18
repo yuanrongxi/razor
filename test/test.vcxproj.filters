@@ -60,6 +60,12 @@
     <ClCompile Include="rate_stat_test.c">
       <Filter>unit</Filter>
     </ClCompile>
+    <ClCompile Include="remote_bitrate_estimator_test.c">
+      <Filter>unit</Filter>
+    </ClCompile>
+    <ClCompile Include="loss_statistics_test.c">
+      <Filter>unit</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="test.h">

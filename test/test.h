@@ -14,6 +14,8 @@ void test_interval_budget();
 void test_pacer_queue();
 void test_pace();
 void test_rate_stat();
+void test_rbe();
+void test_loss_stat();
 
 #endif
 

@@ -1,4 +1,5 @@
 #include "trendline.h"
+#include "common_test.h"
 #include <assert.h>
 #include <math.h>
 
@@ -7,11 +8,6 @@
 #define GAIN				1.0
 #define AVGTIMEBETWEEN		10
 #define PACKET_COUNT		(WND_SIZE * 2 + 1)
-
-static inline void EXPECT_NEAR(double src, double dst, double delta)
-{
-	assert(dst <= src + delta && dst >= src - delta);
-}
 
 static void trendline_func(double slope, double jitter_stdev, double toler)
 {
