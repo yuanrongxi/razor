@@ -47,7 +47,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\common;..\estimator;..\pacing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\common;..\estimator;..\pacing;..\cc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -76,6 +76,8 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\cc\razor_api.c" />
+    <ClCompile Include="..\cc\receiver_congestion_controller.c" />
     <ClCompile Include="..\cc\sender_congestion_controller.c" />
     <ClCompile Include="..\common\cf_crc32.c" />
     <ClCompile Include="..\common\cf_hex.c" />
@@ -87,6 +89,7 @@
     <ClCompile Include="..\estimator\ack_bitrate_estimator.c" />
     <ClCompile Include="..\estimator\aimd_rate_control.c" />
     <ClCompile Include="..\estimator\bitrate_controller.c" />
+    <ClCompile Include="..\estimator\cc_loss_stat.c" />
     <ClCompile Include="..\estimator\delay_base_bwe.c" />
     <ClCompile Include="..\estimator\estimator_common.c" />
     <ClCompile Include="..\estimator\feedback_adapter.c" />
@@ -106,6 +109,8 @@
     <ClCompile Include="..\pacing\pace_sender.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\cc\razor_api.h" />
+    <ClInclude Include="..\cc\receiver_congestion_controller.h" />
     <ClInclude Include="..\cc\sender_congestion_controller.h" />
     <ClInclude Include="..\common\cf_crc32.h" />
     <ClInclude Include="..\common\cf_hex.h" />
@@ -117,6 +122,7 @@
     <ClInclude Include="..\estimator\ack_bitrate_estimator.h" />
     <ClInclude Include="..\estimator\aimd_rate_control.h" />
     <ClInclude Include="..\estimator\bitrate_controller.h" />
+    <ClInclude Include="..\estimator\cc_loss_stat.h" />
     <ClInclude Include="..\estimator\delay_base_bwe.h" />
     <ClInclude Include="..\estimator\estimator_common.h" />
     <ClInclude Include="..\estimator\inter_arrival.h" />

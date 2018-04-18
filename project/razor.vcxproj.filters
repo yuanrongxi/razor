@@ -108,6 +108,15 @@
     <ClCompile Include="..\estimator\remote_bitrate_estimator.c">
       <Filter>estimator</Filter>
     </ClCompile>
+    <ClCompile Include="..\cc\receiver_congestion_controller.c">
+      <Filter>cc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\cc\razor_api.c">
+      <Filter>cc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\estimator\cc_loss_stat.c">
+      <Filter>estimator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\cf_crc32.h">
@@ -186,6 +195,15 @@
       <Filter>estimator</Filter>
     </ClInclude>
     <ClInclude Include="..\estimator\rate_stat.h">
+      <Filter>estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cc\receiver_congestion_controller.h">
+      <Filter>cc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cc\razor_api.h">
+      <Filter>cc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\estimator\cc_loss_stat.h">
       <Filter>estimator</Filter>
     </ClInclude>
   </ItemGroup>
