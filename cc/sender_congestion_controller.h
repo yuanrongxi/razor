@@ -7,10 +7,15 @@
 #include "pace_sender.h"
 #include "ack_bitrate_estimator.h"
 
+#include "razor_api.h"
+
 typedef struct
 {
+	razor_sender_t				sender;
 	int							accepted_queue_ms;			/*视频报文在发送queue的最大延迟*/
 	int							was_in_alr;
+	int32_t						rtt;
+
 	delay_base_bwe_t*			bwe;						/*基于延迟的带宽评估器*/
 	bitrate_controller_t*		bitrate_controller;			/*码率控制器，会根据bwe、ack rate和loss进行综合码率调节*/
 	ack_bitrate_estimator_t*	ack;						/*远端确认收到的数据带宽评估器*/
