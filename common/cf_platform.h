@@ -85,39 +85,8 @@ char* 		su_addr_to_iport(su_addr* addr, char* str, int len, uint16_t* port);
 void		su_addr_to_addr(su_addr* src, su_addr* dst);
 int			su_addr_cmp(su_addr* src, su_addr* dst);
 int			su_addr_eq(su_addr* src, su_addr* dst);
- 
-#ifdef SU_SERVER
-#include "cf_log.h"
 
-#define log_debug(...)					print_log(LEVEL_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
-#define log_info(...)					print_log(LEVEL_INFO, __FILE__, __LINE__, __VA_ARGS__)
-#define log_warn(...)					print_log(LEVEL_WARN, __FILE__, __LINE__, __VA_ARGS__)
-#define log_error(...)					print_log(LEVEL_ERROR, __FILE__, __LINE__, __VA_ARGS__)
-
-#else
-void ex_sharing_log(int level, const char* file, int line, const char *fmt, ...);
-#define log_debug(...)  				ex_sharing_log(0, __FILE__, __LINE__, __VA_ARGS__)
-#define log_info(...)    				ex_sharing_log(1, __FILE__, __LINE__, __VA_ARGS__)
-#define log_warn(...)					ex_sharing_log(2, __FILE__, __LINE__, __VA_ARGS__)
-#define log_error(...)   				ex_sharing_log(3, __FILE__, __LINE__, __VA_ARGS__)
-#endif
-
-#undef IP_SIZE
 #define IP_SIZE 32
-
-#define msg_log(addr, ...)						\
-do{												\
-	char ip[IP_SIZE] = { 0 };					\
-	su_addr_to_string((addr), ip, IP_SIZE);		\
-	log_info(__VA_ARGS__);						\
-} while (0)
-
-#define msg_log_debug(addr, ...)				\
-do{												\
-	char ip[IP_SIZE] = { 0 };					\
-	su_addr_to_string((addr), ip, IP_SIZE);		\
-	log_debug(__VA_ARGS__);						\
-} while (0)
 
 #define SU_MAX(a, b)		((a) > (b) ? (a) : (b))
 #define SU_MIN(a, b)		((a) < (b) ? (a) : (b))	
