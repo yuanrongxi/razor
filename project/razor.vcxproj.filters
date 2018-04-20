@@ -117,6 +117,9 @@
     <ClCompile Include="..\estimator\cc_loss_stat.c">
       <Filter>estimator</Filter>
     </ClCompile>
+    <ClCompile Include="..\cc\razor_log.c">
+      <Filter>cc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\cf_crc32.h">
@@ -205,6 +208,12 @@
     </ClInclude>
     <ClInclude Include="..\estimator\cc_loss_stat.h">
       <Filter>estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cc\razor_log.h">
+      <Filter>cc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cc\razor_callback.h">
+      <Filter>cc</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,9 +1,22 @@
 #include "sender_congestion_controller.h"
+#include "razor_log.h"
 
 #define k_max_queue_ms		250
 #define k_min_bitrate_bps	10000
 
 #define k_max_feedback_size 1472
+
+static void sender_cc_on_change_bitrate(void* handler, uint32_t bitrate, uint8_t fraction_loss, uint32_t rtt)
+{
+	sender_cc_t* cc = (sender_cc_t*)handler;
+
+	razor_info("sender change bitrate, bitrate = %ubps\n", bitrate);
+
+	pace_set_estimate_bitrate(cc->pacer, bitrate);
+	/*触发一个通信层通知*/
+	if (cc->trigger != NULL && cc->trigger_cb != NULL)
+		cc->trigger_cb(cc->trigger, bitrate, fraction_loss, rtt);
+}
 
 sender_cc_t* sender_cc_create(void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms)
 {
@@ -13,16 +26,22 @@ sender_cc_t* sender_cc_create(void* trigger, bitrate_changed_func bitrate_cb, vo
 
 	cc->rtt = 200;
 
+	cc->trigger = trigger;
+	cc->trigger_cb = bitrate_cb;
+
 	cc->ack = ack_estimator_create();
 	cc->bwe = delay_bwe_create();
-	cc->bitrate_controller = bitrate_controller_create(trigger, bitrate_cb);
+	cc->bitrate_controller = bitrate_controller_create(cc, sender_cc_on_change_bitrate);
 	cc->pacer = pace_create(handler, send_cb);
 
 	feedback_adapter_init(&cc->adapter);
 
 	delay_bwe_set_min_bitrate(cc->bwe, k_min_bitrate_bps);
+	pace_set_bitrate_limits(cc->pacer, k_min_bitrate_bps);
 
 	bin_stream_init(&cc->strm);
+
+	razor_info("create razor's sender cc!\n");
 
 	return cc;
 }
@@ -31,6 +50,8 @@ void sender_cc_destroy(sender_cc_t* cc)
 {
 	if (cc == NULL)
 		return;
+
+	razor_info("destroy razor's sender\n");
 
 	if (cc->ack != NULL){
 		ack_estimator_destroy(cc->ack);
@@ -57,6 +78,8 @@ void sender_cc_destroy(sender_cc_t* cc)
 	bin_stream_destroy(&cc->strm);
 
 	free(cc);
+
+	razor_info("free razor's sender OK\n");
 }
 
 void sender_cc_heartbeat(sender_cc_t* cc)
@@ -99,12 +122,13 @@ void sender_on_feedback(sender_cc_t* cc, uint8_t* feedback, int feedback_size)
 	/*解码得到反馈序列*/
 	feedback_msg_decode(&cc->strm, &msg);
 
+	now_ts = GET_SYS_MS();
+
 	/*处理proxy estimate的信息*/
 	if ((msg.flag & proxy_ts_msg) == proxy_ts_msg){
 		if (feedback_on_feedback(&cc->adapter, &msg) <= 0)
 			return;
 
-		now_ts = GET_SYS_MS();
 		cur_alr = pace_get_limited_start_time(cc->pacer) > 0 ? 0 : -1;
 		if (cc->was_in_alr == 0 && cur_alr != 0){
 			ack_estimator_set_alrended(cc->ack, now_ts);
@@ -124,17 +148,22 @@ void sender_on_feedback(sender_cc_t* cc, uint8_t* feedback, int feedback_size)
 	}
 	/*处理remb*/
 	if ((msg.flag & remb_msg) == remb_msg){
+		razor_debug("sender remb = %ubps\n", msg.remb);
 		bitrate_controller_on_remb(cc->bitrate_controller, msg.remb);
 	}
 	/*处理loss info*/
-	if ((msg.flag & loss_info_msg) == loss_info_msg)
+	if ((msg.flag & loss_info_msg) == loss_info_msg){
+		razor_debug("sender receive loss info, fraction_loss = %u, packets_num = %u\n", msg.fraction_loss, msg.packet_num);
 		bitrate_controller_on_report(cc->bitrate_controller, cc->rtt, now_ts, msg.fraction_loss, msg.packet_num);
+	}
 }
 
 void sender_cc_update_rtt(sender_cc_t* cc, int32_t rtt)
 {
 	cc->rtt = rtt;
 	delay_bwe_rtt_update(cc->bwe, rtt);
+
+	razor_debug("set razor sender rtt = %dms\n", rtt);
 }
 
 void sender_cc_set_bitrates(sender_cc_t* cc, uint32_t min_bitrate, uint32_t start_bitrate, uint32_t max_bitrate)
@@ -147,6 +176,11 @@ void sender_cc_set_bitrates(sender_cc_t* cc, uint32_t min_bitrate, uint32_t star
 	delay_bwe_set_start_bitrate(cc->bwe, start_bitrate);
 
 	bitrate_controller_set_bitrates(cc->bitrate_controller, start_bitrate, min_bitrate, max_bitrate);
+
+	pace_set_estimate_bitrate(cc->pacer, start_bitrate);
+	pace_set_bitrate_limits(cc->pacer, min_bitrate);
+
+	razor_info("set razor sender bitrates, min = %ubps, max = %ubps, start = %ubps\n", min_bitrate, max_bitrate, start_bitrate);
 }
 
 int64_t sender_cc_get_pacer_queue_ms(sender_cc_t* cc)

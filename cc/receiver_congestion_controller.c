@@ -1,4 +1,5 @@
 #include "receiver_congestion_controller.h"
+#include "razor_log.h"
 
 receiver_cc_t* receiver_cc_create(int min_bitrate, int max_bitrate, int packet_header_size, void* handler, send_feedback_func cb)
 {
@@ -15,6 +16,8 @@ receiver_cc_t* receiver_cc_create(int min_bitrate, int max_bitrate, int packet_h
 	rbe_set_max_bitrate(cc->rbe, max_bitrate);
 
 	loss_statistics_init(&cc->loss_stat);
+
+	razor_info("create razor's receiver\n");
 
 	return cc;
 }
@@ -35,6 +38,8 @@ void receiver_cc_destroy(receiver_cc_t* cc)
 	}
 
 	loss_statistics_destroy(&cc->loss_stat);
+
+	razor_info("destroy razor's receiver\n");
 }
 
 void receiver_cc_heartbeat(receiver_cc_t* cc)
@@ -83,17 +88,20 @@ void receiver_cc_on_received(receiver_cc_t* cc, uint16_t seq, uint32_t timestamp
 void receiver_cc_update_rtt(receiver_cc_t* cc, int32_t rtt)
 {
 	rbe_update_rtt(cc->rbe, rtt);
+	razor_info("razor's receiver update rtt, rtt = %dms\n", rtt);
 }
 
 void receiver_cc_set_min_bitrate(receiver_cc_t* cc, int min_bitrate)
 {
 	cc->min_bitrate = min_bitrate;
 	rbe_set_min_bitrate(cc->rbe, min_bitrate);
+	razor_info("receiver set min bitrate, bitrate = %ubps\n", min_bitrate);
 }
 
 void receiver_cc_set_max_bitrate(receiver_cc_t* cc, int max_bitrate)
 {
 	cc->max_bitrate = max_bitrate;
 	rbe_set_max_bitrate(cc->rbe, max_bitrate);
+	razor_info("receiver set max bitrate, bitrate = %ubps\n", max_bitrate);
 }
 

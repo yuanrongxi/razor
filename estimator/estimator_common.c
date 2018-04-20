@@ -2,7 +2,6 @@
 
 void feedback_msg_encode(bin_stream_t* strm, feedback_msg_t* msg)
 {
-	uint8_t* pos;
 	int i;
 
 	mach_uint8_write(strm, msg->flag);

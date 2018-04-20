@@ -1,4 +1,5 @@
 #include "cc_loss_stat.h"
+#include "razor_log.h"
 
 #define k_loss_statistics_window_ms 500
 
@@ -20,13 +21,12 @@ void loss_statistics_destroy(cc_loss_statistics_t* loss_stat)
 int loss_statistics_calculate(cc_loss_statistics_t* loss_stat, int64_t now_ts, uint8_t* fraction_loss, int* num)
 {
 	int disance;
-	double loss_val;
 	
 	*fraction_loss = 0;
 	*num = 0;
 
 	if (loss_stat->max_id == -1 || loss_stat->prev_max_id == -1 
-		|| now_ts < loss_stat->stat_ts + k_loss_statistics_window_ms)
+		|| (now_ts < loss_stat->stat_ts + k_loss_statistics_window_ms && loss_stat->max_id < loss_stat->prev_max_id + 20))
 		return -1;
 
 	disance = loss_stat->max_id - loss_stat->prev_max_id;
@@ -37,6 +37,8 @@ int loss_statistics_calculate(cc_loss_statistics_t* loss_stat, int64_t now_ts, u
 		*fraction_loss = 0;
 	else{
 		*fraction_loss = (disance - loss_stat->count) * 255 / disance;
+		if (*fraction_loss > 12) /*%5ртио*/
+			razor_info("loss!! fraction = %u\n", *fraction_loss);
 	}
 	*num = disance;
 

@@ -24,6 +24,9 @@ typedef struct
 
 	bin_stream_t				strm;
 
+	void*						trigger;					/*码率改变后需要通知给通信层的trigger*/
+	bitrate_changed_func		trigger_cb;					/*通知函数*/
+
 }sender_cc_t;
 
 sender_cc_t*					sender_cc_create(void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms);

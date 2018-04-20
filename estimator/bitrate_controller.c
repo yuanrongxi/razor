@@ -1,4 +1,5 @@
 #include "bitrate_controller.h"
+#include "razor_log.h"
 
 /*触发上层的pacer和videosource改变码率*/
 static void inline maybe_trigger_network_changed(bitrate_controller_t* ctrl)
@@ -96,8 +97,13 @@ void bitrate_controller_on_remb(bitrate_controller_t* ctrl, uint32_t bitrate)
 
 void bitrate_controller_on_report(bitrate_controller_t* ctrl, uint32_t rtt, int64_t cur_ts, uint8_t fraction_loss, int packets_num)
 {
-	sender_estimation_update_block(ctrl->est, fraction_loss, rtt, packets_num, rtt);
-	maybe_trigger_network_changed(ctrl);
+	if (packets_num > 0){
+		sender_estimation_update_block(ctrl->est, fraction_loss, rtt, packets_num, rtt);
+		maybe_trigger_network_changed(ctrl);
+	}
+	else{
+		razor_warn("bitrate controller recv packets_num < 0\n");
+	}
 }
 
 void bitrate_controller_on_basedelay_result(bitrate_controller_t* ctrl, int update, int probe, uint32_t target_bitrate, int recovered_from_overuse)

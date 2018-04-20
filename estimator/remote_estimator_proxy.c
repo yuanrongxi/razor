@@ -135,7 +135,7 @@ int estimator_proxy_heartbeat(estimator_proxy_t* proxy, int64_t cur_ts, feedback
 void estimator_proxy_bitrate_changed(estimator_proxy_t* proxy, uint32_t bitrate)
 {
 	double rate = bitrate * 0.05;
-	proxy->send_interval_ms = (proxy->header_size * 8.0 * 1000.0) / rate + 0.5;
+	proxy->send_interval_ms = (int64_t)((proxy->header_size * 8.0 * 1000.0) / rate + 0.5);
 	proxy->send_interval_ms = SU_MAX(SU_MIN(proxy->send_interval_ms, kMaxSendIntervalMs), kMinSendIntervalMs);
 
 }
