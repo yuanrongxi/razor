@@ -1,0 +1,560 @@
+#include "sim_internal.h"
+#include <assert.h>
+
+#define CACHE_SIZE 1024
+#define INDEX(i)	((i) % CACHE_SIZE)
+#define MAX_VIDEO_DELAY_MS 4000
+
+/************************************************播放缓冲区的定义**********************************************************/
+static sim_frame_cache_t* open_real_video_cache(sim_session_t* s)
+{
+	sim_frame_cache_t* cache = calloc(1, sizeof(sim_frame_cache_t));
+	cache->wait_timer = s->rtt + 2 * s->rtt_var;
+	cache->state = buffer_waiting;
+
+	cache->frame_timer = 100;
+	cache->size = CACHE_SIZE;
+	cache->frames = calloc(cache->size, sizeof(sim_frame_cache_t));
+	return cache;
+}
+
+static inline void real_video_clean_frame(sim_session_t* session, sim_frame_cache_t* c, sim_frame_t* frame)
+{
+	int i;
+	if (frame->seg_number == 0)
+		return;
+
+	for (i = 0; i < frame->seg_number; ++i){
+		if (frame->segments[i] != NULL){
+			free(frame->segments[i]);
+			frame->segments[i] = NULL;
+		}
+	}
+
+	free(frame->segments);
+
+	frame->ts = 0;
+	frame->frame_type = 0;
+	frame->seg_number = 0;
+
+	c->min_fid = frame->fid;
+}
+
+static void close_real_video_cache(sim_session_t* s, sim_frame_cache_t* cache)
+{
+	uint32_t i;
+	for (i = 0; i < cache->size; ++i)
+		real_video_clean_frame(s, cache, &cache->frames[i]);
+
+	free(cache->frames);
+	free(cache);
+}
+
+static void reset_real_video_cache(sim_session_t* s, sim_frame_cache_t* cache)
+{
+	uint32_t i;
+
+	for (i = 0; i < cache->size; ++i)
+		real_video_clean_frame(s, cache, &cache->frames[i]);
+
+	cache->min_fid = 0;
+	cache->max_fid = 0;
+	cache->play_ts = 0;
+	cache->frame_ts = 0;
+	cache->max_ts = 100;
+	cache->frame_timer = 100;
+
+	cache->state = buffer_waiting;
+	cache->wait_timer = SU_MAX(100, s->rtt + 2 * s->rtt_var);
+	cache->loss_flag = 0;
+}
+
+static void real_video_evict_frame(sim_session_t* s, sim_frame_cache_t* c, uint32_t fid)
+{
+	uint32_t pos, i;
+
+	for (pos = c->max_fid + 1; pos <= fid; pos++)
+		real_video_clean_frame(s, c, &c->frames[INDEX(pos)]);
+
+	if (fid < c->min_fid + c->size)
+		return;
+
+	for (pos = c->min_fid + 1; pos < c->max_fid; ++pos){
+		if (c->frames[INDEX(pos)].frame_type == 1)
+			break;
+	}
+
+	for (i = c->min_fid + 1; i < pos; ++i)
+		real_video_clean_frame(s, c, &c->frames[INDEX(i)]);
+}
+
+static void evict_gop_frame(sim_session_t* s, sim_frame_cache_t* c)
+{
+	uint32_t i, key_frame_id;
+	sim_frame_t* frame = NULL;
+
+	key_frame_id = 0;
+	for (i = c->min_fid + 2; i < c->max_fid; ++i){
+		frame = &c->frames[INDEX(i)];
+		if (frame->frame_type == 1){
+			key_frame_id = i;
+			break;
+		}
+	}
+
+	for (i = c->min_fid + 1; i < key_frame_id; i++){
+		c->frame_ts = c->frames[INDEX(i)].ts;
+		real_video_clean_frame(s, c, &c->frames[INDEX(i)]);
+	}
+}
+
+static int real_video_cache_put(sim_session_t* s, sim_frame_cache_t* c, sim_segment_t* seg)
+{
+	sim_frame_t* frame;
+	int ret = -1;
+	if (seg->index >= seg->total){
+		assert(0);
+		return ret;
+	}
+	else if (seg->fid <= c->min_fid)
+		return ret;
+
+	if (seg->fid > c->max_fid){
+		if (c->max_fid > 0)
+			real_video_evict_frame(s, c, seg->fid);
+		else if (c->min_fid == 0)
+			c->min_fid = seg->fid - 1;
+
+		if (c->max_fid >= 0 && c->max_fid < seg->fid && c->max_ts < seg->timestamp){
+			c->frame_timer = (seg->timestamp - c->max_ts) / (seg->fid - c->max_fid);
+			if (c->frame_timer < 20)
+				c->frame_timer = 20;
+			else if (c->frame_timer > 200)
+				c->frame_timer = 200;
+		}
+		c->max_ts = seg->timestamp;
+		c->max_fid = seg->fid;
+	}
+
+	/*sim_debug("buffer put video frame, frame = %u, seq = %u, ts = %u\n", seg->fid, seg->seq, seg->timestamp);*/
+
+	frame = &(c->frames[INDEX(seg->fid)]);
+	frame->fid = seg->fid;
+	frame->frame_type = seg->ftype;
+	frame->ts = seg->timestamp;
+
+	if (frame->seg_number == 0){
+		frame->seg_number = seg->total;
+		frame->segments = calloc(frame->seg_number, sizeof(seg));
+		frame->segments[seg->index] = seg;
+
+		ret = 0;
+	}
+	else{
+		if (frame->segments[seg->index] == NULL){
+			frame->segments[seg->index] = seg;
+			ret = 0;
+		}
+	}
+
+	return ret;
+}
+
+static void real_video_cache_check_playing(sim_session_t* s, sim_frame_cache_t* c)
+{
+	uint32_t max_ts, min_ts;
+
+	if (c->max_fid > c->min_fid){
+		max_ts = c->frames[INDEX(c->max_fid)].ts;
+		min_ts = c->frames[INDEX(c->min_fid + 1)].ts;
+
+		if (max_ts > min_ts + c->frame_timer && c->max_fid > c->min_fid + 1){
+			c->state = buffer_playing;
+
+			c->play_ts = GET_SYS_MS();
+			c->frame_ts = max_ts - c->frame_timer * (c->max_fid - c->min_fid - 1);
+			/*sim_debug("buffer playing, frame ts = %u, min_ts = %u, c->frame_timer = %u, max ts = %u\n", c->frame_ts, min_ts, c->frame_timer, max_ts);*/
+		}
+	}
+}
+
+static inline void real_video_cache_check_waiting(sim_session_t* s, sim_frame_cache_t* c)
+{
+	if (c->max_fid <= c->min_fid){
+		c->state = buffer_waiting;
+		/*sim_debug("buffer waiting ...........\n");*/
+	}
+}
+
+static inline int real_video_cache_check_frame_full(sim_session_t* s, sim_frame_t* frame)
+{
+	int i;
+	for (i = 0; i < frame->seg_number; ++i)
+		if (frame->segments[i] == NULL)
+			return -1;
+
+	return 0;
+}
+
+static inline void real_video_cache_sync_timestamp(sim_session_t* s, sim_frame_cache_t* c)
+{
+	uint64_t cur_ts = GET_SYS_MS();
+
+	if (cur_ts > c->play_ts){
+		c->frame_ts = (uint32_t)(cur_ts - c->play_ts) + c->frame_ts;
+		c->play_ts = cur_ts;
+	}
+}
+
+static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t* data, size_t* sizep, int loss)
+{
+	uint32_t pos, space;
+	size_t size, buffer_size;
+	int ret, i;
+	sim_frame_t* frame;
+	uint32_t max_ts;
+
+	buffer_size = *sizep;
+	*sizep = 0;
+
+	if (c->state == buffer_waiting)
+		real_video_cache_check_playing(s, c);
+	else
+		real_video_cache_check_waiting(s, c);
+
+	if (c->state != buffer_playing){
+		size = 0;
+		ret = -1;
+		goto err;
+	}
+
+	real_video_cache_sync_timestamp(s, c);
+
+	max_ts = c->frames[INDEX(c->max_fid)].ts;
+
+	size = 0;
+	pos = INDEX(c->min_fid + 1);
+	frame = &c->frames[pos];
+	if (frame->ts <= c->frame_ts && c->min_fid + 1 == frame->fid && real_video_cache_check_frame_full(s, frame) == 0){
+		size = 0;
+		for (i = 0; i < frame->seg_number; ++i){
+			if (size + frame->segments[i]->data_size <= buffer_size && frame->segments[i]->data_size <= SIM_VIDEO_SIZE){
+				memcpy(data + size, frame->segments[i]->data, frame->segments[i]->data_size);
+				size += frame->segments[i]->data_size;
+			}
+			else{
+				size = 0;
+				break;
+			}
+		}
+
+		c->frame_ts = frame->ts;
+
+		space = SU_MAX(c->wait_timer * 5 / 4, c->frame_timer * 2);
+
+		if (loss == 0) {
+			if (frame->ts + space * 2 < max_ts)
+				c->frame_ts = (uint32_t)(max_ts - space);
+			else if (frame->ts + space <= max_ts && c->min_fid + 2 < c->max_fid)
+				c->frame_ts = frame->ts + 5;
+		}
+
+		real_video_clean_frame(s, c, frame);
+		ret = 0;
+	}
+	else{
+		if (frame->ts + SU_MAX(MAX_VIDEO_DELAY_MS, 2 * c->wait_timer) < max_ts
+			&& real_video_cache_check_frame_full(s, frame)){ /*驱逐一个GOP，延迟太大，需要做驱逐*/
+			evict_gop_frame(s, c);
+		}
+
+		size = 0;
+		ret = -1;
+	}
+
+err:
+	*sizep = size;
+	return ret;
+}
+
+static uint32_t real_video_cache_get_min_seq(sim_session_t* s, sim_frame_cache_t* c)
+{
+	int i;
+	sim_frame_t* frame;
+	sim_segment_t* seg;
+
+	frame = &c->frames[INDEX(c->min_fid)];
+	for (i = 0; i < frame->seg_number; ++i){
+		seg = frame->segments[i];
+		if (seg != NULL)
+			return seg->packet_id - seg->index - 1;
+	}
+
+	return 0;
+}
+
+/*********************************************视频接收端处理*************************************************/
+typedef struct
+{
+	int64_t				ts;					/*丢包请求时刻，一般要过一个周期才进行重新请求，这个周期一般是RTT的倍数关系*/
+	int					count;				/*丢包请求时刻*/
+}sim_loss_t;
+
+static void loss_free(skiplist_item_t key, skiplist_item_t val, void* args)
+{
+	if (val.ptr != NULL)
+		free(val.ptr);
+}
+
+/*接收端进行feedback， 将feedback发送到发送端*/
+static void send_sim_feedback(void* handler, const uint8_t* payload, int payload_size)
+{
+	sim_header_t header;
+	sim_feedback_t feedback;
+	sim_receiver_t* r = (sim_receiver_t*)handler;
+	sim_session_t* s = r->s;
+
+	if (payload_size > SIM_FEEDBACK_SIZE){
+		/*sim_error("feedback size > SIM_FEEDBACK_SIZE\n");*/
+		return;
+	}
+
+	INIT_SIM_HEADER(header, SIM_SEG_ACK, s->uid);
+
+	feedback.base_packet_id = r->base_seq;
+	feedback.feedback_size = payload_size;
+
+	sim_encode_msg(&s->sstrm, &header, &feedback);
+	sim_session_network_send(s, &s->sstrm);
+}
+
+sim_receiver_t* sim_receiver_create(sim_session_t* s)
+{
+	sim_receiver_t* r = calloc(1, sizeof(sim_receiver_t));
+
+	r->loss = skiplist_create(idu32_compare, loss_free, NULL);
+	r->cache = open_real_video_cache(s);
+	r->cache_ts = GET_SYS_MS();
+
+	/*创建一个接收端的拥塞控制对象*/
+	r->cc = razor_receiver_create(MIN_BITRATE, MAX_BITRATE, SIM_SEGMENT_HEADER_SIZE, r, send_sim_feedback);
+
+	return r;
+}
+
+void sim_receiver_destroy(sim_session_t* s, sim_receiver_t* r)
+{
+	if (r == NULL)
+		return;
+
+	assert(r->cache && r->loss);
+	skiplist_destroy(r->loss);
+	close_real_video_cache(s, r->cache);
+
+	/*销毁接收端的拥塞控制对象*/
+	if (r->cc != NULL){
+		razor_receiver_destroy(r->cc);
+		r->cc = NULL;
+	}
+
+	free(r);
+}
+
+void sim_receiver_reset(sim_session_t* s, sim_receiver_t* r)
+{
+	reset_real_video_cache(s, r->cache);
+	skiplist_clear(r->loss);
+
+	r->base_uid = 0;
+	r->base_seq = 0;
+	r->actived = 0;
+	r->max_seq = 0;
+	r->ack_ts = GET_SYS_MS();
+	r->active_ts = r->ack_ts;
+	r->loss_count = 0;
+
+	/*重新创建一个CC对象*/
+	if (r->cc != NULL){
+		razor_receiver_destroy(r->cc);
+		r->cc = NULL;
+	}
+	r->cc = razor_receiver_create(MIN_BITRATE, MAX_BITRATE, SIM_SEGMENT_HEADER_SIZE, r, send_sim_feedback);
+}
+
+int sim_receiver_active(sim_session_t* s, sim_receiver_t* r)
+{
+	if (r->actived == 1)
+		return -1;
+
+	r->actived = 1;
+	r->cache->frame_timer = 50;		/*填写一个默认的播放帧间隔*/
+
+	r->active_ts = GET_SYS_MS();
+	return 0;
+}
+
+static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32_t seq)
+{
+	uint32_t i;
+	skiplist_item_t key, val;
+	skiplist_iter_t* iter;
+
+	key.u32 = seq;
+	skiplist_remove(r->loss, key);
+
+	for (i = r->max_seq + 1; i < seq; ++i){
+		key.u32 = i;
+		iter = skiplist_search(r->loss, key);
+		if (iter == NULL){
+			sim_loss_t* l = calloc(1, sizeof(sim_loss_t));
+			l->ts = GET_SYS_MS() - s->rtt / 2;						/*设置下一个请求重传的时刻*/
+			l->count = 0;
+			val.ptr = l;
+
+			skiplist_insert(r->loss, key, val);
+		}
+	}
+}
+
+static inline void sim_receiver_send_ack(sim_session_t* s, sim_segment_ack_t* ack)
+{
+	sim_header_t header;
+	INIT_SIM_HEADER(header, SIM_SEG_ACK, s->uid);
+
+	sim_encode_msg(&s->sstrm, &header, ack);
+	sim_session_network_send(s, &s->sstrm);
+}
+
+/*进行ack和nack确认，并计算缓冲区的等待时间*/
+static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t seq)
+{
+	uint64_t cur_ts;
+	sim_segment_ack_t ack;
+	skiplist_iter_t* iter;
+	skiplist_item_t key;
+	sim_loss_t* l;
+	uint32_t min_seq, delay, space_factor;
+	int max_count = 0;
+
+	ack.acked_packet_id = seq;
+
+	cur_ts = GET_SYS_MS();
+	if (r->ack_ts + 20 < cur_ts){
+		min_seq = real_video_cache_get_min_seq(s, r->cache);
+		if (min_seq > r->base_seq){
+			for (key.u32 = r->base_seq + 1; key.u32 <= min_seq; ++key.u32)
+				skiplist_remove(r->loss, key);
+			r->base_seq = min_seq;
+		}
+
+		ack.base_packet_id = r->base_seq;
+		ack.nack_num = 0;
+		SKIPLIST_FOREACH(r->loss, iter){
+			l = (sim_loss_t*)iter->val.ptr;
+
+			if (iter->key.u32 <= r->base_seq)
+				continue;
+
+			space_factor = (SU_MIN(5, l->count / 2 + 1)) * (s->rtt + s->rtt_var); /*用于简单的拥塞限流，防止GET洪水*/
+			if (l->ts + space_factor <= cur_ts && l->count < 30 && ack.nack_num < NACK_NUM){
+				ack.nack[ack.nack_num++] = iter->key.u32;
+				l->ts = cur_ts;
+
+				r->loss_count++;
+				l->count++;
+			}
+
+			if (l->count > max_count)
+				max_count = l->count;
+		}
+		if (ack.nack_num > 0 || hb == 0)
+			sim_receiver_send_ack(s, &ack);
+
+		r->ack_ts = cur_ts;
+	}
+
+	/*根据丢包重传确定视频缓冲区需要的缓冲时间*/
+	if (max_count > 1){
+		delay = (max_count * 16 + 7) * (s->rtt + s->rtt_var) / 16;
+		if (delay > r->cache->wait_timer)
+			r->cache->wait_timer = SU_MIN(delay, 5000);
+	}
+	else if (skiplist_size(r->loss) > 0)
+		r->cache->wait_timer = SU_MAX((s->rtt + s->rtt_var * 2), r->cache->wait_timer);
+
+	r->cache->wait_timer = SU_MAX(r->cache->frame_timer, r->cache->wait_timer);
+}
+
+int sim_receiver_put(sim_session_t* s, sim_receiver_t* r, sim_segment_t* seg)
+{
+	uint32_t seq;
+
+	/*拥塞报告*/
+	if (r->cc != NULL){
+		r->cc->on_received(r->cc, seg->transport_seq, seg->timestamp + seg->send_ts, seg->data_size + SIM_SEGMENT_HEADER_SIZE, seg->remb);
+	}
+
+	if (r->max_seq == 0 && seg->ftype == 0)
+		return -1;
+
+	seq = seg->packet_id;
+	if (r->actived == 0 || seg->packet_id <= r->base_seq){
+		return -1;
+	}
+
+	if (r->max_seq == 0 && seg->packet_id > seg->index){
+		r->max_seq = seg->packet_id - seg->index - 1;
+		r->base_seq = seg->packet_id - seg->index - 1;
+	}
+
+	sim_receiver_update_loss(s, r, seq);
+	if (real_video_cache_put(s, r->cache, seg) != 0)
+		return -1;
+
+	if (seq == r->base_seq + 1)
+		r->base_seq = seq;
+
+	r->max_seq = SU_MAX(r->max_seq, seq);
+
+	video_real_ack(s, r, 0, seg->packet_id);
+
+	return 0;
+}
+
+/*获取视频帧数据*/
+int sim_receiver_get(sim_session_t* s, sim_receiver_t* r, uint8_t* data, size_t* sizep)
+{
+	if (r == NULL || r->actived == 0)
+		return -1;
+
+	return real_video_cache_get(s, r->cache, data, sizep, skiplist_size(r->loss));
+}
+
+void sim_receiver_timer(sim_session_t* s, sim_receiver_t* r, int64_t now_ts)
+{
+	video_real_ack(s, r, 1, 0);
+
+	/*每1秒尝试缩一次缓冲区等待时间*/
+	if (r->cache_ts + SU_MAX(s->rtt + s->rtt_var, 1000) < now_ts){
+		if (r->loss_count == 0)
+			r->cache->wait_timer = SU_MAX(r->cache->wait_timer * 7 / 8, r->cache->frame_timer);
+		else if (r->cache->wait_timer > 2 * (s->rtt + s->rtt_var))
+			r->cache->wait_timer = SU_MAX(r->cache->wait_timer * 15 / 16, r->cache->frame_timer);
+
+		r->cache_ts = GET_SYS_MS();
+		r->loss_count = 0;
+	}
+
+	/*拥塞心跳控制*/
+	if (r->cc != NULL)
+		r->cc->heartbeat(r->cc);
+}
+
+void sim_receiver_update_rtt(sim_session_t* s, sim_receiver_t* r)
+{
+	if (r->cc != NULL)
+		r->cc->update_rtt(r->cc, s->rtt + s->rtt_var);
+}
+
+
+
