@@ -80,6 +80,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="sim_external.h" />
     <ClInclude Include="sim_internal.h" />
     <ClInclude Include="sim_proto.h" />
     <ClInclude Include="sim_receiver.h" />
@@ -91,6 +92,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sim_proto.c" />
+    <ClCompile Include="sim_receiver.c" />
+    <ClCompile Include="sim_sender.c" />
+    <ClCompile Include="sim_session.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

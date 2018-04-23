@@ -82,10 +82,12 @@ typedef struct
 	uint8_t		data[SIM_VIDEO_SIZE];
 }sim_segment_t;
 
+#define SIM_SEGMENT_HEADER_SIZE (SIM_HEADER_SIZE + 24)
+
 typedef struct
 {
-	uint32_t	acked_packet_id;		/*被接收端确认连续最大的包ID*/
-
+	uint32_t	base_packet_id;			/*被接收端确认连续最大的包ID*/
+	uint32_t	acked_packet_id;		/*立即确认的报文序号id,用于计算rtt*/
 	/*重传的序列*/
 	uint8_t		nack_num;
 	uint16_t	nack[NACK_NUM];
@@ -100,7 +102,7 @@ typedef sim_ping_t sim_pong_t;
 
 typedef struct
 {
-	uint32_t	acked_packet_id;		/*被接收端确认连续最大的包ID*/
+	uint32_t	base_packet_id;			/*被接收端确认连续最大的包ID*/
 
 	uint16_t	feedback_size;
 	uint8_t		feedback[SIM_FEEDBACK_SIZE];

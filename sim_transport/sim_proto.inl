@@ -70,13 +70,13 @@ static inline int sim_ping_decode(bin_stream_t* strm, sim_ping_t* body)
 
 static inline void sim_feedbak_encode(bin_stream_t* strm, sim_feedback_t* body)
 {
-	mach_uint32_write(strm, body->acked_packet_id);
+	mach_uint32_write(strm, body->base_packet_id);
 	mach_data_write(strm, body->feedback, body->feedback_size);
 }
 
 static inline int sim_feedbak_decode(bin_stream_t* strm, sim_feedback_t* body)
 {
-	mach_uint32_read(strm, &body->acked_packet_id);
+	mach_uint32_read(strm, &body->base_packet_id);
 	body->feedback_size = mach_data_read(strm, body->feedback, SIM_FEEDBACK_SIZE);
 	if (body->feedback_size == READ_DATA_ERROR)
 		body->feedback_size = 0;
@@ -184,6 +184,7 @@ static inline int sim_segment_decode(bin_stream_t* strm, sim_segment_t* body)
 static inline void sim_segment_ack_encode(bin_stream_t* strm, sim_segment_ack_t* body)
 {
 	int i;
+	mach_uint16_write(strm, body->base_packet_id);
 	mach_uint32_write(strm, body->acked_packet_id);
 	
 	mach_uint8_write(strm, body->nack_num);
@@ -195,6 +196,7 @@ static inline int sim_segment_ack_decode(bin_stream_t* strm, sim_segment_ack_t* 
 {
 	int i;
 
+	mach_uint32_read(strm, &body->base_packet_id);
 	mach_uint32_read(strm, &body->acked_packet_id);
 	mach_uint8_read(strm, &body->nack_num);
 	body->nack_num = SU_MIN(body->nack_num, NACK_NUM);

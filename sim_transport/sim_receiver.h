@@ -1,4 +1,9 @@
 
+enum{
+	buffer_waiting = 0,
+	buffer_playing
+};
+
 typedef struct
 {
 	uint32_t			fid;
@@ -46,6 +51,9 @@ struct __sim_receiver
 	uint64_t			active_ts;
 
 	int					actived;
+
+	razor_receiver_t*	cc;
+	sim_session_t*		s;
 };
 
 

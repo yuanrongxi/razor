@@ -33,6 +33,9 @@
     <ClInclude Include="sim_internal.h">
       <Filter>transport</Filter>
     </ClInclude>
+    <ClInclude Include="sim_external.h">
+      <Filter>transport</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="sim_proto.inl">
@@ -42,6 +45,15 @@
   <ItemGroup>
     <ClCompile Include="sim_proto.c">
       <Filter>proto</Filter>
+    </ClCompile>
+    <ClCompile Include="sim_receiver.c">
+      <Filter>transport</Filter>
+    </ClCompile>
+    <ClCompile Include="sim_sender.c">
+      <Filter>transport</Filter>
+    </ClCompile>
+    <ClCompile Include="sim_session.c">
+      <Filter>transport</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
