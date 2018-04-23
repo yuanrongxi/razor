@@ -73,9 +73,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\cc\razor_api.c" />
     <ClCompile Include="..\cc\razor_log.c" />
     <ClCompile Include="..\cc\receiver_congestion_controller.c" />
