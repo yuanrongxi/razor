@@ -1,3 +1,10 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
+
 #include "sim_internal.h"
 #include <assert.h>
 
@@ -436,10 +443,11 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 	uint32_t min_seq, delay, space_factor;
 	int max_count = 0;
 
-	ack.acked_packet_id = seq;
-
 	cur_ts = GET_SYS_MS();
-	if (r->ack_ts + 20 < cur_ts){
+	/*如果是心跳触发*/
+	if ((hb == 0 && r->ack_ts + 20 < cur_ts) || (r->ack_ts + 200 < cur_ts)){
+		ack.acked_packet_id = seq;
+		/**/
 		min_seq = real_video_cache_get_min_seq(s, r->cache);
 		if (min_seq > r->base_seq){
 			for (key.u32 = r->base_seq + 1; key.u32 <= min_seq; ++key.u32)
@@ -467,8 +475,8 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 			if (l->count > max_count)
 				max_count = l->count;
 		}
-		if (ack.nack_num > 0 || hb == 0)
-			sim_receiver_send_ack(s, &ack);
+		
+		sim_receiver_send_ack(s, &ack);
 
 		r->ack_ts = cur_ts;
 	}
@@ -545,7 +553,7 @@ void sim_receiver_timer(sim_session_t* s, sim_receiver_t* r, int64_t now_ts)
 		r->loss_count = 0;
 	}
 
-	/*拥塞心跳控制*/
+	/*拥塞控制心跳*/
 	if (r->cc != NULL)
 		r->cc->heartbeat(r->cc);
 }

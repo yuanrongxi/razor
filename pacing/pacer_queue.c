@@ -1,3 +1,10 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
+
 #include "pacer_queue.h"
 
 static void pacer_free_packet_event(skiplist_item_t key, skiplist_item_t val, void* args)

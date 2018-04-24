@@ -1,3 +1,10 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
+
 #include "delay_base_bwe.h"
 
 #define k_trendline_smoothing_coeff		0.9

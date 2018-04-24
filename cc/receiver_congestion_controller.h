@@ -1,3 +1,10 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
+
 #ifndef __receiver_congestion_controller_h_
 #define __receiver_congestion_controller_h_
 

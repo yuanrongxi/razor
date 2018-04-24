@@ -1,3 +1,10 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
+
 #include "remote_bitrate_estimator.h"
 
 #define k_min_bitrate					64000	  /*8KB/S*/

@@ -91,6 +91,7 @@
     <None Include="sim_proto.inl" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="sim_external.c" />
     <ClCompile Include="sim_proto.c" />
     <ClCompile Include="sim_receiver.c" />
     <ClCompile Include="sim_sender.c" />

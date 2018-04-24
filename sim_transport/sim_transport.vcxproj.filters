@@ -55,5 +55,8 @@
     <ClCompile Include="sim_session.c">
       <Filter>transport</Filter>
     </ClCompile>
+    <ClCompile Include="sim_external.c">
+      <Filter>transport</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

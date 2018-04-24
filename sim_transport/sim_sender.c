@@ -1,15 +1,50 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
+
 #include "sim_internal.h"
 #include <assert.h>
 
 /*单个报文发送的最大次数*/
 #define MAX_SEND_COUNT		10
 
-/*处理来自razor的码率调节通告*/
+/*处理来自razor的码率调节通告,这个函数需要剥离FEC和重传需要的码率*/
 static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction_loss, uint32_t rtt)
 {
 	sim_session_t* s = (sim_session_t*)trigger;
+	uint32_t overhead_bitrate, per_packets_second, payload_bitrate, video_bitrate_kbps;
+	double loss;
+	uint32_t packet_size_bit = (SIM_SEGMENT_HEADER_SIZE + SIM_VIDEO_SIZE) * 8;
 
-	/*todo: 进行视频可利用带宽计算*/
+	/*计算这个码率下每秒能发送多少个报文*/
+	per_packets_second = bitrate + packet_size_bit - 1 / packet_size_bit;
+	/*计算传输协议头需要占用的码率*/
+	overhead_bitrate = per_packets_second * SIM_SEGMENT_HEADER_SIZE * 8;
+	/*计算视频数据可利用的码率*/
+	payload_bitrate = bitrate - overhead_bitrate;
+
+	/*计算丢包率，用平滑遗忘算法进行逼近，webRTC用的是单位时间内最大和时间段平滑*/
+	if (s->loss_fraction == 0)
+		s->loss_fraction = fraction_loss;
+	else
+		s->loss_fraction = (s->loss_fraction * 3 + fraction_loss) / 4;
+
+	loss = s->loss_fraction / 255.0;
+	/*todo:通过丢包率计算FEC比例，FEC机制在这进行计算！！！！*/
+
+	/*留出5%码率做nack和feedback*/
+	loss += 0.05;
+	if (loss > 0.5) /*重传的带宽不能大于半*/
+		loss = 0.5;
+
+	/*计算视频编码器的码率,单位kbps*/
+	video_bitrate_kbps = (uint32_t)(loss * payload_bitrate) / 1000;
+
+	/*通知上层进行码率调整*/
+	s->change_bitrate_cb(video_bitrate_kbps);
 }
 
 static void sim_send_packet(void* handler, uint32_t packet_id, int retrans, size_t size)
@@ -37,7 +72,6 @@ static void sim_send_packet(void* handler, uint32_t packet_id, int retrans, size
 	seg->send_ts = (uint16_t)(now_ts - sender->first_ts - seg->timestamp);
 	/*将发送记录送入拥塞对象中进行bwe对象做延迟估算*/
 	sender->cc->on_send(sender->cc, seg->transport_seq, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
-
 
 	INIT_SIM_HEADER(header, SIM_SEG, s->uid);
 	sim_encode_msg(&s->sstrm, &header, seg);
@@ -218,7 +252,7 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 		if (iter != NULL){
 			seg = (sim_segment_t*)iter->val.ptr;
 			/*将报文加入到cc的pacer中进行重发*/
-			sender->cc->add_packet(sender->cc, seg->packet_id, 0, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
+			sender->cc->add_packet(sender->cc, seg->packet_id, 1, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
 		}
 	}
 

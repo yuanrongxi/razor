@@ -1,3 +1,10 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
+
 #include "rate_stat.h"
 
 void rate_stat_init(rate_stat_t* rate, int wnd_size, float scale)

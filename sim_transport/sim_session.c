@@ -1,3 +1,10 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
+
 #include "sim_internal.h"
 #include <time.h>
 
@@ -22,13 +29,15 @@ typedef void(*session_command_fn)(sim_session_t* s, uint64_t ts);
 
 #define MAX_TRY_TIME 100
 
-sim_session_t* sim_session_create(uint32_t uid, uint16_t port, sim_notify_fn notify_cb, sim_change_bitrate_fn change_bitrate_cb, sim_state_fn state_cb)
+sim_session_t* sim_session_create(uint16_t port, sim_notify_fn notify_cb, sim_change_bitrate_fn change_bitrate_cb, sim_state_fn state_cb)
 {
 	sim_session_t* session = calloc(1, sizeof(sim_session_t));
 	session->cid = rand();
-	session->uid = uid;
+	session->uid = 0;
 	session->rtt = 100;
 	session->rtt_var = 5;
+	session->loss_fraction = 0;
+
 	session->state = session_idle;
 	session->interrupt = net_normal;
 
@@ -82,9 +91,11 @@ void sim_session_destroy(sim_session_t* s)
 
 static void sim_session_reset(sim_session_t* s)
 {
+	s->uid = 0;
 	s->state = session_idle;
 	s->rtt = 100;
 	s->rtt_var = 5;
+	s->loss_fraction = 0;
 	s->cid = rand();
 	s->rbandwidth = 0;
 	s->sbandwidth = 0;
@@ -114,7 +125,7 @@ static void sim_session_send_connect(sim_session_t* s, int64_t now_ts)
 	s->resend++;
 }
 
-int sim_session_connect(sim_session_t* s, const char* peer_ip, uint16_t peer_port)
+int sim_session_connect(sim_session_t* s, uint32_t local_uid, const char* peer_ip, uint16_t peer_port)
 {
 	int ret = -1;
 	su_mutex_lock(s->mutex);
@@ -127,6 +138,7 @@ int sim_session_connect(sim_session_t* s, const char* peer_ip, uint16_t peer_por
 	su_set_addr(&s->peer, peer_ip, peer_port);
 	msg_log(&s->peer, "connect reciver address = %s, state = session_connecting\n", ip);
 
+	s->uid = local_uid;
 	ret = 0;
 	s->state = session_connecting;
 	s->resend = 0;
@@ -188,10 +200,6 @@ int sim_session_send_video(sim_session_t* s, uint8_t ftype, const uint8_t* data,
 
 	if (s->interrupt == net_interrupt) /*网络中断，进行帧丢弃*/
 		goto err;
-	else if (s->interrupt == net_recover && ftype == 0) /*如果网络处于恢复状态，要碰到一个关键帧才向外发送视频帧*/
-		goto err;
-	else 
-		s->interrupt = net_normal;
 
 	if (s->sender != NULL)
 		ret = sim_sender_put(s, s->sender, ftype, data, size);
@@ -201,7 +209,7 @@ err:
 	return ret;
 }
 
-int sim_session_recv_video(sim_session_t* s, uint32_t uid, uint8_t* data, size_t* sizep)
+int sim_session_recv_video(sim_session_t* s, uint8_t* data, size_t* sizep)
 {
 	int ret = -1;
 	su_mutex_lock(s->mutex);
@@ -217,15 +225,16 @@ err:
 	return ret;
 }
 
-void sim_set_bitrates(sim_session_t* s, uint32_t min_bitrate, uint32_t start_bitrate, uint32_t max_bitrate)
+void sim_session_set_bitrates(sim_session_t* s, uint32_t min_bitrate, uint32_t start_bitrate, uint32_t max_bitrate)
 {
 	s->min_bitrate = min_bitrate;
 	s->max_bitrate = max_bitrate;
-	s->start_bitrate = start_bitrate;
+	s->start_bitrate = (uint32_t)(start_bitrate * (SIM_SEGMENT_HEADER_SIZE + SIM_VIDEO_SIZE) * 1.05 / SIM_VIDEO_SIZE);
+	s->start_bitrate = SU_MIN(max_bitrate, s->start_bitrate);
 
 	/*如果sender没有创建，在sender create的时候进行设置*/
 	if (s->sender != NULL)
-		sim_sender_set_bitrates(s, s->sender, min_bitrate, min_bitrate, max_bitrate);
+		sim_sender_set_bitrates(s, s->sender, min_bitrate, s->start_bitrate, max_bitrate);
 }
 
 int sim_session_network_send(sim_session_t* s, bin_stream_t* strm)
@@ -320,8 +329,10 @@ static void process_sim_connect(sim_session_t* s, sim_header_t* header, bin_stre
 	ack.result = 0;
 	
 	/*初始化接收端*/
-	if (s->receiver == NULL)
+	if (s->receiver == NULL){
 		s->receiver = sim_receiver_create(s);
+		s->notify_cb(sim_start_play_notify, header->uid);
+	}
 	else
 		sim_receiver_reset(s, s->receiver);
 
@@ -351,8 +362,9 @@ static void process_sim_connect_ack(sim_session_t* s, sim_header_t* header, bin_
 	else{
 		s->state = session_connected;
 		/*创建sender*/
-		if (s->sender != NULL)
+		if (s->sender != NULL){
 			s->sender = sim_sender_create(s);
+		}
 		else
 			sim_sender_reset(s, s->sender);
 		sim_sender_active(s, s->sender);
@@ -394,6 +406,7 @@ static void process_sim_disconnect(sim_session_t* s, sim_header_t* header, bin_s
 	if (s->receiver != NULL){
 		sim_receiver_destroy(s, s->receiver);
 		s->receiver = NULL;
+		s->notify_cb(sim_stop_play_notify, header->uid);
 	}
 }
 

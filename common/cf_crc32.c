@@ -1,9 +1,9 @@
-/*
- * crc32.c
- *
- *  Created on: Nov 10, 2016
- *      Author: lqp
- */
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
 
 #include "cf_crc32.h"
 

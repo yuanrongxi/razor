@@ -1,3 +1,10 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
+
 #ifndef __sim_internal_h_
 #define __sim_internal_h_
 
@@ -49,20 +56,20 @@ void					sim_receiver_timer(sim_session_t* s, sim_receiver_t* r, int64_t now_ts)
 void					sim_receiver_update_rtt(sim_session_t* s, sim_receiver_t* r);
 /**************************************************************************************************/
 
-sim_session_t*			sim_session_create(uint32_t uid, uint16_t port, sim_notify_fn notify_cb, sim_change_bitrate_fn change_bitrate_cb, sim_state_fn state_cb);
+sim_session_t*			sim_session_create(uint16_t port, sim_notify_fn notify_cb, sim_change_bitrate_fn change_bitrate_cb, sim_state_fn state_cb);
 void					sim_session_destroy(sim_session_t* s);
 
 /*连接一个接收端*/
-int						sim_session_connect(sim_session_t* s, const char* peer_id, uint16_t peer_port);
+int						sim_session_connect(sim_session_t* s, uint32_t local_uid, const char* peer_ip, uint16_t peer_port);
 /*断开一个接收端*/
 int						sim_session_disconnect(sim_session_t* s);
 /*发送视频数据*/
 int						sim_session_send_video(sim_session_t* s, uint8_t ftype, const uint8_t* data, size_t size);
 /*获取接收端的视频数据*/
-int						sim_session_recv_video(sim_session_t* s, uint32_t uid, uint8_t* data, size_t* sizep);
+int						sim_session_recv_video(sim_session_t* s, uint8_t* data,  size_t* sizep);
 
 /*设置码率范围和当前使用的码率，一般只在视频编码器初始化的时候调用*/
-void					sim_set_bitrates(sim_session_t* s, uint32_t min_bitrate, uint32_t start_bitrate, uint32_t max_bitrate);
+void					sim_session_set_bitrates(sim_session_t* s, uint32_t min_bitrate, uint32_t start_bitrate, uint32_t max_bitrate);
 
 /*内部发送消息接口*/
 int						sim_session_network_send(sim_session_t* s, bin_stream_t* strm);

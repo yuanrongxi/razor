@@ -1,3 +1,9 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
 
 struct __sim_session
 {
@@ -9,6 +15,7 @@ struct __sim_session
 
 	uint32_t		rtt;				/*rtt值*/
 	uint32_t		rtt_var;			/*rtt误差修正值*/
+	uint8_t			loss_fraction;		/*丢包率, 0 ~ 255之间的数，100% = 255*/
 
 	int				state;				/*状态*/
 	int				interrupt;			/*中断*/

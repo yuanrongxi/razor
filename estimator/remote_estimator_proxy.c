@@ -1,3 +1,10 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
+
 #include "remote_estimator_proxy.h"
 
 #define DEFAULT_PROXY_INTERVAL_TIME 100

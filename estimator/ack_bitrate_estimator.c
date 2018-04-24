@@ -1,3 +1,10 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
+
 #include <stdio.h>
 #include "ack_bitrate_estimator.h"
 #include "cf_platform.h"

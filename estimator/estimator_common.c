@@ -1,3 +1,10 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
+
 #include "estimator_common.h"
 
 void feedback_msg_encode(bin_stream_t* strm, feedback_msg_t* msg)

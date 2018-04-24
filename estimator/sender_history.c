@@ -1,3 +1,10 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
+
 #include "sender_history.h"
 
 static void free_packet_feedback(skiplist_item_t key, skiplist_item_t val, void* args)

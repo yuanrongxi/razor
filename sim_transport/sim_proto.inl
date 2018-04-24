@@ -1,3 +1,10 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
+
 #include "sim_proto.h"
 
 static inline void sim_encode_header(bin_stream_t* strm, sim_header_t* header)

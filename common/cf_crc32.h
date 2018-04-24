@@ -1,9 +1,10 @@
-/*
- * crc32.h
- *
- *  Created on: Nov 10, 2016
- *      Author: lqp
- */
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
+
 
 #ifndef COMMON_CRC32_H_
 #define COMMON_CRC32_H_
