@@ -38,7 +38,6 @@ sender_cc_t* sender_cc_create(void* trigger, bitrate_changed_func bitrate_cb, vo
 
 	cc->ack = ack_estimator_create();
 	cc->bwe = delay_bwe_create();
-	cc->bitrate_controller = bitrate_controller_create(cc, sender_cc_on_change_bitrate);
 	cc->pacer = pace_create(handler, send_cb);
 
 	feedback_adapter_init(&cc->adapter);
@@ -48,6 +47,7 @@ sender_cc_t* sender_cc_create(void* trigger, bitrate_changed_func bitrate_cb, vo
 
 	bin_stream_init(&cc->strm);
 
+	cc->bitrate_controller = bitrate_controller_create(cc, sender_cc_on_change_bitrate);
 	razor_info("create razor's sender cc!\n");
 
 	return cc;
@@ -170,7 +170,7 @@ void sender_cc_update_rtt(sender_cc_t* cc, int32_t rtt)
 	cc->rtt = rtt;
 	delay_bwe_rtt_update(cc->bwe, rtt);
 
-	razor_debug("set razor sender rtt = %dms\n", rtt);
+	/*razor_debug("set razor sender rtt = %dms\n", rtt);*/
 }
 
 void sender_cc_set_bitrates(sender_cc_t* cc, uint32_t min_bitrate, uint32_t start_bitrate, uint32_t max_bitrate)

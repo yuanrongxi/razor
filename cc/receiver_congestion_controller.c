@@ -95,7 +95,7 @@ void receiver_cc_on_received(receiver_cc_t* cc, uint16_t seq, uint32_t timestamp
 void receiver_cc_update_rtt(receiver_cc_t* cc, int32_t rtt)
 {
 	rbe_update_rtt(cc->rbe, rtt);
-	razor_info("razor's receiver update rtt, rtt = %dms\n", rtt);
+	/*razor_info("razor's receiver update rtt, rtt = %dms\n", rtt);*/
 }
 
 void receiver_cc_set_min_bitrate(receiver_cc_t* cc, int min_bitrate)
