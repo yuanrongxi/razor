@@ -102,10 +102,19 @@ static void sim_session_reset(sim_session_t* s)
 	s->rcount = 0;
 	s->scount = 0;
 	s->stat_ts = GET_SYS_MS();
+	s->resend = 0;
+	s->commad_ts = s->stat_ts;
 	s->interrupt = net_normal;
 	
-	sim_sender_reset(s, s->sender);
-	sim_receiver_reset(s, s->receiver);
+	if (s->sender != NULL){
+		sim_sender_destroy(s, s->sender);
+		s->sender = NULL;
+	}
+
+	if (s->receiver != NULL){
+		sim_receiver_destroy(s, s->receiver);
+		s->receiver = NULL;
+	}
 }
 
 static void sim_session_send_connect(sim_session_t* s, int64_t now_ts)
@@ -120,6 +129,8 @@ static void sim_session_send_connect(sim_session_t* s, int64_t now_ts)
 
 	sim_encode_msg(&s->sstrm, &header, &body);
 	sim_session_network_send(s, &s->sstrm);
+
+	msg_log(&s->peer, "send SIM_CONNECT to %s\n", ip);
 
 	s->commad_ts = now_ts;
 	s->resend++;
@@ -160,6 +171,8 @@ static void sim_session_send_disconnect(sim_session_t* s, int64_t now_ts)
 
 	sim_encode_msg(&s->sstrm, &header, &body);
 	sim_session_network_send(s, &s->sstrm);
+
+	msg_log(&s->peer, "send SIM_DISCONNECT to %s\n", ip);
 
 	s->commad_ts = now_ts;
 	s->resend++;
@@ -214,13 +227,9 @@ int sim_session_recv_video(sim_session_t* s, uint8_t* data, size_t* sizep)
 	int ret = -1;
 	su_mutex_lock(s->mutex);
 
-	if (s->state < session_connected)
-		goto err;
-
 	if (s->receiver != NULL)
 		ret = sim_receiver_get(s, s->receiver, data, sizep);
 
-err:
 	su_mutex_unlock(s->mutex);
 	return ret;
 }
@@ -337,17 +346,22 @@ static void process_sim_connect(sim_session_t* s, sim_header_t* header, bin_stre
 		sim_receiver_reset(s, s->receiver);
 
 	sim_info("receiver actived!!!\n");
-	sim_receiver_active(s, s->receiver);
+	sim_receiver_active(s, s->receiver, header->uid);
 
 	sim_encode_msg(&s->sstrm, &h, &ack);
 	sim_session_network_send(s, &s->sstrm);
+
+	msg_log(addr, "send SIM_CONNECT_ACK to %s\n", ip);
+
+	s->commad_ts = GET_SYS_MS();
+	s->resend = 0;
 }
 
 static void process_sim_connect_ack(sim_session_t* s, sim_header_t* header, bin_stream_t* strm, su_addr* addr)
 {
 	sim_connect_ack_t ack;
 
-	if (sim_decode_msg(strm, header, &ack) != 0);
+	if (sim_decode_msg(strm, header, &ack) != 0)
 		return;
 
 	if (s->state != session_connecting)
@@ -362,12 +376,13 @@ static void process_sim_connect_ack(sim_session_t* s, sim_header_t* header, bin_
 	else{
 		s->state = session_connected;
 		/*创建sender*/
-		if (s->sender != NULL){
+		if (s->sender == NULL){
 			s->sender = sim_sender_create(s);
 		}
 		else
 			sim_sender_reset(s, s->sender);
 		sim_sender_active(s, s->sender);
+
 
 		/*将网络设置为恢复状态*/
 		s->interrupt = net_recover;
@@ -389,10 +404,10 @@ static void process_sim_disconnect(sim_session_t* s, sim_header_t* header, bin_s
 	sim_disconnect_t body;
 	sim_disconnect_ack_t ack;
 
-	if(sim_decode_msg(strm, header, &body) != 0);
+	if(sim_decode_msg(strm, header, &body) != 0)
 	return;
 
-	msg_log(&s->peer, "recv SIM_DISCONNECT from %s\n", ip);
+	msg_log(addr, "recv SIM_DISCONNECT from %s\n", ip);
 
 	INIT_SIM_HEADER(h, SIM_DISCONNECT_ACK, s->uid);
 
@@ -402,11 +417,13 @@ static void process_sim_disconnect(sim_session_t* s, sim_header_t* header, bin_s
 	sim_encode_msg(&s->sstrm, &h, &ack);
 	sim_session_network_send(s, &s->sstrm);
 
+	msg_log(addr, "send SIM_CONNECT_ACK to %s\n", ip);
+
 	/*关闭接收端*/
 	if (s->receiver != NULL){
+		s->notify_cb(sim_stop_play_notify, s->receiver->base_uid);
 		sim_receiver_destroy(s, s->receiver);
 		s->receiver = NULL;
-		s->notify_cb(sim_stop_play_notify, header->uid);
 	}
 }
 
@@ -453,8 +470,9 @@ static void process_sim_seg(sim_session_t* s, sim_header_t* header, bin_stream_t
 {
 	sim_segment_t seg;
 
-	if (sim_decode_msg(strm, header, &seg) == 0)
+	if (sim_decode_msg(strm, header, &seg) != 0){
 		return;
+	}
 
 	if (s->receiver != NULL)
 		sim_receiver_put(s, s->receiver, &seg);
@@ -464,7 +482,7 @@ static void process_sim_seg_ack(sim_session_t* s, sim_header_t* header, bin_stre
 {
 	sim_segment_ack_t ack;
 
-	if (sim_decode_msg(strm, header, &ack) == 0)
+	if (sim_decode_msg(strm, header, &ack) != 0)
 		return;
 
 	if (s->sender != NULL)
@@ -475,7 +493,7 @@ static void process_sim_feedback(sim_session_t* s, sim_header_t* header, bin_str
 {
 	sim_feedback_t feedback;
 
-	if (sim_decode_msg(strm, header, &feedback) == 0)
+	if (sim_decode_msg(strm, header, &feedback) != 0)
 		return;
 
 	if (s->sender != NULL)
@@ -490,6 +508,7 @@ static void sim_session_process(sim_session_t* s, bin_stream_t* strm, su_addr* a
 	if (header.mid < MIN_MSG_ID || header.mid > MAX_MSG_ID)
 		return;
 
+	su_addr_to_addr(addr, &s->peer);
 	if (s->interrupt == net_interrupt){
 		s->interrupt = net_recover;
 		s->notify_cb(net_recover_notify, 0); /*通知编码器可以进行编码*/
@@ -542,7 +561,7 @@ static void sim_session_send_ping(sim_session_t* s, int64_t now_ts)
 	sim_header_t header;
 	sim_ping_t body;
 
-	INIT_SIM_HEADER(header, SIM_DISCONNECT, s->uid);
+	INIT_SIM_HEADER(header, SIM_PING, s->uid);
 	body.ts = now_ts;
 
 	sim_encode_msg(&s->sstrm, &header, &body);
@@ -573,7 +592,7 @@ static void sim_session_state_timer(sim_session_t* s, int64_t now_ts, sim_sessio
 			s->state_cb(s->rbandwidth * 1000 / delay, s->sbandwidth * 1000 / delay);
 
 		sim_info("sim transport, send count = %u, recv count = %u, send bandwidth = %u, recv bandwidth = %u\n",
-			s->scount, s->rcount, s->sbandwidth * 1000 / delay, s->rbandwidth * 1000 / delay);
+			s->scount /10, s->rcount / 10, s->sbandwidth * 1000 / delay, s->rbandwidth * 1000 / delay);
 
 		s->rbandwidth = 0;
 		s->sbandwidth = 0;
@@ -582,10 +601,14 @@ static void sim_session_state_timer(sim_session_t* s, int64_t now_ts, sim_sessio
 	}
 
 	if (s->commad_ts + TICK_DELAY_MS < now_ts){
-		if (s->resend <= 30){
+		if (s->resend <= 10){
 			fn(s, now_ts);
 		}
 		else{
+			if (s->receiver != NULL){
+				s->notify_cb(sim_stop_play_notify, s->receiver->base_uid);
+			}
+
 			sim_session_reset(s);
 			s->notify_cb(type, 1);
 		}
@@ -605,7 +628,6 @@ static void sim_session_heartbeat(sim_session_t* s, int64_t now_ts)
 	case session_connected:
 		if (s->sender != NULL)
 			sim_sender_timer(s, s->sender, now_ts);
-		sim_session_state_timer(s, now_ts, sim_session_send_ping, sim_network_timout);
 		break;
 
 	case session_disconnected:
@@ -615,6 +637,9 @@ static void sim_session_heartbeat(sim_session_t* s, int64_t now_ts)
 	default:
 		;
 	}
+
+	if (s->sender != NULL || s->receiver != NULL)
+		sim_session_state_timer(s, now_ts, sim_session_send_ping, sim_network_timout);
 }
 
 

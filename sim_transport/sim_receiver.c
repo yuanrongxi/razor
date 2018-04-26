@@ -118,6 +118,8 @@ static void evict_gop_frame(sim_session_t* s, sim_frame_cache_t* c)
 static int real_video_cache_put(sim_session_t* s, sim_frame_cache_t* c, sim_segment_t* seg)
 {
 	sim_frame_t* frame;
+	sim_segment_t* tmp;
+
 	int ret = -1;
 	if (seg->index >= seg->total){
 		assert(0);
@@ -151,15 +153,17 @@ static int real_video_cache_put(sim_session_t* s, sim_frame_cache_t* c, sim_segm
 	frame->ts = seg->timestamp;
 
 	if (frame->seg_number == 0){
+		tmp = (sim_segment_t*)malloc(sizeof(sim_segment_t));
 		frame->seg_number = seg->total;
 		frame->segments = calloc(frame->seg_number, sizeof(seg));
-		frame->segments[seg->index] = seg;
+		frame->segments[seg->index] = tmp;
 
 		ret = 0;
 	}
 	else{
 		if (frame->segments[seg->index] == NULL){
-			frame->segments[seg->index] = seg;
+			tmp = (sim_segment_t*)malloc(sizeof(sim_segment_t));
+			frame->segments[seg->index] = tmp;
 			ret = 0;
 		}
 	}
@@ -294,7 +298,10 @@ static uint32_t real_video_cache_get_min_seq(sim_session_t* s, sim_frame_cache_t
 	for (i = 0; i < frame->seg_number; ++i){
 		seg = frame->segments[i];
 		if (seg != NULL)
-			return seg->packet_id - seg->index - 1;
+			if (i > 0)
+				return seg->packet_id - seg->index - 1;
+			else
+				return seg->packet_id - seg->index;
 	}
 
 	return 0;
@@ -326,7 +333,7 @@ static void send_sim_feedback(void* handler, const uint8_t* payload, int payload
 		return;
 	}
 
-	INIT_SIM_HEADER(header, SIM_SEG_ACK, s->uid);
+	INIT_SIM_HEADER(header, SIM_FEEDBACK, s->uid);
 
 	feedback.base_packet_id = r->base_seq;
 	feedback.feedback_size = payload_size;
@@ -342,6 +349,7 @@ sim_receiver_t* sim_receiver_create(sim_session_t* s)
 	r->loss = skiplist_create(idu32_compare, loss_free, NULL);
 	r->cache = open_real_video_cache(s);
 	r->cache_ts = GET_SYS_MS();
+	r->s = s;
 
 	/*创建一个接收端的拥塞控制对象*/
 	r->cc = razor_receiver_create(MIN_BITRATE, MAX_BITRATE, SIM_SEGMENT_HEADER_SIZE, r, send_sim_feedback);
@@ -388,7 +396,7 @@ void sim_receiver_reset(sim_session_t* s, sim_receiver_t* r)
 	r->cc = razor_receiver_create(MIN_BITRATE, MAX_BITRATE, SIM_SEGMENT_HEADER_SIZE, r, send_sim_feedback);
 }
 
-int sim_receiver_active(sim_session_t* s, sim_receiver_t* r)
+int sim_receiver_active(sim_session_t* s, sim_receiver_t* r, uint32_t uid)
 {
 	if (r->actived == 1)
 		return -1;
@@ -396,6 +404,7 @@ int sim_receiver_active(sim_session_t* s, sim_receiver_t* r)
 	r->actived = 1;
 	r->cache->frame_timer = 50;		/*填写一个默认的播放帧间隔*/
 
+	r->base_uid = uid;
 	r->active_ts = GET_SYS_MS();
 	return 0;
 }
@@ -430,6 +439,7 @@ static inline void sim_receiver_send_ack(sim_session_t* s, sim_segment_ack_t* ac
 
 	sim_encode_msg(&s->sstrm, &header, ack);
 	sim_session_network_send(s, &s->sstrm);
+	sim_debug("send SEG_ACK, base = %u, ack_id = %u\n", ack->base_packet_id, ack->acked_packet_id);
 }
 
 /*进行ack和nack确认，并计算缓冲区的等待时间*/

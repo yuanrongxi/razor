@@ -49,7 +49,7 @@ void					sim_sender_set_bitrates(sim_session_t* s, sim_sender_t* sender, uint32_
 sim_receiver_t*			sim_receiver_create(sim_session_t* s);
 void					sim_receiver_destroy(sim_session_t* s, sim_receiver_t* r);
 void					sim_receiver_reset(sim_session_t* s, sim_receiver_t* r);
-int						sim_receiver_active(sim_session_t* s, sim_receiver_t* r);
+int						sim_receiver_active(sim_session_t* s, sim_receiver_t* r, uint32_t uid);
 int						sim_receiver_put(sim_session_t* s, sim_receiver_t* r, sim_segment_t* seg);
 int						sim_receiver_get(sim_session_t* s, sim_receiver_t* r, uint8_t* data, size_t* sizep);
 void					sim_receiver_timer(sim_session_t* s, sim_receiver_t* r, int64_t now_ts);

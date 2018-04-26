@@ -60,8 +60,10 @@ static void sim_send_packet(void* handler, uint32_t packet_id, int retrans, size
 
 	key.u32 = packet_id;
 	it = skiplist_search(sender->cache, key);
-	if (it == NULL)
+	if (it == NULL){
+		sim_debug("send packet to network failed, packet id = %u\n", packet_id);
 		return;
+	}
 
 	now_ts = GET_SYS_MS();
 
@@ -77,6 +79,15 @@ static void sim_send_packet(void* handler, uint32_t packet_id, int retrans, size
 	sim_encode_msg(&s->sstrm, &header, seg);
 
 	sim_session_network_send(s, &s->sstrm);
+
+	sim_debug("send packet id = %u, transport_seq\n", packet_id, seg->transport_seq);
+}
+
+void free_video_seg(skiplist_item_t key, skiplist_item_t val, void* args)
+{
+	sim_segment_t* seg = val.ptr;
+	if (seg != NULL)
+		free(seg);
 }
 
 sim_sender_t* sim_sender_create(sim_session_t* s)
@@ -214,6 +225,7 @@ int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t ftype, const 
 
 		/*将报文加入到cc的pacer中*/
 		sender->cc->add_packet(sender->cc, seg->packet_id, 0, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
+		sim_debug("cc add packet, packet id = %u\n", seg->packet_id);
 	}
 
 	return 0;
@@ -224,9 +236,10 @@ static inline void sim_sender_update_base(sim_session_t* s, sim_sender_t* sender
 	uint32_t i;
 	skiplist_item_t key;
 
-	for (i = sender->base_packet_id; i < base_packet_id; ++i){
+	for (i = sender->base_packet_id; i <= base_packet_id; ++i){
 		key.u32 = i;
 		skiplist_remove(sender->cache, key);
+		sim_debug("sim sender remove packet id = %u\n", i);
 	}
 
 	if (base_packet_id > sender->base_packet_id)

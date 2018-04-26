@@ -12,6 +12,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum{
 	sim_connect_notify = 1000,
 	sim_network_timout,
@@ -40,6 +44,10 @@ int			sim_send_video(uint8_t ftype, const uint8_t* data, size_t size);
 int			sim_recv_video(uint8_t* data, size_t* sizep);
 
 void		sim_set_bitrates(uint32_t min_bitrate, uint32_t start_bitrate, uint32_t max_bitrate);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
