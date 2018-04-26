@@ -66,11 +66,11 @@ void estimator_proxy_incoming(estimator_proxy_t* proxy, int64_t arrival_ts, uint
 			if (iter->key.i64 < sequence && arrival_ts >= iter->val.i64 + BACK_WINDOWS_MS && num < MAX_IDS_NUM)
 				ids[num++] = iter->key.i64;
 		}
-	}
 
-	for (i = 0; i < num; ++i){
-		key.i64 = sequence;
-		skiplist_remove(proxy->arrival_times, key);
+		for (i = 0; i < num; ++i){
+			key.i64 = sequence;
+			skiplist_remove(proxy->arrival_times, key);
+		}
 	}
 
 	if (proxy->wnd_start_seq == -1)
