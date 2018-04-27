@@ -33,7 +33,7 @@ int loss_statistics_calculate(cc_loss_statistics_t* loss_stat, int64_t now_ts, u
 	*num = 0;
 
 	if (loss_stat->max_id == -1 || loss_stat->prev_max_id == -1 
-		|| (now_ts < loss_stat->stat_ts + k_loss_statistics_window_ms && loss_stat->max_id < loss_stat->prev_max_id + 20))
+		|| (now_ts < loss_stat->stat_ts + k_loss_statistics_window_ms || loss_stat->max_id < loss_stat->prev_max_id + 20))
 		return -1;
 
 	disance = loss_stat->max_id - loss_stat->prev_max_id;

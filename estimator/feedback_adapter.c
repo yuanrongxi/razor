@@ -6,6 +6,7 @@
 */
 
 #include "feedback_adapter.h"
+#include "razor_log.h"
 #include <stdlib.h>
 
 #define k_history_cache_ms		60000
@@ -85,6 +86,12 @@ int feedback_on_feedback(feedback_adapter_t* adapter, feedback_msg_t* msg)
 
 			/*更新到达的值*/
 			adapter->packets[adapter->num].arrival_ts = msg->samples[i].ts;
+
+			razor_debug("feedback, seq = %u, send_ts = %lld, arrival_ts = %lld\n", 
+				adapter->packets[adapter->num].sequence_number, 
+				adapter->packets[adapter->num].send_ts,
+				msg->samples[i].ts);
+
 			adapter->num++;
 		}
 	}

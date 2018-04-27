@@ -17,6 +17,7 @@ static void inline maybe_trigger_network_changed(bitrate_controller_t* ctrl)
 	if (ctrl->trigger != NULL && ctrl->trigger_func != NULL
 		&& bitrate_controller_get_parameter(ctrl, &bitrate, &fraction_loss, &rtt) == 0){
 		ctrl->trigger_func(ctrl->trigger, bitrate, fraction_loss, rtt);
+		ctrl->notify_ts = GET_SYS_MS();
 	}
 }
 
@@ -24,12 +25,11 @@ bitrate_controller_t* bitrate_controller_create(void* trigger, bitrate_changed_f
 {
 	bitrate_controller_t* ctrl = calloc(1, sizeof(bitrate_controller_t));
 	ctrl->last_bitrate_update_ts = GET_SYS_MS();
+	ctrl->notify_ts = ctrl->last_bitrate_update_ts;
 	ctrl->est = sender_estimation_create(10000, 1500000);
 
 	ctrl->trigger = trigger;
 	ctrl->trigger_func = func;
-
-	maybe_trigger_network_changed(ctrl);
 
 	return ctrl;
 }
@@ -105,7 +105,7 @@ void bitrate_controller_on_remb(bitrate_controller_t* ctrl, uint32_t bitrate)
 void bitrate_controller_on_report(bitrate_controller_t* ctrl, uint32_t rtt, int64_t cur_ts, uint8_t fraction_loss, int packets_num)
 {
 	if (packets_num > 0){
-		sender_estimation_update_block(ctrl->est, fraction_loss, rtt, packets_num, rtt);
+		sender_estimation_update_block(ctrl->est, fraction_loss, rtt, packets_num, cur_ts);
 		maybe_trigger_network_changed(ctrl);
 	}
 	else{
@@ -119,18 +119,30 @@ void bitrate_controller_on_basedelay_result(bitrate_controller_t* ctrl, int upda
 		return;
 
 	sender_estimation_update_delay_base(ctrl->est, GET_SYS_MS(), target_bitrate);
-	if (probe == 0)
-		sender_estimation_set_send_bitrate(ctrl->est, target_bitrate);
 	maybe_trigger_network_changed(ctrl);
 }
 
+#define k_normal_notify_timer 2000
 void bitrate_controller_heartbeat(bitrate_controller_t* ctrl, int64_t cur_ts)
 {
+	uint32_t bitrate, rtt;
+	uint8_t fraction_loss;
+
 	if (cur_ts < ctrl->last_bitrate_update_ts + 25)
 		return;
 
 	sender_estimation_update(ctrl->est, cur_ts);
-	maybe_trigger_network_changed(ctrl);
+
+	if (ctrl->trigger != NULL && ctrl->trigger_func != NULL){
+		if (bitrate_controller_get_parameter(ctrl, &bitrate, &fraction_loss, &rtt) == 0){ /*网络状态发生变更，进行通知*/
+			ctrl->trigger_func(ctrl->trigger, bitrate, fraction_loss, rtt);
+			ctrl->notify_ts = cur_ts;
+		}
+		else if (ctrl->notify_ts + k_normal_notify_timer <= cur_ts){ /*每2秒触发一次，通知上层进行FEC和丢包重传策略调整*/
+			ctrl->trigger_func(ctrl->trigger, bitrate, fraction_loss, rtt);
+			ctrl->notify_ts = cur_ts;
+		}
+	}
 
 	ctrl->last_bitrate_update_ts = cur_ts;
 }

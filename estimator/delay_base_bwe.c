@@ -6,6 +6,7 @@
 */
 
 #include "delay_base_bwe.h"
+#include "razor_log.h"
 
 #define k_trendline_smoothing_coeff		0.9
 #define k_trendline_threshold_gain		4.0
@@ -183,8 +184,10 @@ bwe_result_t delay_bwe_incoming(delay_base_bwe_t* bwe, packet_feedback_t packets
 		prev_state = bwe->detector->state;
 	}
 
-	if (bwe->detector->state == kBwOverusing)
+	if (bwe->detector->state == kBwOverusing){
 		overusing = 0;
+		razor_debug("bwe state = kBwOverusing\n");
+	}
 
 	if (delayed_feedback == 0){ /*太多次网络feedback事件出现重复，强制的带宽减半并返回*/
 		bwe->consecutive_delayed_feedbacks++;

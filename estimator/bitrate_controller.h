@@ -15,6 +15,7 @@
 typedef struct
 {
 	int64_t					last_bitrate_update_ts;
+	int64_t					notify_ts;					/*定时通告上层*/
 
 	uint32_t				reserved_bitrate_bps;
 	
