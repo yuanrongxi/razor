@@ -6,6 +6,7 @@
 */
 
 #include "sender_bandwidth_estimator.h"
+#include "razor_log.h"
 
 #define k_low_loss_threshold			0.02f
 #define k_high_loss_threshold			0.1f
@@ -66,6 +67,7 @@ void sender_estimation_set_minmax_bitrate(sender_estimation_t* estimation, uint3
 
 void sender_estimation_set_send_bitrate(sender_estimation_t* est, uint32_t send_bitrate)
 {
+	razor_debug("sender_estimation_set_send_bitrate, bitrate = %u\n", send_bitrate);
 	cap_bitrate_to_threshold(est, GET_SYS_MS(), send_bitrate);
 
 	/*清空历史最小记录*/
@@ -74,18 +76,21 @@ void sender_estimation_set_send_bitrate(sender_estimation_t* est, uint32_t send_
 
 void sender_estimation_set_bitrates(sender_estimation_t* est, uint32_t send_bitrate, uint32_t min_bitrate, uint32_t max_bitrate)
 {
+	razor_debug("sender_estimation_set_bitrates, bitrate = %u", send_bitrate);
 	sender_estimation_set_minmax_bitrate(est, min_bitrate, max_bitrate);
 	sender_estimation_set_send_bitrate(est, send_bitrate);
 }
 
 void sender_estimation_update_remb(sender_estimation_t* est, int64_t cur_ts, uint32_t bitrate)
 {
+	razor_debug("sender_estimation_update_remb, bitrate = %u", bitrate);
 	est->bwe_incoming = bitrate;
 	cap_bitrate_to_threshold(est, cur_ts, est->curr_bitrate);
 }
 
 void sender_estimation_update_delay_base(sender_estimation_t* est, int64_t cur_ts, uint32_t bitrate)
 {
+	razor_debug("sender_estimation_update_delay_base, bitrate = %u\n", bitrate);
 	est->delay_base_bitrate = bitrate;
 	cap_bitrate_to_threshold(est, cur_ts, est->curr_bitrate);
 }
@@ -204,6 +209,7 @@ void sender_estimation_update(sender_estimation_t* est, int64_t cur_ts)
 			est->min_bitrates[est->end_index].bitrate = est->curr_bitrate;
 			est->end_index++;
 
+			razor_debug("sender_estimation_update start_phare, bitrate = %u\n", new_bitrate);
 			cap_bitrate_to_threshold(est, cur_ts, new_bitrate);
 			return;
 		}
@@ -212,6 +218,7 @@ void sender_estimation_update(sender_estimation_t* est, int64_t cur_ts)
 	sender_estimation_update_history(est, cur_ts);
 
 	if (est->last_packet_report_ts == -1){
+		razor_debug("sender_estimation_update last_packet_report_ts = -1, bitrate = %u\n", est->curr_bitrate);
 		cap_bitrate_to_threshold(est, cur_ts, est->curr_bitrate);
 		return;
 	}
@@ -227,6 +234,7 @@ void sender_estimation_update(sender_estimation_t* est, int64_t cur_ts)
 		if (est->curr_bitrate < est->bitrate_threshold || loss < est->low_loss_threshold){
 			pos = est->begin_index % MIN_HISTORY_ARR_SIZE;
 			new_bitrate = (uint32_t)(est->min_bitrates[pos].bitrate * 1.08 + 0.5 + 1000); /*1000是防止min_bitrate太小造成叠加无效*/
+
 		}
 		else if (est->curr_bitrate > est->bitrate_threshold){ /*码率过载，根据丢包率进行码率下降调整*/
 			/* 2% < loss < 10%*/

@@ -68,7 +68,7 @@ void estimator_proxy_incoming(estimator_proxy_t* proxy, int64_t arrival_ts, uint
 		}
 
 		for (i = 0; i < num; ++i){
-			key.i64 = sequence;
+			key.i64 = ids[i];
 			skiplist_remove(proxy->arrival_times, key);
 		}
 	}
@@ -91,7 +91,7 @@ static int proxy_bulid_feelback_packet(estimator_proxy_t* proxy, feedback_msg_t*
 	skiplist_iter_t* iter;
 	int64_t new_start_seq = -1;
 
-	if (proxy->max_arrival_seq <= proxy->wnd_start_seq &&  skiplist_size(proxy->arrival_times) == 0)
+	if (proxy->max_arrival_seq <= proxy->wnd_start_seq &&  skiplist_size(proxy->arrival_times) > 2)
 		return -1;
 	
 	msg->min_ts = -1;
@@ -118,7 +118,7 @@ static int proxy_bulid_feelback_packet(estimator_proxy_t* proxy, feedback_msg_t*
 	}
 
 	/*进行到达时间序列编码*/
-	if (msg->samples_num > 0){
+	if (msg->samples_num > 2){
 		proxy->wnd_start_seq = new_start_seq;
 		return 0;
 	}
