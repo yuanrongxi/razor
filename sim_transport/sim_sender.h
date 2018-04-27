@@ -21,6 +21,7 @@ struct __sim_sender
 	razor_sender_t*				cc;					/*ÓµÈû¿ØÖÆ¶ÔÏó*/
 
 	sim_session_t*				s;
+
 };
 
 

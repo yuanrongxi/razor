@@ -197,6 +197,7 @@ int	sim_session_disconnect(sim_session_t* s)
 
 	sim_session_send_disconnect(s, s->commad_ts);
 
+	ret = 0;
 err:
 	su_mutex_unlock(s->mutex);
 	return ret;
@@ -496,6 +497,8 @@ static void process_sim_feedback(sim_session_t* s, sim_header_t* header, bin_str
 	if (sim_decode_msg(strm, header, &feedback) != 0)
 		return;
 
+	sim_debug("recv SIM_FEEDBACK, feedback size = %d\n", strm->used);
+
 	if (s->sender != NULL)
 		sim_sender_feedback(s, s->sender, &feedback);
 }
@@ -583,7 +586,7 @@ static void sim_session_state_timer(sim_session_t* s, int64_t now_ts, sim_sessio
 {
 	uint32_t delay;
 
-	if (s->stat_ts + 10000 < now_ts){
+	if (s->stat_ts + 3*1000 < now_ts){
 		delay = (uint32_t)(now_ts - s->stat_ts) * 1024;
 
 		s->stat_ts = now_ts;
@@ -592,12 +595,15 @@ static void sim_session_state_timer(sim_session_t* s, int64_t now_ts, sim_sessio
 			s->state_cb(s->rbandwidth * 1000 / delay, s->sbandwidth * 1000 / delay);
 
 		sim_info("sim transport, send count = %u, recv count = %u, send bandwidth = %u, recv bandwidth = %u\n",
-			s->scount /10, s->rcount / 10, s->sbandwidth * 1000 / delay, s->rbandwidth * 1000 / delay);
+			s->scount /3, s->rcount / 3, s->sbandwidth * 1000 / delay, s->rbandwidth * 1000 / delay);
 
 		s->rbandwidth = 0;
 		s->sbandwidth = 0;
 		s->scount = 0;
 		s->rcount = 0;
+
+		if (s->sender != NULL && s->sender->cc != NULL)
+			sim_info("pace queue delay = %u ms", s->sender->cc->get_pacer_queue_ms(s->sender->cc));
 	}
 
 	if (s->commad_ts + TICK_DELAY_MS < now_ts){

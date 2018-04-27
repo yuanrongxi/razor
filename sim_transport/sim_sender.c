@@ -12,7 +12,7 @@
 #define MAX_SEND_COUNT		10
 
 /*处理来自razor的码率调节通告,这个函数需要剥离FEC和重传需要的码率*/
-static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction_loss, uint32_t rtt)
+static void sim_bitrate_change(void* trigger, uint32_t bitrate_kbps, uint8_t fraction_loss, uint32_t rtt)
 {
 	sim_session_t* s = (sim_session_t*)trigger;
 	uint32_t overhead_bitrate, per_packets_second, payload_bitrate, video_bitrate_kbps;
@@ -20,11 +20,11 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction
 	uint32_t packet_size_bit = (SIM_SEGMENT_HEADER_SIZE + SIM_VIDEO_SIZE) * 8;
 
 	/*计算这个码率下每秒能发送多少个报文*/
-	per_packets_second = bitrate + packet_size_bit - 1 / packet_size_bit;
+	per_packets_second = (bitrate_kbps + packet_size_bit - 1) / packet_size_bit;
 	/*计算传输协议头需要占用的码率*/
 	overhead_bitrate = per_packets_second * SIM_SEGMENT_HEADER_SIZE * 8;
 	/*计算视频数据可利用的码率*/
-	payload_bitrate = bitrate - overhead_bitrate;
+	payload_bitrate = bitrate_kbps - overhead_bitrate;
 
 	/*计算丢包率，用平滑遗忘算法进行逼近，webRTC用的是单位时间内最大和时间段平滑*/
 	if (s->loss_fraction == 0)
@@ -41,8 +41,9 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction
 		loss = 0.5;
 
 	/*计算视频编码器的码率,单位kbps*/
-	video_bitrate_kbps = (uint32_t)(loss * payload_bitrate) / 1000;
+	video_bitrate_kbps = (uint32_t)((1.0 - loss) * payload_bitrate) / 1000;
 
+	sim_info("loss = %f, bitrate = %u, video_bitrate_kbps = %u\n", loss, bitrate_kbps, video_bitrate_kbps);
 	/*通知上层进行码率调整*/
 	s->change_bitrate_cb(video_bitrate_kbps);
 }
@@ -80,7 +81,7 @@ static void sim_send_packet(void* handler, uint32_t packet_id, int retrans, size
 
 	sim_session_network_send(s, &s->sstrm);
 
-	sim_debug("send packet id = %u, transport_seq\n", packet_id, seg->transport_seq);
+	sim_debug("send packet id = %u, transport_seq = %u\n", packet_id, sender->transport_seq_seed - 1);
 }
 
 void free_video_seg(skiplist_item_t key, skiplist_item_t val, void* args)
@@ -225,7 +226,7 @@ int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t ftype, const 
 
 		/*将报文加入到cc的pacer中*/
 		sender->cc->add_packet(sender->cc, seg->packet_id, 0, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
-		sim_debug("cc add packet, packet id = %u\n", seg->packet_id);
+		/*sim_debug("cc add packet, packet id = %u\n", seg->packet_id);*/
 	}
 
 	return 0;
@@ -239,7 +240,7 @@ static inline void sim_sender_update_base(sim_session_t* s, sim_sender_t* sender
 	for (i = sender->base_packet_id; i <= base_packet_id; ++i){
 		key.u32 = i;
 		skiplist_remove(sender->cache, key);
-		sim_debug("sim sender remove packet id = %u\n", i);
+		/*sim_debug("sim sender remove packet id = %u\n", i);*/
 	}
 
 	if (base_packet_id > sender->base_packet_id)
@@ -256,8 +257,11 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 
 	int64_t now_ts;
 
+	/*检查非法数据*/
+	if (ack->acked_packet_id > sender->packet_id_seed || ack->base_packet_id > sender->packet_id_seed)
+		return -1;
 	/*推进窗口*/
-	sim_sender_update_base(s, sender, ack->acked_packet_id);
+	sim_sender_update_base(s, sender, ack->base_packet_id);
 
 	for (i = 0; i < ack->nack_num; ++i){
 		key.u32 = ack->base_packet_id + ack->nack[i];

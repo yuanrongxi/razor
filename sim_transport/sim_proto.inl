@@ -191,7 +191,7 @@ static inline int sim_segment_decode(bin_stream_t* strm, sim_segment_t* body)
 static inline void sim_segment_ack_encode(bin_stream_t* strm, sim_segment_ack_t* body)
 {
 	int i;
-	mach_uint16_write(strm, body->base_packet_id);
+	mach_uint32_write(strm, body->base_packet_id);
 	mach_uint32_write(strm, body->acked_packet_id);
 	
 	mach_uint8_write(strm, body->nack_num);

@@ -25,6 +25,8 @@ typedef struct
 {
 	uint32_t			size;
 
+	uint32_t			min_seq;
+
 	uint32_t			min_fid;
 	uint32_t			max_fid;
 	uint32_t			frame_ts;		/*已经播放的相对视频时间戳*/

@@ -18,7 +18,7 @@ static sim_frame_cache_t* open_real_video_cache(sim_session_t* s)
 	sim_frame_cache_t* cache = calloc(1, sizeof(sim_frame_cache_t));
 	cache->wait_timer = s->rtt + 2 * s->rtt_var;
 	cache->state = buffer_waiting;
-
+	cache->min_seq = 0;
 	cache->frame_timer = 100;
 	cache->size = CACHE_SIZE;
 	cache->frames = calloc(cache->size, sizeof(sim_frame_cache_t));
@@ -33,6 +33,7 @@ static inline void real_video_clean_frame(sim_session_t* session, sim_frame_cach
 
 	for (i = 0; i < frame->seg_number; ++i){
 		if (frame->segments[i] != NULL){
+			c->min_seq = frame->segments[i]->packet_id + frame->segments[i]->total - 1;
 			free(frame->segments[i]);
 			frame->segments[i] = NULL;
 		}
@@ -64,6 +65,7 @@ static void reset_real_video_cache(sim_session_t* s, sim_frame_cache_t* cache)
 	for (i = 0; i < cache->size; ++i)
 		real_video_clean_frame(s, cache, &cache->frames[i]);
 
+	cache->min_seq = 0;
 	cache->min_fid = 0;
 	cache->max_fid = 0;
 	cache->play_ts = 0;
@@ -154,6 +156,7 @@ static int real_video_cache_put(sim_session_t* s, sim_frame_cache_t* c, sim_segm
 
 	if (frame->seg_number == 0){
 		tmp = (sim_segment_t*)malloc(sizeof(sim_segment_t));
+		*tmp = *seg;
 		frame->seg_number = seg->total;
 		frame->segments = calloc(frame->seg_number, sizeof(seg));
 		frame->segments[seg->index] = tmp;
@@ -163,6 +166,7 @@ static int real_video_cache_put(sim_session_t* s, sim_frame_cache_t* c, sim_segm
 	else{
 		if (frame->segments[seg->index] == NULL){
 			tmp = (sim_segment_t*)malloc(sizeof(sim_segment_t));
+			*tmp = *seg;
 			frame->segments[seg->index] = tmp;
 			ret = 0;
 		}
@@ -263,12 +267,12 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 
 		space = SU_MAX(c->wait_timer * 5 / 4, c->frame_timer * 2);
 
-		if (loss == 0) {
-			if (frame->ts + space * 2 < max_ts)
-				c->frame_ts = (uint32_t)(max_ts - space);
-			else if (frame->ts + space <= max_ts && c->min_fid + 2 < c->max_fid)
-				c->frame_ts = frame->ts + 5;
-		}
+		if (frame->ts + space * 2 < max_ts)
+			c->frame_ts = (uint32_t)(max_ts - space);
+		else if (frame->ts + space < max_ts)
+			c->frame_ts = c->frame_ts + 10;
+		else if (c->min_fid + 1 >= c->max_fid) /*放慢速度*/
+				c->frame_ts = frame->ts - 5;
 
 		real_video_clean_frame(s, c, frame);
 		ret = 0;
@@ -290,7 +294,7 @@ err:
 
 static uint32_t real_video_cache_get_min_seq(sim_session_t* s, sim_frame_cache_t* c)
 {
-	int i;
+	/*int i;
 	sim_frame_t* frame;
 	sim_segment_t* seg;
 
@@ -304,7 +308,8 @@ static uint32_t real_video_cache_get_min_seq(sim_session_t* s, sim_frame_cache_t
 				return seg->packet_id - seg->index;
 	}
 
-	return 0;
+	return 0;*/
+	return c->min_seq;
 }
 
 /*********************************************视频接收端处理*************************************************/
@@ -336,10 +341,14 @@ static void send_sim_feedback(void* handler, const uint8_t* payload, int payload
 	INIT_SIM_HEADER(header, SIM_FEEDBACK, s->uid);
 
 	feedback.base_packet_id = r->base_seq;
+
 	feedback.feedback_size = payload_size;
+	memcpy(feedback.feedback, payload, payload_size);
 
 	sim_encode_msg(&s->sstrm, &header, &feedback);
 	sim_session_network_send(s, &s->sstrm);
+
+	sim_debug("sim send SIM_FEEDBACK, feedback size = %u\n", payload_size);
 }
 
 sim_receiver_t* sim_receiver_create(sim_session_t* s)
