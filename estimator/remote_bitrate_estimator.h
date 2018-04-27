@@ -24,6 +24,7 @@ typedef struct
 
 	int							last_incoming_bitrate;
 	rate_stat_t					incoming_bitrate;
+	
 
 	aimd_rate_controller_t*		aimd;
 	overuse_detector_t*			detector;

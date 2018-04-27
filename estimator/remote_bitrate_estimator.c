@@ -117,7 +117,9 @@ int rbe_heartbeat(remote_bitrate_estimator_t* est, int64_t now_ts, uint32_t* rem
 
 	if (now_ts >= est->last_update_ts + est->interval_ts){
 		est->last_update_ts = now_ts;
-		rbe_update_estimate(est, now_ts);
+
+		if (est->last_packet_ts > 0 && est->last_packet_ts + k_max_update_timeout > now_ts)
+			rbe_update_estimate(est, now_ts);
 
 		/*进行REMB的发送*/
 		if (est->last_packet_ts + k_max_update_timeout > GET_SYS_MS() && rbe_last_estimate(est, &bitrate) == 0){
@@ -167,6 +169,8 @@ void rbe_incoming_packet(remote_bitrate_estimator_t* est, uint32_t timestamp, in
 		if (incoming_rate > 0 && (prev_state != kBwOverusing || aimd_time_reduce_further(est->aimd, now_ts, incoming_rate) == 0))
 			rbe_update_estimate(est, now_ts);
 	}
+
+	est->last_packet_ts = now_ts;
 }
 
 static void rbe_update_estimate(remote_bitrate_estimator_t* est, int64_t now_ts)
