@@ -142,7 +142,7 @@ void pace_try_transmit(pace_sender_t* pace, int64_t now_ts)
 	while (pacer_queue_empty(&pace->que) != 0){
 		ev = pacer_queue_front(&pace->que);
 		if (pace_send(pace, ev) == 0){
-		/*	razor_debug("pace send packet, packet id = %u, pace cache size = %d\n", ev->seq, pace->que.l->size);*/
+			/*razor_debug("pace send packet, packet id = %u, pace cache size = %d, pace delay = %ums\n", ev->seq, pace->que.l->size, pace_queue_ms(pace));*/
 			if (pace->first_sent_ts == -1)
 				pace->first_sent_ts = now_ts;
 			

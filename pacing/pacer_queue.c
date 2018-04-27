@@ -160,6 +160,9 @@ size_t pacer_queue_bytes(pacer_queue_t* que)
 
 int64_t	pacer_queue_oldest(pacer_queue_t* que)
 {
+	if (que->oldest_ts == -1)
+		return GET_SYS_MS();
+
 	return que->oldest_ts;
 }
 
