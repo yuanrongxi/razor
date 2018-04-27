@@ -32,6 +32,8 @@ typedef std::list<thread_msg_t>	msg_queue_t;
 
 static msg_queue_t main_queue;
 su_mutex main_mutex;
+static uint32_t g_sbw = 0;
+static uint32_t g_rbw = 0;
 
 static void notify_callback(int type, uint32_t val)
 {
@@ -64,7 +66,8 @@ static void notify_change_bitrate(uint32_t bitrate_kbps)
 
 static void notify_state(uint32_t rbw, uint32_t sbw)
 {
-	printf("send bandwidth = %uKB/s, recv bandwidth = %uKB/s\n", sbw, rbw);
+	g_sbw = sbw;
+	g_rbw = rbw;
 }
 
 static int64_t play_video(uint8_t* video_frame, size_t size)
@@ -88,6 +91,8 @@ static int64_t play_video(uint8_t* video_frame, size_t size)
 	memcpy(&frame_ts, pos, sizeof(frame_ts));
 
 	assert(frame_size == size);
+
+	/*printf("frame id = %d, frame_size = %d, frame_ts = %lld\n", count, frame_size, frame_ts);*/
 
 	return frame_ts;
 }
@@ -141,9 +146,10 @@ static void main_loop_event()
 			now_ts = GET_SYS_MS();
 			if (now_ts >= frame_ts && frame_ts > 0){
 				delay += (uint32_t)(now_ts - frame_ts);
+				packet_count++;
+				if (tick_ts + 1000 < now_ts){
 
-				if (tick_ts + 10 * 1000 < now_ts){
-					printf("%u\n", delay / packet_count);
+					printf("%ums, sbw = %ukb/s, rbw = %ukb/s\n", delay / packet_count, g_sbw, g_rbw);
 					packet_count = 0;
 					delay = 0;
 					tick_ts = now_ts;
