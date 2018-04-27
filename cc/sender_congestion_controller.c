@@ -147,7 +147,7 @@ void sender_on_feedback(sender_cc_t* cc, uint8_t* feedback, int feedback_size)
 
 		/*根据延迟状态进行发送端拥塞控制判断,并评估最新的发送码率*/
 		init_bwe_result_null(bwe_result);
-		delay_bwe_incoming(cc->bwe, cc->adapter.packets, cc->adapter.num, ack_estimator_bitrate_bps(cc->ack), now_ts);
+		bwe_result = delay_bwe_incoming(cc->bwe, cc->adapter.packets, cc->adapter.num, ack_estimator_bitrate_bps(cc->ack), now_ts);
 
 		/*进行码率调节*/
 		if (bwe_result.updated == 0)
