@@ -88,7 +88,6 @@ static void notify_change_bitrate(uint32_t bitrate_kbps)
 	thread_msg_t msg;
 	msg.msg_id = el_change_bitrate;
 	msg.val = bitrate_kbps;
-
 	/*将消息递到主线程上*/
 	su_mutex_lock(main_mutex);
 	main_queue.push_back(msg);
@@ -97,12 +96,14 @@ static void notify_change_bitrate(uint32_t bitrate_kbps)
 
 static void notify_state(uint32_t rbw, uint32_t sbw)
 {
-
+	printf("send bandwidth = %uKB/s, recv bandwidth = %uKB/s\n", sbw, rbw);
 }
 
 #define MAX_SEND_BITRATE (300 * 8 * 1000)
 #define MIN_SEND_BITRATE (100 * 8 * 1000)
 #define START_SEND_BITRATE (140 * 8 * 1000)
+
+#define MAX_VIDEO_BITRATE (300 * 8)
 
 typedef struct
 {
@@ -121,14 +122,15 @@ typedef struct
 static void try_send_video(video_sender_t* sender)
 {
 	uint8_t* pos = sender->frame, ftype;
-	int64_t now_ts;
+	int64_t now_ts, space;
 	size_t frame_size = 0;
 	if (sender->record_flag == 0)
 		return;
 
 	now_ts = GET_SYS_MS();
 	if (now_ts >= sender->prev_ts + 1000 / sender->frame_rate + 1){
-		frame_size = sender->bitrate_kbps * 1000 / (8 * sender->frame_rate);
+		space = (now_ts - sender->prev_ts);
+		frame_size = sender->bitrate_kbps / 8 * space;
 
 		if (frame_size > 200){
 			frame_size -= 200;
@@ -150,7 +152,8 @@ static void try_send_video(video_sender_t* sender)
 
 		sender->prev_ts = now_ts;
 		/*只发送一帧试一试*/
-		sender->record_flag = 0;
+		if (++sender->index > 10000)
+			sender->record_flag = 0;
 	}
 }
 
@@ -161,7 +164,7 @@ static void main_loop_event()
 
 	thread_msg_t msg;
 	int run = 1;
-
+	int disconnecting = 0;
 	sender.frame = (uint8_t*)malloc(FRAME_SIZE);
 
 	while (run){
@@ -206,12 +209,23 @@ static void main_loop_event()
 			case el_resume:
 				printf("resume sender!\n");
 				break;
+
+			case el_change_bitrate:
+				if (msg.val <= MAX_VIDEO_BITRATE){
+					sender.bitrate_kbps = msg.val;
+					printf("set bytes rate = %ukb/s\n", sender.bitrate_kbps / 8);
+				}
+				break;
 			}
 		}
 
 		try_send_video(&sender);
 
 		su_sleep(0, 10000);
+		if (sender.index >= 10000 && disconnecting == 0){
+			sim_disconnect();
+			disconnecting = 1;
+		}
 	}
 
 	free(sender.frame);
