@@ -33,7 +33,7 @@ static inline void real_video_clean_frame(sim_session_t* session, sim_frame_cach
 
 	for (i = 0; i < frame->seg_number; ++i){
 		if (frame->segments[i] != NULL){
-			c->min_seq = frame->segments[i]->packet_id + frame->segments[i]->total - 1;
+			c->min_seq = frame->segments[i]->packet_id - frame->segments[i]->index + frame->segments[i]->total - 1;
 			free(frame->segments[i]);
 			frame->segments[i] = NULL;
 		}
@@ -111,6 +111,7 @@ static void evict_gop_frame(sim_session_t* s, sim_frame_cache_t* c)
 		}
 	}
 
+	sim_debug("evict_gop_frame, from frame = %u, to frame = %u!! \n", c->min_fid + 1, key_frame_id - 1);
 	for (i = c->min_fid + 1; i < key_frame_id; i++){
 		c->frame_ts = c->frames[INDEX(i)].ts;
 		real_video_clean_frame(s, c, &c->frames[INDEX(i)]);
@@ -147,7 +148,7 @@ static int real_video_cache_put(sim_session_t* s, sim_frame_cache_t* c, sim_segm
 		c->max_fid = seg->fid;
 	}
 
-	/*sim_debug("buffer put video frame, frame = %u, seq = %u, ts = %u\n", seg->fid, seg->seq, seg->timestamp);*/
+	/*sim_debug("buffer put video frame, frame = %u, packet_id = %u, ts = %u\n", seg->fid, seg->packet_id, seg->timestamp);*/
 
 	frame = &(c->frames[INDEX(seg->fid)]);
 	frame->fid = seg->fid;
@@ -183,7 +184,7 @@ static void real_video_cache_check_playing(sim_session_t* s, sim_frame_cache_t* 
 		max_ts = c->frames[INDEX(c->max_fid)].ts;
 		min_ts = c->frames[INDEX(c->min_fid + 1)].ts;
 
-		if (max_ts > min_ts + c->frame_timer && c->max_fid > c->min_fid + 1){
+		if (max_ts >= min_ts + c->frame_timer && c->max_fid >= c->min_fid + 1){
 			c->state = buffer_playing;
 
 			c->play_ts = GET_SYS_MS();
@@ -263,22 +264,26 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 			}
 		}
 
-		c->frame_ts = frame->ts;
+		space = SU_MAX(c->wait_timer, c->frame_timer);
 
-		space = SU_MAX(c->wait_timer * 5 / 4, c->frame_timer * 2);
+		/*加速播放，缩小延迟,最小能缩小到2帧间隔的延迟，太短了不利益在网络波动下进行传输*/
+		if (loss == 0){
+			if (frame->ts + space * 4 < max_ts)
+				c->frame_ts = c->frame_ts + (2 * space);
+			else if (frame->ts + space * 2 < max_ts)
+				c->frame_ts = c->frame_ts + space / 4;
+			else if (frame->ts + space <= max_ts)
+				c->frame_ts = c->frame_ts + 5;
+		}
 
-		if (frame->ts + space * 2 < max_ts)
-			c->frame_ts = (uint32_t)(max_ts - space);
-		else if (frame->ts + space < max_ts)
-			c->frame_ts = c->frame_ts + 10;
-		else if (c->min_fid + 1 >= c->max_fid) /*放慢速度*/
-				c->frame_ts = frame->ts - 5;
+		if (c->min_fid + 1 == c->max_fid && c->frame_ts > 5) /*放慢速度*/
+			c->frame_ts = c->frame_ts - 5;
 
 		real_video_clean_frame(s, c, frame);
 		ret = 0;
 	}
 	else{
-		if (frame->ts + SU_MAX(MAX_VIDEO_DELAY_MS, 2 * c->wait_timer) < max_ts
+		if (frame->ts + SU_MAX(MAX_VIDEO_DELAY_MS, 4 * c->wait_timer) < max_ts
 			&& real_video_cache_check_frame_full(s, frame)){ /*驱逐一个GOP，延迟太大，需要做驱逐*/
 			evict_gop_frame(s, c);
 		}
@@ -294,21 +299,6 @@ err:
 
 static uint32_t real_video_cache_get_min_seq(sim_session_t* s, sim_frame_cache_t* c)
 {
-	/*int i;
-	sim_frame_t* frame;
-	sim_segment_t* seg;
-
-	frame = &c->frames[INDEX(c->min_fid)];
-	for (i = 0; i < frame->seg_number; ++i){
-		seg = frame->segments[i];
-		if (seg != NULL)
-			if (i > 0)
-				return seg->packet_id - seg->index - 1;
-			else
-				return seg->packet_id - seg->index;
-	}
-
-	return 0;*/
 	return c->min_seq;
 }
 
@@ -484,7 +474,7 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 
 			space_factor = (SU_MIN(5, l->count / 2 + 1)) * (s->rtt + s->rtt_var); /*用于简单的拥塞限流，防止GET洪水*/
 			if (l->ts + space_factor <= cur_ts && l->count < 30 && ack.nack_num < NACK_NUM){
-				ack.nack[ack.nack_num++] = iter->key.u32;
+				ack.nack[ack.nack_num++] = iter->key.u32 - r->base_seq;
 				l->ts = cur_ts;
 
 				r->loss_count++;
