@@ -136,8 +136,6 @@ static void main_loop_event()
 			}
 		}
 
-		su_sleep(0, 10000);
-
 		/*收视频模拟的频数据*/
 		if (play_flag == 1){
 			frame_ts = play_video(frame, size);
@@ -156,6 +154,8 @@ static void main_loop_event()
 				}
 			}
 		}
+
+		su_sleep(0, 1000);
 	}
 
 	free(frame);
