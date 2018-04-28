@@ -244,7 +244,7 @@ int main(int argc, const char* argv[])
 	main_mutex = su_create_mutex();
 
 	sim_init(16000, log_win_write, notify_callback, notify_change_bitrate, notify_state);
-	sim_set_bitrates(MIN_SEND_BITRATE, START_SEND_BITRATE, MAX_SEND_BITRATE);
+	sim_set_bitrates(MIN_SEND_BITRATE, START_SEND_BITRATE, MAX_SEND_BITRATE * 3);
 
 	if (sim_connect(1000, "192.168.150.18", 16001) != 0){
 		printf("sim connect failed!\n");
