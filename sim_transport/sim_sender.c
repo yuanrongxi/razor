@@ -66,6 +66,9 @@ static void sim_send_packet(void* handler, uint32_t packet_id, int retrans, size
 		return;
 	}
 
+	if (retrans == 1)
+		sim_debug("resend!!!!! packet id= %u\n", packet_id);
+
 	now_ts = GET_SYS_MS();
 
 	seg = it->val.ptr;
@@ -79,6 +82,7 @@ static void sim_send_packet(void* handler, uint32_t packet_id, int retrans, size
 	INIT_SIM_HEADER(header, SIM_SEG, s->uid);
 	sim_encode_msg(&s->sstrm, &header, seg);
 
+	/*if (rand() % 30 != 0)*/
 	sim_session_network_send(s, &s->sstrm);
 
 	sim_debug("send packet id = %u, transport_seq = %u\n", packet_id, sender->transport_seq_seed - 1);

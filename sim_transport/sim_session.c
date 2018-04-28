@@ -249,9 +249,10 @@ void sim_session_set_bitrates(sim_session_t* s, uint32_t min_bitrate, uint32_t s
 
 int sim_session_network_send(sim_session_t* s, bin_stream_t* strm)
 {
+	uint32_t crc;
 	if (s->s < 0 || strm->used <= 0)
 		return -1;
-
+	
 	s->sbandwidth += strm->used;
 	s->scount++;
 	return su_udp_send(s->s, &s->peer, strm->data, strm->used);
@@ -507,7 +508,9 @@ static void sim_session_process(sim_session_t* s, bin_stream_t* strm, su_addr* a
 {
 	sim_header_t header;
 
-	sim_decode_header(strm, &header);
+	if (sim_decode_header(strm, &header) != 0)
+		return;
+
 	if (header.mid < MIN_MSG_ID || header.mid > MAX_MSG_ID)
 		return;
 

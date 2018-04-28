@@ -7,22 +7,6 @@
 
 #include "sim_proto.h"
 
-static inline void sim_encode_header(bin_stream_t* strm, sim_header_t* header)
-{
-	mach_uint8_write(strm, header->ver);
-	mach_uint8_write(strm, header->mid);
-	mach_uint32_write(strm, header->uid);
-}
-
-int sim_decode_header(bin_stream_t* strm, sim_header_t* header)
-{
-	mach_uint8_read(strm, &header->ver);
-	mach_uint8_read(strm, &header->mid);
-	mach_uint32_read(strm, &header->uid);
-
-	return 0;
-}
-
 static inline void sim_connect_encode(bin_stream_t* strm, sim_connect_t* body)
 {
 	mach_uint32_write(strm, body->cid);

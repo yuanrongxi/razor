@@ -7,9 +7,40 @@
 
 #include "cf_platform.h"
 #include "sim_proto.inl"
+#include "cf_crc32.h"
+
+#define CRC_VAL	0x0e3dfc0a
+
+static void sim_encode_header(bin_stream_t* strm, sim_header_t* header)
+{
+	mach_uint8_write(strm, header->ver);
+	mach_uint8_write(strm, header->mid);
+	mach_uint32_write(strm, header->uid);
+}
+
+int sim_decode_header(bin_stream_t* strm, sim_header_t* header)
+{
+	uint32_t src, crc;
+	uint8_t* pos = strm->data + strm->used - sizeof(uint32_t);
+	src = mach_get_4(pos);
+
+	/*校验CRC*/
+	crc = crc32(CRC_VAL, strm->data, strm->used - sizeof(uint32_t));
+	if (src == crc){
+		mach_uint8_read(strm, &header->ver);
+		mach_uint8_read(strm, &header->mid);
+		mach_uint32_read(strm, &header->uid);
+
+		return 0;
+	}
+	else
+		return -1;
+}
 
 void sim_encode_msg(bin_stream_t* strm, sim_header_t* header, void* body)
 {
+	uint32_t crc;
+
 	bin_stream_rewind(strm, 1);
 
 	sim_encode_header(strm, header);
@@ -47,6 +78,10 @@ void sim_encode_msg(bin_stream_t* strm, sim_header_t* header, void* body)
 	default:
 		;
 	}
+
+	/*增加CRC值*/
+	crc = crc32(CRC_VAL, strm->data, strm->used);
+	mach_uint32_write(strm, crc);
 }
 
 int sim_decode_msg(bin_stream_t* strm, sim_header_t* header, void* body)
