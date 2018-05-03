@@ -171,8 +171,8 @@ uint32_t pacer_queue_target_bitrate_kbps(pacer_queue_t* que, int64_t now_ts)
 	uint32_t ret = 0, space;
 
 	if (que->oldest_ts != -1 && now_ts > que->oldest_ts){
-		space = (uint32_t)(now_ts - que->oldest_ts) / 10;
-		if (space > k_max_pace_queue_ms)
+		space = (uint32_t)(now_ts - que->oldest_ts);
+		if (space >= k_max_pace_queue_ms)
 			space = 1;
 		else
 			space = k_max_pace_queue_ms - space;

@@ -37,7 +37,7 @@ void					pace_destroy(pace_sender_t* pace);
 void					pace_set_estimate_bitrate(pace_sender_t* pace, uint32_t bitrate_pbs);
 void					pace_set_bitrate_limits(pace_sender_t* pace, uint32_t min_sent_bitrate);
 
-void					pace_insert_packet(pace_sender_t* pace, uint32_t seq, int retrans, size_t size, int64_t now_ts);
+int						pace_insert_packet(pace_sender_t* pace, uint32_t seq, int retrans, size_t size, int64_t now_ts);
 
 int64_t					pace_queue_ms(pace_sender_t* pace);
 size_t					pace_queue_size(pace_sender_t* pace);

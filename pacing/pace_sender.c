@@ -63,7 +63,7 @@ void pace_set_bitrate_limits(pace_sender_t* pace, uint32_t min_sent_bitrate)
 }
 
 /*将一个即将要发送的报文放入排队队列中*/
-void pace_insert_packet(pace_sender_t* pace, uint32_t seq, int retrans, size_t size, int64_t now_ts)
+int pace_insert_packet(pace_sender_t* pace, uint32_t seq, int retrans, size_t size, int64_t now_ts)
 {
 	packet_event_t ev;
 	ev.seq = seq;
@@ -71,7 +71,7 @@ void pace_insert_packet(pace_sender_t* pace, uint32_t seq, int retrans, size_t s
 	ev.size = size;
 	ev.que_ts = now_ts;
 	ev.sent = 0;
-	pacer_queue_push(&pace->que, &ev);
+	return pacer_queue_push(&pace->que, &ev);
 }
 
 int64_t pace_queue_ms(pace_sender_t* pace)
@@ -128,7 +128,7 @@ void pace_try_transmit(pace_sender_t* pace, int64_t now_ts)
 	
 	/*计算media budget中需要的码率,并更新到media budget之中*/
 	if (pacer_queue_bytes(&pace->que) > 0){
-		target_bitrate_kbps = pacer_queue_target_bitrate_kbps(&pace->que, now_ts);
+		target_bitrate_kbps = pacer_queue_target_bitrate_kbps(&pace->que, now_ts) /*+ pace->pacing_bitrate_kpbs;*/;
 		target_bitrate_kbps = SU_MAX(pace->pacing_bitrate_kpbs, target_bitrate_kbps);
 	}
 	else
