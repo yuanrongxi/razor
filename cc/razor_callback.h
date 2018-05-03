@@ -35,7 +35,7 @@ typedef void(*sender_heartbeat_func)(razor_sender_t* sender);
 typedef void(*sender_set_bitrates)(razor_sender_t* sender, uint32_t min_bitrate, uint32_t start_bitrate, uint32_t max_bitrate);
 
 /*发送端增加一个待发送的报文*/
-typedef void(*sender_add_packet_func)(razor_sender_t* sender, uint32_t packet_id, int retrans, size_t size);
+typedef int(*sender_add_packet_func)(razor_sender_t* sender, uint32_t packet_id, int retrans, size_t size);
 
 /*上层将一个报文发送到网络后需要将其传输的自增长seq id和报文大小传入拥塞控制对象中进行记录，以便做对照查询*/
 typedef void(*sender_on_send_func)(razor_sender_t* sender, uint16_t transport_seq, size_t size);

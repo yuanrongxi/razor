@@ -21,10 +21,12 @@ static void razor_sender_set_bitrates(razor_sender_t* sender, uint32_t min_bitra
 		sender_cc_set_bitrates((sender_cc_t*)sender, min_bitrate, start_bitrate, max_bitrate);
 }
 
-static void razor_sender_add_packet(razor_sender_t* sender, uint32_t packet_id, int retrans, size_t size)
+static int razor_sender_add_packet(razor_sender_t* sender, uint32_t packet_id, int retrans, size_t size)
 {
 	if (sender != NULL)
-		sender_cc_add_pace_packet((sender_cc_t*)sender, packet_id, retrans, size);
+		return sender_cc_add_pace_packet((sender_cc_t*)sender, packet_id, retrans, size);
+	else
+		return -1;
 }
 
 static void razor_sender_on_send(razor_sender_t* sender, uint16_t transport_seq, size_t size)

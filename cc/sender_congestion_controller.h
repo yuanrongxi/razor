@@ -42,7 +42,7 @@ void							sender_cc_destroy(sender_cc_t* cc);
 void							sender_cc_heartbeat(sender_cc_t* cc);
 
 /*packet_id是报文序号，相当于RTP的头中的SEQ*/
-void							sender_cc_add_pace_packet(sender_cc_t* cc, uint32_t packet_id, int retrans, size_t size);
+int								sender_cc_add_pace_packet(sender_cc_t* cc, uint32_t packet_id, int retrans, size_t size);
 /*这里的seq是transport的自增长ID，即使包重发，这个ID也是不一样的*/
 void							sender_on_send_packet(sender_cc_t* cc, uint16_t seq, size_t size);
 

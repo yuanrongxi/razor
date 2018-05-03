@@ -99,9 +99,9 @@ void sender_cc_heartbeat(sender_cc_t* cc)
 	bitrate_controller_heartbeat(cc->bitrate_controller, now_ts);
 }
 
-void sender_cc_add_pace_packet(sender_cc_t* cc, uint32_t packet_id, int retrans, size_t size)
+int sender_cc_add_pace_packet(sender_cc_t* cc, uint32_t packet_id, int retrans, size_t size)
 {
-	pace_insert_packet(cc->pacer, packet_id, retrans, size, GET_SYS_MS());
+	return pace_insert_packet(cc->pacer, packet_id, retrans, size, GET_SYS_MS());
 }
 
 void sender_on_send_packet(sender_cc_t* cc, uint16_t seq, size_t size)
