@@ -30,7 +30,6 @@
 #include <pthread.h>
 #include <stdarg.h>
 #include <errno.h>
-#include "cf_gcc.h"
 #endif
 
 #ifdef __cplusplus
