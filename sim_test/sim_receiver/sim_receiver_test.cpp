@@ -34,6 +34,7 @@ static msg_queue_t main_queue;
 su_mutex main_mutex;
 static uint32_t g_sbw = 0;
 static uint32_t g_rbw = 0;
+static int g_rtt = 200;
 
 static void notify_callback(int type, uint32_t val)
 {
@@ -64,10 +65,11 @@ static void notify_change_bitrate(uint32_t bitrate_kbps)
 {
 }
 
-static void notify_state(uint32_t rbw, uint32_t sbw)
+static void notify_state(uint32_t rbw, uint32_t sbw, int32_t rtt)
 {
 	g_sbw = sbw;
 	g_rbw = rbw;
+	g_rtt = rtt;
 }
 
 static int64_t play_video(uint8_t* video_frame, size_t size)
@@ -105,7 +107,7 @@ static void main_loop_event()
 	int run = 1, packet_count, play_flag;
 	uint8_t* frame;
 	size_t size;
-	uint32_t delay;
+	uint32_t delay, max_delay;
 	int64_t frame_ts, now_ts, tick_ts;
 
 	frame = (uint8_t*)malloc(FRAME_SIZE * sizeof(uint8_t));
@@ -113,10 +115,12 @@ static void main_loop_event()
 
 	tick_ts = GET_SYS_MS();
 	delay = 0;
+	max_delay = 0;
 	packet_count = 0;
 	play_flag = 0;
 
 	while (run){
+		su_mutex_lock(main_mutex);
 
 		if (main_queue.size() > 0){
 			msg = main_queue.front();
@@ -136,6 +140,8 @@ static void main_loop_event()
 			}
 		}
 
+		su_mutex_unlock(main_mutex);
+
 		/*收视频模拟的频数据*/
 		if (play_flag == 1){
 			frame_ts = play_video(frame, size);
@@ -143,13 +149,14 @@ static void main_loop_event()
 			/*进行数据合法性校验*/
 			now_ts = GET_SYS_MS();
 			if (now_ts >= frame_ts && frame_ts > 0){
-				delay += (uint32_t)(now_ts - frame_ts);
+				delay = (uint32_t)(now_ts - frame_ts);
+				max_delay = SU_MAX(delay, max_delay);
 				packet_count++;
 				if (tick_ts + 1000 < now_ts){
 
-					printf("%ums, sbw = %ukb/s, rbw = %ukb/s\n", delay / packet_count, g_sbw, g_rbw);
+					printf("max_delay = %ums, sbw = %ukb/s, rbw = %ukb/s, rtt = %u\n", max_delay, g_sbw, g_rbw, g_rtt);
 					packet_count = 0;
-					delay = 0;
+					max_delay = 0;
 					tick_ts = now_ts;
 				}
 			}
