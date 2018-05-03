@@ -29,7 +29,7 @@ enum{
 typedef void(*sim_notify_fn)(int type, uint32_t val);
 typedef int(*sim_log_fn)(int level, const char* fmt, va_list vl);
 typedef void(*sim_change_bitrate_fn)(uint32_t bw);
-typedef void(*sim_state_fn)(uint32_t rbw, uint32_t sbw);
+typedef void(*sim_state_fn)(uint32_t rbw, uint32_t sbw, int32_t rtt);
 
 /*uid是本地用户ID， port是本地端口用于连接对方*/
 void		sim_init(uint16_t port, sim_log_fn log_cb, sim_notify_fn notify_cb, sim_change_bitrate_fn change_bitrate_cb, sim_state_fn state_cb);
