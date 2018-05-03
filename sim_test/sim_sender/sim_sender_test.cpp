@@ -94,16 +94,20 @@ static void notify_change_bitrate(uint32_t bitrate_kbps)
 	su_mutex_unlock(main_mutex);
 }
 
-static void notify_state(uint32_t rbw, uint32_t sbw)
+static uint32_t g_rbw = 0;
+static uint32_t g_sbw = 0;
+static int32_t g_rtt = 0;
+
+static void notify_state(uint32_t rbw, uint32_t sbw, int32_t rtt)
 {
-	printf("send bandwidth = %uKB/s, recv bandwidth = %uKB/s\n", sbw, rbw);
+	g_rbw = rbw;
+	g_sbw = sbw;
+	g_rtt = rtt;
 }
 
 #define MAX_SEND_BITRATE (300 * 8 * 1000)
 #define MIN_SEND_BITRATE (100 * 8 * 1000)
 #define START_SEND_BITRATE (140 * 8 * 1000)
-
-#define MAX_VIDEO_BITRATE (300 * 8)
 
 typedef struct
 {
@@ -128,9 +132,11 @@ static void try_send_video(video_sender_t* sender)
 		return;
 
 	now_ts = GET_SYS_MS();
-	if (now_ts >= sender->prev_ts + 1000 / sender->frame_rate + 1){
+	if (now_ts >= sender->prev_ts + 1000 / sender->frame_rate){
 		space = (now_ts - sender->prev_ts);
 		frame_size = sender->bitrate_kbps / 8 * space;
+
+		sender->prev_ts = now_ts;
 
 		if (frame_size > 200){
 			frame_size -= 200;
@@ -144,15 +150,17 @@ static void try_send_video(video_sender_t* sender)
 		memcpy(pos, &now_ts, sizeof(now_ts));
 		pos += sizeof(now_ts);
 
+		/*限制下模拟包的大小*/
+		if (frame_size > 800 * 1000)
+			return;
+
 		ftype = 0;
 		if (sender->index % (sender->frame_rate * 4) == 0) /*关键帧*/
 			ftype = 1;
 
 		sim_send_video(ftype, sender->frame, frame_size);
-
-		sender->prev_ts = now_ts;
 		/*只发送一帧试一试*/
-		if (++sender->index > 10000)
+		if (++sender->index > 20000)
 			sender->record_flag = 0;
 	}
 }
@@ -166,11 +174,17 @@ static void main_loop_event()
 	int run = 1;
 	int disconnecting = 0;
 	sender.frame = (uint8_t*)malloc(FRAME_SIZE);
+	int64_t prev_ts, now_ts;
+
+	prev_ts = now_ts = GET_SYS_MS();
 
 	while (run){
+		su_mutex_lock(main_mutex);
 		if (main_queue.size() > 0){
 			msg = main_queue.front();
 			main_queue.pop_front();
+			
+			su_mutex_unlock(main_mutex);
 
 			switch (msg.msg_id){
 			case el_connect:
@@ -208,21 +222,31 @@ static void main_loop_event()
 
 			case el_resume:
 				printf("resume sender!\n");
+				sender.record_flag = 1;
 				break;
 
 			case el_change_bitrate:
-				if (msg.val <= MAX_VIDEO_BITRATE){
+				if (msg.val <= MAX_SEND_BITRATE / 1000){
 					sender.bitrate_kbps = msg.val;
 					printf("set bytes rate = %ukb/s\n", sender.bitrate_kbps / 8);
 				}
 				break;
 			}
 		}
+		else{
+			su_mutex_unlock(main_mutex);
+		}
 
 		try_send_video(&sender);
 
+		now_ts = GET_SYS_MS();
+		if (now_ts >= 1000 + prev_ts){
+			printf("send = %ukb/s, recv = %ukb/s, rtt = %ums, frame id = %d\n", g_sbw, g_rbw, g_rtt, sender.index);
+			prev_ts = now_ts;
+		}
+
 		su_sleep(0, 10000);
-		if (sender.index >= 10000 && disconnecting == 0){
+		if (sender.index >= 20000 && disconnecting == 0){
 			sim_disconnect();
 			disconnecting = 1;
 		}
@@ -244,9 +268,9 @@ int main(int argc, const char* argv[])
 	main_mutex = su_create_mutex();
 
 	sim_init(16000, log_win_write, notify_callback, notify_change_bitrate, notify_state);
-	sim_set_bitrates(MIN_SEND_BITRATE, START_SEND_BITRATE, MAX_SEND_BITRATE * 3);
+	sim_set_bitrates(MIN_SEND_BITRATE, START_SEND_BITRATE, MAX_SEND_BITRATE * 5/4);
 
-	if (sim_connect(1000, "192.168.150.18", 16001) != 0){
+	if (sim_connect(1000, "192.168.150.30", 9200) != 0){
 		printf("sim connect failed!\n");
 		goto err;
 	}
