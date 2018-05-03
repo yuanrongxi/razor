@@ -55,6 +55,8 @@ sim_session_t* sim_session_create(uint16_t port, sim_notify_fn notify_cb, sim_ch
 		goto err;
 	}
 
+	su_socket_noblocking(session->s);
+
 	session->mutex = su_create_mutex();
 	bin_stream_init(&session->sstrm);
 
@@ -249,7 +251,6 @@ void sim_session_set_bitrates(sim_session_t* s, uint32_t min_bitrate, uint32_t s
 
 int sim_session_network_send(sim_session_t* s, bin_stream_t* strm)
 {
-	uint32_t crc;
 	if (s->s < 0 || strm->used <= 0)
 		return -1;
 	
@@ -498,7 +499,7 @@ static void process_sim_feedback(sim_session_t* s, sim_header_t* header, bin_str
 	if (sim_decode_msg(strm, header, &feedback) != 0)
 		return;
 
-	sim_debug("recv SIM_FEEDBACK, feedback size = %d\n", strm->used);
+	/*sim_debug("recv SIM_FEEDBACK, feedback size = %d\n", strm->used);*/
 
 	if (s->sender != NULL)
 		sim_sender_feedback(s, s->sender, &feedback);
@@ -577,7 +578,7 @@ static void sim_session_send_ping(sim_session_t* s, int64_t now_ts)
 	s->resend++;
 
 	/*网络超时3秒了，不进行发送报文*/
-	if (s->resend > 3){
+	if (s->resend > 12){
 		s->interrupt = net_interrupt;
 		s->notify_cb(net_interrupt_notify, 0);
 	}
@@ -585,7 +586,7 @@ static void sim_session_send_ping(sim_session_t* s, int64_t now_ts)
 
 #define TICK_DELAY_MS 1000
 typedef void(*sim_session_command_func)(sim_session_t* s, int64_t now_ts);
-static void sim_session_state_timer(sim_session_t* s, int64_t now_ts, sim_session_command_func fn, int type)
+static void sim_session_state_timer(sim_session_t* s, int64_t now_ts, sim_session_command_func fn, int type, int tick_delay)
 {
 	uint32_t delay;
 
@@ -595,10 +596,10 @@ static void sim_session_state_timer(sim_session_t* s, int64_t now_ts, sim_sessio
 		s->stat_ts = now_ts;
 
 		if (s->state_cb != NULL)
-			s->state_cb(s->rbandwidth * 1000 / delay, s->sbandwidth * 1000 / delay);
+			s->state_cb(s->rbandwidth * 1000 / delay, s->sbandwidth * 1000 / delay, s->rtt + s->rtt_var);
 
-		sim_info("sim transport, send count = %u, recv count = %u, send bandwidth = %u, recv bandwidth = %u\n",
-			s->scount /3, s->rcount / 3, s->sbandwidth * 1000 / delay, s->rbandwidth * 1000 / delay);
+		sim_info("sim transport, send count = %u, recv count = %u, send bandwidth = %u, recv bandwidth = %u, rtt = %d\n",
+			s->scount /3, s->rcount / 3, s->sbandwidth * 1000 / delay, s->rbandwidth * 1000 / delay, s->rtt + s->rtt_var);
 
 		s->rbandwidth = 0;
 		s->sbandwidth = 0;
@@ -606,11 +607,11 @@ static void sim_session_state_timer(sim_session_t* s, int64_t now_ts, sim_sessio
 		s->rcount = 0;
 
 		if (s->sender != NULL && s->sender->cc != NULL)
-			sim_info("pace queue delay = %u ms", s->sender->cc->get_pacer_queue_ms(s->sender->cc));
+			sim_info("pace queue delay = %u ms\n", s->sender->cc->get_pacer_queue_ms(s->sender->cc));
 	}
 
-	if (s->commad_ts + TICK_DELAY_MS < now_ts){
-		if (s->resend <= 10){
+	if (s->commad_ts + tick_delay < now_ts){
+		if (s->resend * tick_delay < 10000){
 			fn(s, now_ts);
 		}
 		else{
@@ -631,7 +632,7 @@ static void sim_session_heartbeat(sim_session_t* s, int64_t now_ts)
 
 	switch (s->state){
 	case session_connecting:
-		sim_session_state_timer(s, now_ts, sim_session_send_connect, sim_connect_notify);
+		sim_session_state_timer(s, now_ts, sim_session_send_connect, sim_connect_notify, TICK_DELAY_MS);
 		break;
 
 	case session_connected:
@@ -640,7 +641,7 @@ static void sim_session_heartbeat(sim_session_t* s, int64_t now_ts)
 		break;
 
 	case session_disconnected:
-		sim_session_state_timer(s, now_ts, sim_session_send_disconnect, sim_disconnect_notify);
+		sim_session_state_timer(s, now_ts, sim_session_send_disconnect, sim_disconnect_notify, TICK_DELAY_MS);
 		break;
 
 	default:
@@ -648,7 +649,7 @@ static void sim_session_heartbeat(sim_session_t* s, int64_t now_ts)
 	}
 
 	if (s->sender != NULL || s->receiver != NULL)
-		sim_session_state_timer(s, now_ts, sim_session_send_ping, sim_network_timout);
+		sim_session_state_timer(s, now_ts, sim_session_send_ping, sim_network_timout, TICK_DELAY_MS / 4);
 }
 
 
