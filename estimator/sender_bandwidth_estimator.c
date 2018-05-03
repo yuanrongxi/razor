@@ -234,6 +234,7 @@ void sender_estimation_update(sender_estimation_t* est, int64_t cur_ts)
 		if (est->curr_bitrate < est->bitrate_threshold || loss < est->low_loss_threshold){
 			pos = est->begin_index % MIN_HISTORY_ARR_SIZE;
 			new_bitrate = (uint32_t)(est->min_bitrates[pos].bitrate * 1.08 + 0.5 + 1000); /*1000是防止min_bitrate太小造成叠加无效*/
+			/*razor_debug("sender_estimation_update, loss < 2, new_bitrate = %u\n", new_bitrate);*/
 
 		}
 		else if (est->curr_bitrate > est->bitrate_threshold){ /*码率过载，根据丢包率进行码率下降调整*/
@@ -247,6 +248,7 @@ void sender_estimation_update(sender_estimation_t* est, int64_t cur_ts)
 					est->has_decreased_since_last_fraction_loss = 0;
 
 					new_bitrate = (uint32_t)(est->curr_bitrate * (512 - est->last_fraction_loss) / 512.0f);
+					/*razor_debug("sender_estimation_update, loss >= 10, new_bitrate = %u\n", new_bitrate);*/
 				}
 			}
 		}

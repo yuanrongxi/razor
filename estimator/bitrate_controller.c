@@ -128,7 +128,7 @@ void bitrate_controller_heartbeat(bitrate_controller_t* ctrl, int64_t cur_ts)
 	uint32_t bitrate, rtt;
 	uint8_t fraction_loss;
 
-	if (cur_ts < ctrl->last_bitrate_update_ts + 25)
+	if (cur_ts < ctrl->last_bitrate_update_ts + 100)
 		return;
 
 	sender_estimation_update(ctrl->est, cur_ts);
