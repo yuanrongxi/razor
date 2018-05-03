@@ -111,7 +111,7 @@ static void evict_gop_frame(sim_session_t* s, sim_frame_cache_t* c)
 		}
 	}
 
-	sim_debug("evict_gop_frame, from frame = %u, to frame = %u!! \n", c->min_fid + 1, key_frame_id - 1);
+	sim_debug("evict_gop_frame, from frame = %u, to frame = %u!! \n", c->min_fid + 1, key_frame_id);
 	for (i = c->min_fid + 1; i < key_frame_id; i++){
 		c->frame_ts = c->frames[INDEX(i)].ts;
 		real_video_clean_frame(s, c, &c->frames[INDEX(i)]);
@@ -222,13 +222,38 @@ static inline void real_video_cache_sync_timestamp(sim_session_t* s, sim_frame_c
 	}
 }
 
+static uint32_t real_video_ready_ms(sim_session_t* s, sim_frame_cache_t* c)
+{
+	sim_frame_t* frame;
+	uint32_t i, min_ready_ts, max_ready_ts, ret;
+
+	ret = 0;
+	min_ready_ts = 0;
+	max_ready_ts = 0;
+	for (i = c->min_fid + 1; i <= c->max_fid; ++i){
+		frame = &c->frames[INDEX(i)];
+		if (real_video_cache_check_frame_full(s, frame) == 0){
+			if (min_ready_ts == 0)
+				min_ready_ts = frame->ts;
+			max_ready_ts = frame->ts;
+		}
+		else
+			break;
+	}
+
+	if (min_ready_ts > 0)
+		ret = max_ready_ts - min_ready_ts + c->frame_timer;
+
+	return ret;
+}
+
 static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t* data, size_t* sizep, int loss)
 {
 	uint32_t pos, space;
 	size_t size, buffer_size;
 	int ret, i;
 	sim_frame_t* frame;
-	uint32_t max_ts;
+	uint32_t max_ts, play_ready_ts;
 
 	buffer_size = *sizep;
 	*sizep = 0;
@@ -266,17 +291,15 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 
 		space = SU_MAX(c->wait_timer, c->frame_timer);
 
+		play_ready_ts = real_video_ready_ms(s, c);
 		/*加速播放，缩小延迟,最小能缩小到2帧间隔的延迟，太短了不利益在网络波动下进行传输*/
-		if (loss == 0){
-			if (frame->ts + space * 4 < max_ts)
-				c->frame_ts = c->frame_ts + (2 * space);
-			else if (frame->ts + space * 2 < max_ts)
-				c->frame_ts = c->frame_ts + space / 4;
-			else if (frame->ts + space <= max_ts)
-				c->frame_ts = c->frame_ts + 5;
-		}
-
-		if (c->min_fid + 1 == c->max_fid && c->frame_ts > 5) /*放慢速度*/
+		if (frame->ts + space * 4 < max_ts)
+			c->frame_ts = c->frame_ts + (2 * space);
+		else if (space * 3 / 2 < play_ready_ts)
+			c->frame_ts = c->frame_ts + SU_MAX(5, c->frame_timer / 8);
+		else if (c->frame_timer < play_ready_ts && c->frame_ts + space <= space)
+			c->frame_ts = c->frame_ts + 5;
+		else if (c->min_fid + 1 == c->max_fid && c->frame_ts > 5 && loss > 0) /*放慢速度*/
 			c->frame_ts = c->frame_ts - 5;
 
 		real_video_clean_frame(s, c, frame);
@@ -413,7 +436,9 @@ static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32
 	uint32_t i;
 	skiplist_item_t key, val;
 	skiplist_iter_t* iter;
+	int64_t now_ts;
 
+	now_ts = GET_SYS_MS();
 	key.u32 = seq;
 	skiplist_remove(r->loss, key);
 
@@ -422,7 +447,7 @@ static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32
 		iter = skiplist_search(r->loss, key);
 		if (iter == NULL){
 			sim_loss_t* l = calloc(1, sizeof(sim_loss_t));
-			l->ts = GET_SYS_MS() - s->rtt / 2;						/*设置下一个请求重传的时刻*/
+			l->ts = now_ts - (s->rtt + s->rtt_var)/ 2;						/*设置下一个请求重传的时刻*/
 			l->count = 0;
 			val.ptr = l;
 
@@ -442,6 +467,8 @@ static inline void sim_receiver_send_ack(sim_session_t* s, sim_segment_ack_t* ac
 }
 
 /*进行ack和nack确认，并计算缓冲区的等待时间*/
+#define ACK_REAL_TIME	20
+#define ACK_HB_TIME		200
 static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t seq)
 {
 	uint64_t cur_ts;
@@ -454,7 +481,7 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 
 	cur_ts = GET_SYS_MS();
 	/*如果是心跳触发*/
-	if ((hb == 0 && r->ack_ts + 20 < cur_ts) || (r->ack_ts + 200 < cur_ts)){
+	if ((hb == 0 && r->ack_ts + ACK_REAL_TIME < cur_ts) || (r->ack_ts + ACK_HB_TIME < cur_ts)){
 		ack.acked_packet_id = seq;
 		/**/
 		min_seq = real_video_cache_get_min_seq(s, r->cache);
@@ -472,7 +499,7 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 			if (iter->key.u32 <= r->base_seq)
 				continue;
 
-			space_factor = (SU_MIN(5, l->count / 2 + 1)) * (s->rtt + s->rtt_var); /*用于简单的拥塞限流，防止GET洪水*/
+			space_factor = (SU_MIN(2, l->count / 2 + 1)) * (s->rtt + s->rtt_var); /*用于简单的拥塞限流，防止GET洪水*/
 			if (l->ts + space_factor <= cur_ts && l->count < 30 && ack.nack_num < NACK_NUM){
 				ack.nack[ack.nack_num++] = iter->key.u32 - r->base_seq;
 				l->ts = cur_ts;
@@ -492,9 +519,9 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 
 	/*根据丢包重传确定视频缓冲区需要的缓冲时间*/
 	if (max_count > 1){
-		delay = (max_count * 16 + 7) * (s->rtt + s->rtt_var) / 16;
+		delay = (max_count + 8) * (s->rtt + s->rtt_var) / 8;
 		if (delay > r->cache->wait_timer)
-			r->cache->wait_timer = SU_MIN(delay, 5000);
+			r->cache->wait_timer = SU_MIN(delay, 1000);
 	}
 	else if (skiplist_size(r->loss) > 0)
 		r->cache->wait_timer = SU_MAX((s->rtt + s->rtt_var * 2), r->cache->wait_timer);
@@ -507,17 +534,15 @@ int sim_receiver_put(sim_session_t* s, sim_receiver_t* r, sim_segment_t* seg)
 	uint32_t seq;
 
 	/*拥塞报告*/
-	if (r->cc != NULL){
+	if (r->cc != NULL)
 		r->cc->on_received(r->cc, seg->transport_seq, seg->timestamp + seg->send_ts, seg->data_size + SIM_SEGMENT_HEADER_SIZE, seg->remb);
-	}
 
 	if (r->max_seq == 0 && seg->ftype == 0)
 		return -1;
 
 	seq = seg->packet_id;
-	if (r->actived == 0 || seg->packet_id <= r->base_seq){
+	if (r->actived == 0 || seg->packet_id <= r->base_seq)
 		return -1;
-	}
 
 	if (r->max_seq == 0 && seg->packet_id > seg->index){
 		r->max_seq = seg->packet_id - seg->index - 1;
