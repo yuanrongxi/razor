@@ -13,6 +13,7 @@
 #include "sim_proto.h"
 #include "cf_stream.h"
 #include "razor_api.h"			/*razor的引用头文件*/
+#include "rate_stat.h"
 #include "sim_external.h"
 
 struct __sim_session;
@@ -32,6 +33,14 @@ typedef struct __sim_receiver			sim_receiver_t;
 #define START_BITRATE	800000					/*100KB*/
 
 void					free_video_seg(skiplist_item_t key, skiplist_item_t val, void* args);
+
+/****************************************************************************************************/
+void					sim_limiter_init(sim_sender_limiter_t* limiter, int windows_size_ms);
+void					sim_limiter_destroy(sim_sender_limiter_t* limiter);
+void					sim_limiter_set_max_bitrate(sim_sender_limiter_t* limiter, uint32_t bitrate);
+int						sim_limiter_try(sim_sender_limiter_t* limiter, size_t size, int64_t now_ts);
+void					sim_limiter_update(sim_sender_limiter_t* limiter, size_t size, int64_t now_ts);
+
 /****************************************************************************************************/
 sim_sender_t*			sim_sender_create(sim_session_t* s);
 void					sim_sender_destroy(sim_session_t* s, sim_sender_t* sender);

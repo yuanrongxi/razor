@@ -5,6 +5,14 @@
 * See the file LICENSE for redistribution information.
 */
 
+/*一个nack请求包的带宽限制器*/
+typedef struct
+{
+	rate_stat_t		rate;
+	int				wnd_size;			/*统计的时间窗*/
+	uint32_t		max_rate_bps;		/*最大可以承受的码率*/
+}sim_sender_limiter_t;
+
 struct __sim_sender
 {
 	int							actived;
@@ -22,7 +30,9 @@ struct __sim_sender
 
 	sim_session_t*				s;
 
+	sim_sender_limiter_t		limiter;
 };
+
 
 
 

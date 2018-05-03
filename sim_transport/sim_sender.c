@@ -15,6 +15,8 @@
 static void sim_bitrate_change(void* trigger, uint32_t bitrate_kbps, uint8_t fraction_loss, uint32_t rtt)
 {
 	sim_session_t* s = (sim_session_t*)trigger;
+	sim_sender_t* sender = s->sender;
+
 	uint32_t overhead_bitrate, per_packets_second, payload_bitrate, video_bitrate_kbps;
 	double loss;
 	uint32_t packet_size_bit = (SIM_SEGMENT_HEADER_SIZE + SIM_VIDEO_SIZE) * 8;
@@ -46,6 +48,10 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate_kbps, uint8_t fra
 	sim_info("loss = %f, bitrate = %u, video_bitrate_kbps = %u\n", loss, bitrate_kbps, video_bitrate_kbps);
 	/*通知上层进行码率调整*/
 	s->change_bitrate_cb(video_bitrate_kbps);
+
+	/*设置重发最大的码率*/
+	if (sender != NULL)
+		sim_limiter_set_max_bitrate(&sender->limiter, bitrate_kbps * 1000);
 }
 
 static void sim_send_packet(void* handler, uint32_t packet_id, int retrans, size_t size)
@@ -66,9 +72,6 @@ static void sim_send_packet(void* handler, uint32_t packet_id, int retrans, size
 		return;
 	}
 
-	if (retrans == 1)
-		sim_debug("resend!!!!! packet id= %u\n", packet_id);
-
 	now_ts = GET_SYS_MS();
 
 	seg = it->val.ptr;
@@ -82,10 +85,9 @@ static void sim_send_packet(void* handler, uint32_t packet_id, int retrans, size
 	INIT_SIM_HEADER(header, SIM_SEG, s->uid);
 	sim_encode_msg(&s->sstrm, &header, seg);
 
-	/*if (rand() % 30 != 0)*/
 	sim_session_network_send(s, &s->sstrm);
 
-	sim_debug("send packet id = %u, transport_seq = %u\n", packet_id, sender->transport_seq_seed - 1);
+	/*sim_debug("send packet id = %u, transport_seq = %u\n", packet_id, sender->transport_seq_seed - 1);*/
 }
 
 void free_video_seg(skiplist_item_t key, skiplist_item_t val, void* args)
@@ -102,6 +104,9 @@ sim_sender_t* sim_sender_create(sim_session_t* s)
 
 	sender->cache = skiplist_create(idu32_compare, free_video_seg, s);
 	sender->cc = razor_sender_create(s, sim_bitrate_change, sender, sim_send_packet, 300);
+	
+	sim_limiter_init(&sender->limiter, 300);
+
 	sender->s = s;
 
 	return sender;
@@ -121,6 +126,8 @@ void sim_sender_destroy(sim_session_t* s, sim_sender_t* sender)
 		razor_sender_destroy(sender->cc);
 		sender->cc = NULL;
 	}
+
+	sim_limiter_destroy(&sender->limiter);
 
 	free(sender);
 }
@@ -267,23 +274,31 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 	/*推进窗口*/
 	sim_sender_update_base(s, sender, ack->base_packet_id);
 
+	now_ts = GET_SYS_MS();
+
 	for (i = 0; i < ack->nack_num; ++i){
 		key.u32 = ack->base_packet_id + ack->nack[i];
 		iter = skiplist_search(sender->cache, key);
 		if (iter != NULL){
 			seg = (sim_segment_t*)iter->val.ptr;
+
 			/*将报文加入到cc的pacer中进行重发*/
-			sender->cc->add_packet(sender->cc, seg->packet_id, 1, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
+			if (sim_limiter_try(&sender->limiter, seg->data_size + SIM_SEGMENT_HEADER_SIZE, now_ts) == 0
+				&& sender->cc->add_packet(sender->cc, seg->packet_id, 1, seg->data_size + SIM_SEGMENT_HEADER_SIZE) == 0){
+				/*发送成功，将发送的字节数据加入到限制器当中*/
+				sim_limiter_update(&sender->limiter, seg->data_size + SIM_SEGMENT_HEADER_SIZE, now_ts);
+			}
 		}
 	}
 
 	/*计算RTT*/
+	
+	now_ts = GET_SYS_MS();
+
 	key.u32 = ack->acked_packet_id;
 	iter = skiplist_search(sender->cache, key);
 	if (iter != NULL){
 		seg = (sim_segment_t*)iter->val.ptr;
-
-		now_ts = GET_SYS_MS();
 		if (now_ts > seg->timestamp + seg->send_ts + sender->first_ts)
 			sim_session_calculate_rtt(s, (uint16_t)(now_ts - seg->timestamp - seg->send_ts - sender->first_ts));
 	}
