@@ -16,7 +16,7 @@ void ex_razor_log(int level, const char* file, int line, const char *fmt, ...)
 	va_list vl;
 	if (g_log_cb != NULL) {
 		va_start(vl, fmt);
-		g_log_cb(level, fmt, vl);
+		g_log_cb(level, file, line, fmt, vl);
 		va_end(vl);
 	}
 }

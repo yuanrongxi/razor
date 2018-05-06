@@ -23,7 +23,7 @@ size是报文的长度
 typedef void(*pace_send_func)(void* handler, uint32_t packet_id, int retrans, size_t size);
 
 /*日志输出回调函数*/
-typedef int(*razor_log_func)(int level, const char* fmt, va_list vl);
+typedef int(*razor_log_func)(int level, const char* file, int line, const char* fmt, va_list vl);
 
 /*********************************发送端****************************************/
 typedef struct __razor_sender razor_sender_t;
