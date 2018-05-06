@@ -43,6 +43,7 @@ struct __sim_session
 	sim_notify_fn	notify_cb;
 	sim_change_bitrate_fn change_bitrate_cb;
 	sim_state_fn	state_cb;
+	void*			event;
 
 	bin_stream_t	sstrm;
 };
