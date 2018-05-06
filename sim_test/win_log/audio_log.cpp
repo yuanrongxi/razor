@@ -91,12 +91,30 @@ void close_win_log()
 	}
 }
 
-int log_win_write(int level, const char* fmt, va_list vl)
+static const char* get_file_name(const char* pathname)
 {
-	char date_str[128];
+	if (pathname == NULL)
+		return pathname;
+
+	int32_t size = strlen(pathname);
+
+	char *pos = (char *)pathname + size;
+	while (*pos != '\\' && pos != pathname)
+		pos--;
+
+	if (pos == pathname)
+		return pathname;
+	else
+		return pos + 1;
+}
+
+#define DATE_STR_SIZE 64
+int log_win_write(int level, const char* file, int line, const char* fmt, va_list vl)
+{
+	char date_str[DATE_STR_SIZE];
 	if (log_file != NULL && log_file->fp != NULL){
 		EnterCriticalSection(&(log_file->mutex));
-		fprintf(log_file->fp, "%s ", get_time_str(date_str));
+		fprintf(log_file->fp, "%s %s:%d ", get_time_str(date_str), get_file_name(file), line);
 		vfprintf(log_file->fp, fmt, vl);
 		LeaveCriticalSection(&(log_file->mutex));
 		fflush(log_file->fp);

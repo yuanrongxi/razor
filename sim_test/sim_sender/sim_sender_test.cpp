@@ -43,7 +43,7 @@ static msg_queue_t main_queue;
 su_mutex main_mutex;
 
 
-static void notify_callback(int type, uint32_t val)
+static void notify_callback(void* event, int type, uint32_t val)
 {
 	thread_msg_t msg;
 	msg.msg_id = el_unknown;
@@ -83,7 +83,7 @@ static void notify_callback(int type, uint32_t val)
 	su_mutex_unlock(main_mutex);
 }
 
-static void notify_change_bitrate(uint32_t bitrate_kbps)
+static void notify_change_bitrate(void* event, uint32_t bitrate_kbps)
 {
 	thread_msg_t msg;
 	msg.msg_id = el_change_bitrate;
@@ -98,7 +98,7 @@ static uint32_t g_rbw = 0;
 static uint32_t g_sbw = 0;
 static int32_t g_rtt = 0;
 
-static void notify_state(uint32_t rbw, uint32_t sbw, int32_t rtt)
+static void notify_state(void* event, uint32_t rbw, uint32_t sbw, int32_t rtt)
 {
 	g_rbw = rbw;
 	g_sbw = sbw;
@@ -267,10 +267,10 @@ int main(int argc, const char* argv[])
 
 	main_mutex = su_create_mutex();
 
-	sim_init(16000, log_win_write, notify_callback, notify_change_bitrate, notify_state);
+	sim_init(16000, NULL, log_win_write, notify_callback, notify_change_bitrate, notify_state);
 	sim_set_bitrates(MIN_SEND_BITRATE, START_SEND_BITRATE, MAX_SEND_BITRATE * 5/4);
 
-	if (sim_connect(1000, "192.168.150.30", 9200) != 0){
+	if (sim_connect(1000, "192.168.1.100", 16001) != 0){
 		printf("sim connect failed!\n");
 		goto err;
 	}

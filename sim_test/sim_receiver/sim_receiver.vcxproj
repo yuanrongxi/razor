@@ -52,7 +52,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../common;../../cc;../../sim_transport;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../common;../../cc;../../sim_transport;../win_log;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -78,13 +78,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="audio_log.cpp" />
-    <ClCompile Include="gettimeofday.cpp" />
+    <ClCompile Include="..\win_log\audio_log.cpp" />
+    <ClCompile Include="..\win_log\gettimeofday.cpp" />
     <ClCompile Include="sim_receiver_test.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="audio_log.h" />
-    <ClInclude Include="gettimeofday.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\project\razor.vcxproj">
@@ -93,6 +89,10 @@
     <ProjectReference Include="..\..\sim_transport\sim_transport.vcxproj">
       <Project>{3fa0efd2-f0d4-429a-baf8-ab73ee59e40a}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\win_log\audio_log.h" />
+    <ClInclude Include="..\win_log\gettimeofday.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

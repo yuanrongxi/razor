@@ -18,18 +18,18 @@
     <ClCompile Include="sim_sender_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="audio_log.cpp">
+    <ClCompile Include="..\win_log\audio_log.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gettimeofday.cpp">
+    <ClCompile Include="..\win_log\gettimeofday.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="audio_log.h">
+    <ClInclude Include="..\win_log\audio_log.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="gettimeofday.h">
+    <ClInclude Include="..\win_log\gettimeofday.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

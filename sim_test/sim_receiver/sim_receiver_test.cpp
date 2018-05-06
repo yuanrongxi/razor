@@ -36,7 +36,7 @@ static uint32_t g_sbw = 0;
 static uint32_t g_rbw = 0;
 static int g_rtt = 200;
 
-static void notify_callback(int type, uint32_t val)
+static void notify_callback(void* event, int type, uint32_t val)
 {
 	thread_msg_t msg;
 	msg.msg_id = el_unknown;
@@ -61,11 +61,11 @@ static void notify_callback(int type, uint32_t val)
 	su_mutex_unlock(main_mutex);
 }
 
-static void notify_change_bitrate(uint32_t bitrate_kbps)
+static void notify_change_bitrate(void* event, uint32_t bitrate_kbps)
 {
 }
 
-static void notify_state(uint32_t rbw, uint32_t sbw, int32_t rtt)
+static void notify_state(void* event, uint32_t rbw, uint32_t sbw, int32_t rtt)
 {
 	g_sbw = sbw;
 	g_rbw = rbw;
@@ -179,7 +179,7 @@ int main(int argc, const char* argv[])
 
 	main_mutex = su_create_mutex();
 
-	sim_init(16001, log_win_write, notify_callback, notify_change_bitrate, notify_state);
+	sim_init(16001, NULL, log_win_write, notify_callback, notify_change_bitrate, notify_state);
 
 	main_loop_event();
 
