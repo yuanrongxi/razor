@@ -19,11 +19,11 @@ void ex_sim_log(int level, const char* file, int line, const char *fmt, ...)
 
 	va_list vl;
 	va_start(vl, fmt);
-	g_log_func(level, fmt, vl);
+	g_log_func(level, file, line, fmt, vl);
 	va_end(vl);
 }
 
-void sim_init(uint16_t port, sim_log_fn log_cb, sim_notify_fn notify_cb, sim_change_bitrate_fn change_bitrate_cb, sim_state_fn state_cb)
+void sim_init(uint16_t port, void* event, sim_log_fn log_cb, sim_notify_fn notify_cb, sim_change_bitrate_fn change_bitrate_cb, sim_state_fn state_cb)
 {
 	if (g_inited != 0)
 		return;
@@ -37,7 +37,7 @@ void sim_init(uint16_t port, sim_log_fn log_cb, sim_notify_fn notify_cb, sim_cha
 	razor_setup_log(log_cb);
 
 	/*´´½¨session*/
-	g_session = sim_session_create(port, notify_cb, change_bitrate_cb, state_cb);
+	g_session = sim_session_create(port, event, notify_cb, change_bitrate_cb, state_cb);
 }
 
 void sim_destroy()

@@ -29,7 +29,7 @@ typedef void(*session_command_fn)(sim_session_t* s, uint64_t ts);
 
 #define MAX_TRY_TIME 100
 
-sim_session_t* sim_session_create(uint16_t port, sim_notify_fn notify_cb, sim_change_bitrate_fn change_bitrate_cb, sim_state_fn state_cb)
+sim_session_t* sim_session_create(uint16_t port, void* event, sim_notify_fn notify_cb, sim_change_bitrate_fn change_bitrate_cb, sim_state_fn state_cb)
 {
 	sim_session_t* session = calloc(1, sizeof(sim_session_t));
 	session->cid = rand();
@@ -49,6 +49,7 @@ sim_session_t* sim_session_create(uint16_t port, sim_notify_fn notify_cb, sim_ch
 	session->notify_cb = notify_cb;
 	session->change_bitrate_cb = change_bitrate_cb;
 	session->state_cb = state_cb;
+	session->event = event;
 
 	if (su_udp_create(NULL, port, &session->s) != 0){
 		free(session);
@@ -343,7 +344,7 @@ static void process_sim_connect(sim_session_t* s, sim_header_t* header, bin_stre
 	/*初始化接收端*/
 	if (s->receiver == NULL){
 		s->receiver = sim_receiver_create(s);
-		s->notify_cb(sim_start_play_notify, header->uid);
+		s->notify_cb(s->event, sim_start_play_notify, header->uid);
 	}
 	else
 		sim_receiver_reset(s, s->receiver);
@@ -398,7 +399,7 @@ static void process_sim_connect_ack(sim_session_t* s, sim_header_t* header, bin_
 		sim_info("state = session_connected, create sim sender\n");
 	}
 
-	s->notify_cb(sim_connect_notify, ack.result);
+	s->notify_cb(s->event, sim_connect_notify, ack.result);
 }
 
 static void process_sim_disconnect(sim_session_t* s, sim_header_t* header, bin_stream_t* strm, su_addr* addr)
@@ -424,7 +425,7 @@ static void process_sim_disconnect(sim_session_t* s, sim_header_t* header, bin_s
 
 	/*关闭接收端*/
 	if (s->receiver != NULL){
-		s->notify_cb(sim_stop_play_notify, s->receiver->base_uid);
+		s->notify_cb(s->event, sim_stop_play_notify, s->receiver->base_uid);
 		sim_receiver_destroy(s, s->receiver);
 		s->receiver = NULL;
 	}
@@ -436,7 +437,7 @@ static void process_sim_disconnect_ack(sim_session_t* s, sim_header_t* header, b
 
 	if (s->state == session_disconnected){
 		sim_session_reset(s);
-		s->notify_cb(sim_disconnect_notify, 0);
+		s->notify_cb(s->event, sim_disconnect_notify, 0);
 	}
 }
 static void process_sim_ping(sim_session_t* s, sim_header_t* header, bin_stream_t* strm, su_addr* addr)
@@ -518,7 +519,7 @@ static void sim_session_process(sim_session_t* s, bin_stream_t* strm, su_addr* a
 	su_addr_to_addr(addr, &s->peer);
 	if (s->interrupt == net_interrupt){
 		s->interrupt = net_recover;
-		s->notify_cb(net_recover_notify, 0); /*通知编码器可以进行编码*/
+		s->notify_cb(s->event, net_recover_notify, 0); /*通知编码器可以进行编码*/
 	}
 
 	s->resend = 0;
@@ -580,7 +581,7 @@ static void sim_session_send_ping(sim_session_t* s, int64_t now_ts)
 	/*网络超时3秒了，不进行发送报文*/
 	if (s->resend > 12){
 		s->interrupt = net_interrupt;
-		s->notify_cb(net_interrupt_notify, 0);
+		s->notify_cb(s->event, net_interrupt_notify, 0);
 	}
 }
 
@@ -596,7 +597,7 @@ static void sim_session_state_timer(sim_session_t* s, int64_t now_ts, sim_sessio
 		s->stat_ts = now_ts;
 
 		if (s->state_cb != NULL)
-			s->state_cb(s->rbandwidth * 1000 / delay, s->sbandwidth * 1000 / delay, s->rtt + s->rtt_var);
+			s->state_cb(s->event, s->rbandwidth * 1000 / delay, s->sbandwidth * 1000 / delay, s->rtt + s->rtt_var);
 
 		sim_info("sim transport, send count = %u, recv count = %u, send bandwidth = %u, recv bandwidth = %u, rtt = %d\n",
 			s->scount /3, s->rcount / 3, s->sbandwidth * 1000 / delay, s->rbandwidth * 1000 / delay, s->rtt + s->rtt_var);
@@ -616,11 +617,11 @@ static void sim_session_state_timer(sim_session_t* s, int64_t now_ts, sim_sessio
 		}
 		else{
 			if (s->receiver != NULL){
-				s->notify_cb(sim_stop_play_notify, s->receiver->base_uid);
+				s->notify_cb(s->event, sim_stop_play_notify, s->receiver->base_uid);
 			}
 
 			sim_session_reset(s);
-			s->notify_cb(type, 1);
+			s->notify_cb(s->event, type, 1);
 		}
 	}
 }

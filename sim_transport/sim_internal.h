@@ -65,7 +65,7 @@ void					sim_receiver_timer(sim_session_t* s, sim_receiver_t* r, int64_t now_ts)
 void					sim_receiver_update_rtt(sim_session_t* s, sim_receiver_t* r);
 /**************************************************************************************************/
 
-sim_session_t*			sim_session_create(uint16_t port, sim_notify_fn notify_cb, sim_change_bitrate_fn change_bitrate_cb, sim_state_fn state_cb);
+sim_session_t*			sim_session_create(uint16_t port, void* event, sim_notify_fn notify_cb, sim_change_bitrate_fn change_bitrate_cb, sim_state_fn state_cb);
 void					sim_session_destroy(sim_session_t* s);
 
 /*连接一个接收端*/
