@@ -13,7 +13,7 @@
 
 
 
-pace_sender_t* pace_create(void* handler, pace_send_func send_cb)
+pace_sender_t* pace_create(void* handler, pace_send_func send_cb, uint32_t que_ms)
 {
 	pace_sender_t* pace = calloc(1, sizeof(pace_sender_t));
 
@@ -23,7 +23,7 @@ pace_sender_t* pace_create(void* handler, pace_send_func send_cb)
 	pace->send_cb = send_cb;
 
 	pace->alr = alr_detector_create();
-	pacer_queue_init(&pace->que);
+	pacer_queue_init(&pace->que, que_ms);
 
 	init_interval_budget(&pace->media_budget, 0, -1);
 	increase_budget(&pace->media_budget, k_min_packet_limit_ms);

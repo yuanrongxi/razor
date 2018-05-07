@@ -31,7 +31,7 @@ typedef struct
 	pace_send_func		send_cb;
 }pace_sender_t;
 
-pace_sender_t*			pace_create(void* handler, pace_send_func send_cb);
+pace_sender_t*			pace_create(void* handler, pace_send_func send_cb, uint32_t que_ms);
 void					pace_destroy(pace_sender_t* pace);
 
 void					pace_set_estimate_bitrate(pace_sender_t* pace, uint32_t bitrate_pbs);

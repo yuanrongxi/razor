@@ -4,7 +4,6 @@
 *
 * See the file LICENSE for redistribution information.
 */
-
 #ifndef __pacer_queue_h_
 #define __pacer_queue_h_
 
@@ -12,7 +11,7 @@
 #include "cf_skiplist.h"
 #include "cf_list.h"
 
-#define k_max_pace_queue_ms			1000			/*pacer queue缓冲的最大延迟*/
+#define k_max_pace_queue_ms			250			/*pacer queue缓冲的最大延迟*/
 
 typedef struct
 {
@@ -25,13 +24,14 @@ typedef struct
 
 typedef struct
 {
+	uint32_t		max_que_ms;		/*pacer可以接受最大的延迟*/
 	size_t			total_size;
 	int64_t			oldest_ts;		/*最早帧的时间戳*/
 	skiplist_t*		cache;			/*按绝对SEQ排队的队列*/
 	base_list_t*	l;				/*按时间先后的队列*/
 }pacer_queue_t;
 
-void					pacer_queue_init(pacer_queue_t* que);
+void					pacer_queue_init(pacer_queue_t* que, uint32_t que_ms);
 void					pacer_queue_destroy(pacer_queue_t* que);
 
 int						pacer_queue_push(pacer_queue_t* que, packet_event_t* ev);

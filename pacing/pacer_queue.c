@@ -15,8 +15,9 @@ static void pacer_free_packet_event(skiplist_item_t key, skiplist_item_t val, vo
 	}
 }
 
-void pacer_queue_init(pacer_queue_t* que)
+void pacer_queue_init(pacer_queue_t* que, uint32_t que_ms)
 {
+	que->max_que_ms = SU_MAX(que_ms, k_max_pace_queue_ms);
 	que->oldest_ts = -1;
 	que->total_size = 0;
 	que->cache = skiplist_create(idu32_compare, pacer_free_packet_event, NULL);
