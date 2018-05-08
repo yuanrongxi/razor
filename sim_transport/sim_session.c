@@ -104,6 +104,9 @@ static void sim_session_reset(sim_session_t* s)
 	s->sbandwidth = 0;
 	s->rcount = 0;
 	s->scount = 0;
+	s->video_bytes = 0;
+	s->max_frame_size = 0;
+
 	s->stat_ts = GET_SYS_MS();
 	s->resend = 0;
 	s->commad_ts = s->stat_ts;
@@ -218,9 +221,11 @@ int sim_session_send_video(sim_session_t* s, uint8_t ftype, const uint8_t* data,
 	if (s->interrupt == net_interrupt) /*网络中断，进行帧丢弃*/
 		goto err;
 
+	s->video_bytes += size;
 	if (s->sender != NULL)
 		ret = sim_sender_put(s, s->sender, ftype, data, size);
 
+	s->max_frame_size = SU_MAX(size, s->max_frame_size);
 err:
 	su_mutex_unlock(s->mutex);
 	return ret;
@@ -240,9 +245,9 @@ int sim_session_recv_video(sim_session_t* s, uint8_t* data, size_t* sizep)
 
 void sim_session_set_bitrates(sim_session_t* s, uint32_t min_bitrate, uint32_t start_bitrate, uint32_t max_bitrate)
 {
-	s->min_bitrate = min_bitrate;
-	s->max_bitrate = max_bitrate;
-	s->start_bitrate = (uint32_t)(start_bitrate * (SIM_SEGMENT_HEADER_SIZE + SIM_VIDEO_SIZE) * 1.05 / SIM_VIDEO_SIZE);
+	s->min_bitrate = (int)(min_bitrate * 1.05f);
+	s->max_bitrate = (int)(max_bitrate * 1.05f);
+	s->start_bitrate = (int)(start_bitrate * (SIM_SEGMENT_HEADER_SIZE + SIM_VIDEO_SIZE) * 1.05 / SIM_VIDEO_SIZE);
 	s->start_bitrate = SU_MIN(max_bitrate, s->start_bitrate);
 
 	/*如果sender没有创建，在sender create的时候进行设置*/
@@ -586,29 +591,37 @@ static void sim_session_send_ping(sim_session_t* s, int64_t now_ts)
 }
 
 #define TICK_DELAY_MS 1000
+#define SIM_INFO_SIZE 1024
 typedef void(*sim_session_command_func)(sim_session_t* s, int64_t now_ts);
 static void sim_session_state_timer(sim_session_t* s, int64_t now_ts, sim_session_command_func fn, int type, int tick_delay)
 {
-	uint32_t delay;
+	uint32_t delay, pacer_ms;
+	char info[SIM_INFO_SIZE];
 
-	if (s->stat_ts + 3*1000 < now_ts){
+	if (s->stat_ts + 1000 < now_ts){
 		delay = (uint32_t)(now_ts - s->stat_ts) * 1024;
 
 		s->stat_ts = now_ts;
 
-		if (s->state_cb != NULL)
-			s->state_cb(s->event, s->rbandwidth * 1000 / delay, s->sbandwidth * 1000 / delay, s->rtt + s->rtt_var);
+		pacer_ms = 0;
+		if (s->sender != NULL && s->sender->cc != NULL)
+			pacer_ms = s->sender->cc->get_pacer_queue_ms(s->sender->cc);
 
-		sim_info("sim transport, send count = %u, recv count = %u, send bandwidth = %u, recv bandwidth = %u, rtt = %d\n",
-			s->scount /3, s->rcount / 3, s->sbandwidth * 1000 / delay, s->rbandwidth * 1000 / delay, s->rtt + s->rtt_var);
+		if (s->state_cb != NULL){
+			sprintf(info, "video rate = %ukb/s, send = %ukb/s, recv = %ukb/s, rtt = %dms, max frame = %u, pacer delay = %ums",
+				s->video_bytes * 1000 / delay, s->sbandwidth * 1000 / delay, s->rbandwidth * 1000 / delay, s->rtt + s->rtt_var, s->max_frame_size, pacer_ms);
+			s->state_cb(s->event, info);
+		}
+
+		sim_info("sim transport, send count = %u, recv count = %u, send bandwidth = %ukb/s, recv bandwidth = %ukb/s, rtt = %d, video rate = %ukb/s, pacer delay = %ums\n",
+			s->scount / 3, s->rcount / 3, s->sbandwidth * 1000 / delay, s->rbandwidth * 1000 / delay, s->rtt + s->rtt_var, s->video_bytes * 1000 / delay, pacer_ms);
 
 		s->rbandwidth = 0;
 		s->sbandwidth = 0;
 		s->scount = 0;
 		s->rcount = 0;
-
-		if (s->sender != NULL && s->sender->cc != NULL)
-			sim_info("pace queue delay = %u ms\n", s->sender->cc->get_pacer_queue_ms(s->sender->cc));
+		s->video_bytes = 0;
+		s->max_frame_size = 0;
 	}
 
 	if (s->commad_ts + tick_delay < now_ts){

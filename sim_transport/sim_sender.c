@@ -103,7 +103,8 @@ sim_sender_t* sim_sender_create(sim_session_t* s)
 	sender->first_ts = -1;
 
 	sender->cache = skiplist_create(idu32_compare, free_video_seg, s);
-	sender->cc = razor_sender_create(s, sim_bitrate_change, sender, sim_send_packet, 300);
+	/*pacer queue的延迟不大于250ms*/
+	sender->cc = razor_sender_create(s, sim_bitrate_change, sender, sim_send_packet, 250);
 	
 	sim_limiter_init(&sender->limiter, 300);
 

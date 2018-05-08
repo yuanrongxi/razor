@@ -290,18 +290,20 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 		}
 
 		space = SU_MAX(c->wait_timer, c->frame_timer);
-
+	
 		play_ready_ts = real_video_ready_ms(s, c);
-		/*加速播放，缩小延迟,最小能缩小到2帧间隔的延迟，太短了不利益在网络波动下进行传输*/
+		/*加速播放，缩小延迟,最小能缩小到2帧间隔的延迟，太短了不利在网络波动下进行传输*/	
 		if (frame->ts + space * 4 < max_ts)
-			c->frame_ts = c->frame_ts + (2 * space);
+			c->frame_ts = frame->ts + 10;
 		else if (space * 3 / 2 < play_ready_ts)
-			c->frame_ts = c->frame_ts + SU_MAX(5, c->frame_timer / 8);
-		else if (c->frame_timer < play_ready_ts && c->frame_ts + space <= space)
-			c->frame_ts = c->frame_ts + 5;
-		else if (c->min_fid + 1 == c->max_fid && c->frame_ts > 5 && loss > 0) /*放慢速度*/
-			c->frame_ts = c->frame_ts - 5;
-
+			c->frame_ts = frame->ts + 5;
+		else if (space < play_ready_ts && frame->ts + space <= max_ts)
+			c->frame_ts = c->frame_ts + 3;
+		else if (c->min_fid + 1 == c->max_fid && frame->ts > 5) /*放慢速度*/
+			c->frame_ts = frame->ts - 5;
+		else
+			c->frame_ts = frame->ts;
+		
 		real_video_clean_frame(s, c, frame);
 		ret = 0;
 	}
@@ -447,7 +449,7 @@ static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32
 		iter = skiplist_search(r->loss, key);
 		if (iter == NULL){
 			sim_loss_t* l = calloc(1, sizeof(sim_loss_t));
-			l->ts = now_ts - (s->rtt + s->rtt_var)/ 2;						/*设置下一个请求重传的时刻*/
+			l->ts = now_ts - s->rtt/ 2;						/*设置下一个请求重传的时刻*/
 			l->count = 0;
 			val.ptr = l;
 
@@ -463,7 +465,7 @@ static inline void sim_receiver_send_ack(sim_session_t* s, sim_segment_ack_t* ac
 
 	sim_encode_msg(&s->sstrm, &header, ack);
 	sim_session_network_send(s, &s->sstrm);
-	sim_debug("send SEG_ACK, base = %u, ack_id = %u\n", ack->base_packet_id, ack->acked_packet_id);
+	/*sim_debug("send SEG_ACK, base = %u, ack_id = %u\n", ack->base_packet_id, ack->acked_packet_id);*/
 }
 
 /*进行ack和nack确认，并计算缓冲区的等待时间*/
@@ -521,10 +523,10 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 	if (max_count > 1){
 		delay = (max_count + 8) * (s->rtt + s->rtt_var) / 8;
 		if (delay > r->cache->wait_timer)
-			r->cache->wait_timer = SU_MIN(delay, 1000);
+			r->cache->wait_timer = SU_MIN(delay, 2000);
 	}
 	else if (skiplist_size(r->loss) > 0)
-		r->cache->wait_timer = SU_MAX((s->rtt + s->rtt_var * 2), r->cache->wait_timer);
+		r->cache->wait_timer = SU_MAX((s->rtt + s->rtt_var), r->cache->wait_timer);
 
 	r->cache->wait_timer = SU_MAX(r->cache->frame_timer, r->cache->wait_timer);
 }
