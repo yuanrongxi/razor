@@ -38,7 +38,7 @@ sender_cc_t* sender_cc_create(void* trigger, bitrate_changed_func bitrate_cb, vo
 
 	cc->ack = ack_estimator_create();
 	cc->bwe = delay_bwe_create();
-	cc->pacer = pace_create(handler, send_cb);
+	cc->pacer = pace_create(handler, send_cb, cc->accepted_queue_ms);
 
 	feedback_adapter_init(&cc->adapter);
 
