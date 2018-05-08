@@ -173,13 +173,13 @@ uint32_t pacer_queue_target_bitrate_kbps(pacer_queue_t* que, int64_t now_ts)
 
 	if (que->oldest_ts != -1 && now_ts > que->oldest_ts){
 		space = (uint32_t)(now_ts - que->oldest_ts);
-		if (space >= k_max_pace_queue_ms)
+		if (space >= que->max_que_ms)
 			space = 1;
 		else
-			space = k_max_pace_queue_ms - space;
+			space = que->max_que_ms - space;
 	}
 	else
-		space = k_max_pace_queue_ms - 1;
+		space = que->max_que_ms - 1;
 
 	/*计算缓冲区在500毫秒之内要发送完毕所需的带宽*/
 	if (skiplist_size(que->cache) > 0 && que->total_size > 0)
