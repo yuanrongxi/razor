@@ -1,0 +1,180 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="dshow">
+      <UniqueIdentifier>{d28c1ddb-a25f-4f57-9e07-70c03efb6773}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="h264">
+      <UniqueIdentifier>{506fd5dd-1e67-473f-8b70-70b495730ad4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="device">
+      <UniqueIdentifier>{2b4c0e00-4437-4f55-8609-c53e5dfccb9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="win_log">
+      <UniqueIdentifier>{11e4eb49-74f0-42b4-ba95-d16395e76495}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sim_framework">
+      <UniqueIdentifier>{acac4858-6917-4894-814d-40d369598764}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="echo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="echoDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dshow\DShowCameraPlay.h">
+      <Filter>dshow</Filter>
+    </ClInclude>
+    <ClInclude Include="dshow\DShowGrabberCB.h">
+      <Filter>dshow</Filter>
+    </ClInclude>
+    <ClInclude Include="dshow\DShowMic.h">
+      <Filter>dshow</Filter>
+    </ClInclude>
+    <ClInclude Include="dshow\DShowUtils.h">
+      <Filter>dshow</Filter>
+    </ClInclude>
+    <ClInclude Include="x264\echo_h264_common.h">
+      <Filter>h264</Filter>
+    </ClInclude>
+    <ClInclude Include="x264\echo_h264_encoder.h">
+      <Filter>h264</Filter>
+    </ClInclude>
+    <ClInclude Include="x264\echo_h264_decoder.h">
+      <Filter>h264</Filter>
+    </ClInclude>
+    <ClInclude Include="win32_thread.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="simple_lock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dib.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="video_device.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="video_view.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="..\win_log\audio_log.h">
+      <Filter>win_log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\win_log\gettimeofday.h">
+      <Filter>win_log</Filter>
+    </ClInclude>
+    <ClInclude Include="sim_object.h">
+      <Filter>sim_framework</Filter>
+    </ClInclude>
+    <ClInclude Include="tmpbuf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utf8to.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="record_thread.h">
+      <Filter>sim_framework</Filter>
+    </ClInclude>
+    <ClInclude Include="play_thread.h">
+      <Filter>sim_framework</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="echo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="echoDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dshow\DShowCameraPlay.cpp">
+      <Filter>dshow</Filter>
+    </ClCompile>
+    <ClCompile Include="dshow\DShowGrabberCB.cpp">
+      <Filter>dshow</Filter>
+    </ClCompile>
+    <ClCompile Include="dshow\DShowMic.cpp">
+      <Filter>dshow</Filter>
+    </ClCompile>
+    <ClCompile Include="dshow\DShowUtils.cpp">
+      <Filter>dshow</Filter>
+    </ClCompile>
+    <ClCompile Include="x264\echo_h264_encoder.cpp">
+      <Filter>h264</Filter>
+    </ClCompile>
+    <ClCompile Include="x264\echo_h264_decoder.cpp">
+      <Filter>h264</Filter>
+    </ClCompile>
+    <ClCompile Include="win32_thread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dib.cpp">
+      <Filter>device</Filter>
+    </ClCompile>
+    <ClCompile Include="video_device.cpp">
+      <Filter>device</Filter>
+    </ClCompile>
+    <ClCompile Include="video_view.cpp">
+      <Filter>device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\win_log\audio_log.cpp">
+      <Filter>win_log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\win_log\gettimeofday.cpp">
+      <Filter>win_log</Filter>
+    </ClCompile>
+    <ClCompile Include="sim_object.cpp">
+      <Filter>sim_framework</Filter>
+    </ClCompile>
+    <ClCompile Include="record_thread.cpp">
+      <Filter>sim_framework</Filter>
+    </ClCompile>
+    <ClCompile Include="play_thread.cpp">
+      <Filter>sim_framework</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="echo.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\echo.rc2">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\echo.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
