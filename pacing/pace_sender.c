@@ -36,6 +36,8 @@ void pace_destroy(pace_sender_t* pace)
 	if (pace == NULL)
 		return;
 
+	pacer_queue_destroy(&pace->que);
+
 	if (pace->alr != NULL){
 		alr_detector_destroy(pace->alr);
 		pace->alr = NULL;

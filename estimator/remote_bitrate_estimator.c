@@ -49,7 +49,7 @@ void rbe_destroy(remote_bitrate_estimator_t* est)
 	}
 
 	if (est->detector != NULL){
-		overuse_create(est->detector);
+		overuse_destroy(est->detector);
 		est->detector = NULL;
 	}
 

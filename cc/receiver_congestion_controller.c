@@ -46,6 +46,8 @@ void receiver_cc_destroy(receiver_cc_t* cc)
 
 	loss_statistics_destroy(&cc->loss_stat);
 
+	free(cc);
+
 	razor_info("destroy razor's receiver\n");
 }
 
