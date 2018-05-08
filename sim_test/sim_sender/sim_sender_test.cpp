@@ -94,15 +94,11 @@ static void notify_change_bitrate(void* event, uint32_t bitrate_kbps)
 	su_mutex_unlock(main_mutex);
 }
 
-static uint32_t g_rbw = 0;
-static uint32_t g_sbw = 0;
-static int32_t g_rtt = 0;
+static char g_info[1024] = { 0 };
 
-static void notify_state(void* event, uint32_t rbw, uint32_t sbw, int32_t rtt)
+static void notify_state(void* event, const char* info)
 {
-	g_rbw = rbw;
-	g_sbw = sbw;
-	g_rtt = rtt;
+	strcpy(g_info, info);
 }
 
 #define MAX_SEND_BITRATE (300 * 8 * 1000)
@@ -241,7 +237,7 @@ static void main_loop_event()
 
 		now_ts = GET_SYS_MS();
 		if (now_ts >= 1000 + prev_ts){
-			printf("send = %ukb/s, recv = %ukb/s, rtt = %ums, frame id = %d\n", g_sbw, g_rbw, g_rtt, sender.index);
+			printf("%s, frame id = %d\n", g_info, sender.index);
 			prev_ts = now_ts;
 		}
 
@@ -270,7 +266,7 @@ int main(int argc, const char* argv[])
 	sim_init(16000, NULL, log_win_write, notify_callback, notify_change_bitrate, notify_state);
 	sim_set_bitrates(MIN_SEND_BITRATE, START_SEND_BITRATE, MAX_SEND_BITRATE * 5/4);
 
-	if (sim_connect(1000, "192.168.1.100", 16001) != 0){
+	if (sim_connect(1000, "192.168.150.30", 6009) != 0){
 		printf("sim connect failed!\n");
 		goto err;
 	}
