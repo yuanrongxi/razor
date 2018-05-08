@@ -36,6 +36,6 @@ razor是一个GCC算法实现项目，主体算法来源于webRTC的CC实现，�
     在Linux下直接运行 ./sim_relay
  ### 编译echo
     在visual studio下打开sim_test目录下的echo工程，直接编译
- ###运行echo
+ ### 运行echo
     在echo UI上将receiver ip地址填写为：192.168.1.200：6009，点击start echo按钮即可
     
