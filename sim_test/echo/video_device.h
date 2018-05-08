@@ -55,7 +55,7 @@ public:
 
 	void			set_view_hwnd(HWND hwnd, const RECT& rect);
 
-	int				read(void* data, uint32_t size, int& key_frame);
+	int				read(void* data, uint32_t size, int& key_frame, uint8_t& payload_type);
 
 	void			on_change_bitrate(uint32_t bitrate_kbps);
 
@@ -107,7 +107,7 @@ public:
 	bool open();
 	void close();
 
-	int write(const void* data, uint32_t size);
+	int write(const void* data, uint32_t size, uint8_t payload_type);
 private:
 	bool		open_;
 	HWND		hwnd_;

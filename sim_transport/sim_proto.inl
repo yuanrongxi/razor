@@ -94,6 +94,7 @@ static inline void sim_segment_encode(bin_stream_t* strm, sim_segment_t* body)
 		mask |= (1 << 4);
 
 	mach_uint8_write(strm, mask);
+	mach_uint8_write(strm, body->payload_type);
 
 	if (body->packet_id > U16_MAX)
 		mach_uint32_write(strm, body->packet_id);
@@ -129,6 +130,7 @@ static inline int sim_segment_decode(bin_stream_t* strm, sim_segment_t* body)
 	uint16_t v16;
 
 	mach_uint8_read(strm, &mask);
+	mach_uint8_read(strm, &body->payload_type);
 
 	body->ftype = mask & 0x01;
 	if (mask & (1 << 7))

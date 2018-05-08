@@ -79,20 +79,20 @@ void sim_set_bitrates(uint32_t min_bitrate, uint32_t start_bitrate, uint32_t max
 	sim_session_set_bitrates(g_session, min_bitrate, start_bitrate, max_bitrate);
 }
 
-int sim_send_video(uint8_t ftype, const uint8_t* data, size_t size)
+int sim_send_video(uint8_t payload_type, uint8_t ftype, const uint8_t* data, size_t size)
 {
 	if (g_inited == 0)
 		return -1;
 
-	return sim_session_send_video(g_session, ftype, data, size);
+	return sim_session_send_video(g_session, payload_type, ftype, data, size);
 }
 
-int sim_recv_video(uint8_t* data, size_t* sizep)
+int sim_recv_video(uint8_t* data, size_t* sizep, uint8_t* payload_type)
 {
 	if (g_inited == 0)
 		return -1;
 
-	return sim_session_recv_video(g_session, data, sizep);
+	return sim_session_recv_video(g_session, data, sizep, payload_type);
 }
 
 

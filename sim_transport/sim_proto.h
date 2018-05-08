@@ -11,7 +11,7 @@
 #include "cf_platform.h"
 #include "cf_stream.h"
 
-/*这是模拟传输的协议定义，这里只是简单的点对点通信模拟，不涉及路由优化、连接安全性，不可作为生产使用*/
+/*这是模拟传输的协议定义，这里只是简单的点对点通信模拟，不涉及路由优化、连接安全性，不建议生产环境使用*/
 
 enum
 {
@@ -80,6 +80,7 @@ typedef struct
 	uint16_t	index;					/*帧分包序号*/
 	uint16_t	total;					/*帧分包总数*/
 	uint8_t		ftype;					/*视频帧类型*/
+	uint8_t		payload_type;			/*编码器类型*/
 
 	uint8_t		remb;					/*0表示开启remb, 其他表示不开启*/
 	uint16_t	send_ts;				/*发送时刻相对帧产生时刻的时间戳*/
@@ -109,9 +110,9 @@ typedef sim_ping_t sim_pong_t;
 
 typedef struct
 {
-	uint32_t	base_packet_id;			/*被接收端确认连续最大的包ID*/
+	uint32_t	base_packet_id;						/*被接收端确认连续最大的包ID*/
 
-	uint16_t	feedback_size;
+	uint16_t	feedback_size;						/*cc中的反馈信息,由接收端的拥塞控制对象产生*/
 	uint8_t		feedback[SIM_FEEDBACK_SIZE];
 }sim_feedback_t;
 

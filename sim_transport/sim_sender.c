@@ -188,7 +188,7 @@ static uint16_t sim_split_frame(sim_session_t* s, uint16_t splits[], size_t size
 	return ret;
 }
 
-int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t ftype, const uint8_t* data, size_t size)
+int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t payload_type, uint8_t ftype, const uint8_t* data, size_t size)
 {
 	sim_segment_t* seg;
 	int64_t now_ts;
@@ -220,6 +220,7 @@ int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t ftype, const 
 		seg->fid = sender->frame_id_seed;
 		seg->timestamp = timestamp;
 		seg->ftype = ftype;
+		seg->payload_type = payload_type;
 		seg->index = i;
 		seg->total = total;
 

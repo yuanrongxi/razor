@@ -27,13 +27,14 @@ void VideoPlayhread::set_video_devices(CFVideoPlayer* play)
 void VideoPlayhread::run()
 {
 	uint8_t *data;
+	uint8_t payload_type;
 
 	data = (uint8_t*)malloc(MAX_PIC_SIZE * sizeof(uint8_t));
 
 	while (m_run_flag){
 		size_t rc = MAX_PIC_SIZE;
-		if (sim_recv_video(data, &rc) == 0 && play_ != NULL){
-			play_->write(data, rc);
+		if (sim_recv_video(data, &rc, &payload_type) == 0 && play_ != NULL){
+			play_->write(data, rc, payload_type);
 		}
 
 		Sleep(5);

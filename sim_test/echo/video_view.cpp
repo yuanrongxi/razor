@@ -28,13 +28,14 @@ void VideoViewThread::run()
 	uint8_t *data;
 	int rc = 1024000, size;
 	int key;
+	uint8_t payload_type;
 
 	data = (uint8_t*)malloc(rc * sizeof(uint8_t));
 
 	while (m_run_flag){
-		size = rec_->read(data, rc, key);
+		size = rec_->read(data, rc, key, payload_type);
 		if (size > 0 && player_ != NULL){
-			player_->write(data, size);
+			player_->write(data, size, payload_type);
 		}
 
 		Sleep(5);

@@ -53,4 +53,17 @@ enum Resolution
 #define MIN_320_VIDEO_BITARE (100 * 1000)
 #define START_320_VIDEO_BITRATE (120 * 1000) 
 
+//codec payload type,这里并没有用ffmpeg的codec ID,主要是考虑ffmpeg的codec ID是32位整数表示，在网络协议传输过程不需要这么长的描述
+enum
+{
+	codec_raw = 32,
+	codec_h263,
+	codec_mpeg4,
+	codec_h264,
+	codec_h265,
+	
+	codec_vp8,
+	codec_vp9
+};
+
 #endif

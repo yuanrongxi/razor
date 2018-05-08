@@ -26,6 +26,7 @@ void VideoRecordhread::set_video_devices(CFVideoRecorder* rec)
 void VideoRecordhread::run()
 {
 	uint8_t *data;
+	uint8_t payload_type;
 	int rc = 1024000, size;
 	int key;
 
@@ -33,9 +34,9 @@ void VideoRecordhread::run()
 
 	while (m_run_flag){
 		if (rec_ != NULL){
-			size = rec_->read(data, rc, key);
+			size = rec_->read(data, rc, key, payload_type);
 			if (size > 0)
-				sim_send_video(key, data, size);
+				sim_send_video(payload_type, key, data, size);
 		}
 
 		Sleep(1);

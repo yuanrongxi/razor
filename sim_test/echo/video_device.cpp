@@ -210,7 +210,7 @@ bool CFVideoRecorder::capture_sample()
 	return ret;
 }
 
-int CFVideoRecorder::read(void* data, uint32_t data_size, int& key_frame)
+int CFVideoRecorder::read(void* data, uint32_t data_size, int& key_frame, uint8_t& payload_type)
 {
 	AutoSpLock auto_lock(lock_);
 
@@ -251,6 +251,7 @@ int CFVideoRecorder::read(void* data, uint32_t data_size, int& key_frame)
 			if (encoder_->encode(video_data_, video_data_size_, (PixelFormat)info_.pix_format, (uint8_t*)data, &out_size, &key_frame) && out_size > 0){
 				key_frame = ((key_frame == 0x0001 || key_frame == 0x0002) ? 1 : 0);
 				data_size = out_size;
+				payload_type = codec_h264;
 			}
 		}
 		else
@@ -402,14 +403,13 @@ void CFVideoPlayer::close()
 
 #define SU_MAX(a, b) ((a) > (b) ? (a) : (b))
 
-int CFVideoPlayer::write(const void* data, uint32_t size)
+int CFVideoPlayer::write(const void* data, uint32_t size, uint8_t payload_type)
 {
 	int width, height;
 
 	int32_t pic_type;
 
-	if (size > 0){
-
+	if (size > 0 && payload_type == codec_h264){
 		/*先解码，在显示*/
 		if(decoder_ != NULL && !decoder_->decode((uint8_t *)data, size, &data_, width, height, pic_type))
 			return 0;

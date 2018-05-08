@@ -154,7 +154,7 @@ static void try_send_video(video_sender_t* sender)
 		if (sender->index % (sender->frame_rate * 4) == 0) /*关键帧*/
 			ftype = 1;
 
-		sim_send_video(ftype, sender->frame, frame_size);
+		sim_send_video(0, ftype, sender->frame, frame_size);
 		/*只发送一帧试一试*/
 		if (++sender->index > 20000)
 			sender->record_flag = 0;

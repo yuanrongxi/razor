@@ -47,7 +47,7 @@ void					sim_sender_destroy(sim_session_t* s, sim_sender_t* sender);
 void					sim_sender_reset(sim_session_t* s, sim_sender_t* sender);
 int						sim_sender_active(sim_session_t* s, sim_sender_t* sender);
 
-int						sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t ftype, const uint8_t* data, size_t size);
+int						sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t payload_type, uint8_t ftype, const uint8_t* data, size_t size);
 int						sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ack);
 void					sim_sender_timer(sim_session_t* s, sim_sender_t* sender, uint64_t now_ts);
 void					sim_sender_update_rtt(sim_session_t* s, sim_sender_t* r);
@@ -60,7 +60,7 @@ void					sim_receiver_destroy(sim_session_t* s, sim_receiver_t* r);
 void					sim_receiver_reset(sim_session_t* s, sim_receiver_t* r);
 int						sim_receiver_active(sim_session_t* s, sim_receiver_t* r, uint32_t uid);
 int						sim_receiver_put(sim_session_t* s, sim_receiver_t* r, sim_segment_t* seg);
-int						sim_receiver_get(sim_session_t* s, sim_receiver_t* r, uint8_t* data, size_t* sizep);
+int						sim_receiver_get(sim_session_t* s, sim_receiver_t* r, uint8_t* data, size_t* sizep, uint8_t* payload_type);
 void					sim_receiver_timer(sim_session_t* s, sim_receiver_t* r, int64_t now_ts);
 void					sim_receiver_update_rtt(sim_session_t* s, sim_receiver_t* r);
 /**************************************************************************************************/
@@ -73,9 +73,9 @@ int						sim_session_connect(sim_session_t* s, uint32_t local_uid, const char* p
 /*断开一个接收端*/
 int						sim_session_disconnect(sim_session_t* s);
 /*发送视频数据*/
-int						sim_session_send_video(sim_session_t* s, uint8_t ftype, const uint8_t* data, size_t size);
+int						sim_session_send_video(sim_session_t* s, uint8_t payload_type, uint8_t ftype, const uint8_t* data, size_t size);
 /*获取接收端的视频数据*/
-int						sim_session_recv_video(sim_session_t* s, uint8_t* data,  size_t* sizep);
+int						sim_session_recv_video(sim_session_t* s, uint8_t* data, size_t* sizep, uint8_t* payload_type);
 
 /*设置码率范围和当前使用的码率，一般只在视频编码器初始化的时候调用*/
 void					sim_session_set_bitrates(sim_session_t* s, uint32_t min_bitrate, uint32_t start_bitrate, uint32_t max_bitrate);

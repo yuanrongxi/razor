@@ -71,11 +71,12 @@ static void notify_state(void* event, const char* info)
 static int64_t play_video(uint8_t* video_frame, size_t size)
 {
 	int ret, count;
-	uint8_t* pos;
+	uint8_t* pos, payload_type;
 	size_t frame_size;
 	int64_t frame_ts;
 	 
-	ret = sim_recv_video(video_frame, &size);
+	payload_type = 0;
+	ret = sim_recv_video(video_frame, &size, &payload_type);
 	if (ret != 0) 
 		return -1;
 

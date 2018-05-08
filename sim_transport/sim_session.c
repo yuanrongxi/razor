@@ -209,7 +209,7 @@ err:
 	return ret;
 }
 
-int sim_session_send_video(sim_session_t* s, uint8_t ftype, const uint8_t* data, size_t size)
+int sim_session_send_video(sim_session_t* s, uint8_t payload_type, uint8_t ftype, const uint8_t* data, size_t size)
 {
 	int ret = -1;
 	su_mutex_lock(s->mutex);
@@ -223,7 +223,7 @@ int sim_session_send_video(sim_session_t* s, uint8_t ftype, const uint8_t* data,
 
 	s->video_bytes += size;
 	if (s->sender != NULL)
-		ret = sim_sender_put(s, s->sender, ftype, data, size);
+		ret = sim_sender_put(s, s->sender, payload_type, ftype, data, size);
 
 	s->max_frame_size = SU_MAX(size, s->max_frame_size);
 err:
@@ -231,13 +231,13 @@ err:
 	return ret;
 }
 
-int sim_session_recv_video(sim_session_t* s, uint8_t* data, size_t* sizep)
+int sim_session_recv_video(sim_session_t* s, uint8_t* data, size_t* sizep, uint8_t* payload_type)
 {
 	int ret = -1;
 	su_mutex_lock(s->mutex);
 
 	if (s->receiver != NULL)
-		ret = sim_receiver_get(s, s->receiver, data, sizep);
+		ret = sim_receiver_get(s, s->receiver, data, sizep, payload_type);
 
 	su_mutex_unlock(s->mutex);
 	return ret;

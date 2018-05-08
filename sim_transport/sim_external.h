@@ -39,9 +39,9 @@ int			sim_connect(uint32_t local_uid, const char* peer_ip, uint16_t peer_port);
 int			sim_disconnect();
 
 /*发送一帧视频*/
-int			sim_send_video(uint8_t ftype, const uint8_t* data, size_t size);
+int			sim_send_video(uint8_t payload_type, uint8_t ftype, const uint8_t* data, size_t size);
 /*接收一帧视频，sizep必须初始化一个缓冲区最大值，防止缓冲区拷贝溢出*/
-int			sim_recv_video(uint8_t* data, size_t* sizep);
+int			sim_recv_video(uint8_t* data, size_t* sizep, uint8_t* payload_type);
 
 void		sim_set_bitrates(uint32_t min_bitrate, uint32_t start_bitrate, uint32_t max_bitrate);
 

@@ -247,33 +247,34 @@ static uint32_t real_video_ready_ms(sim_session_t* s, sim_frame_cache_t* c)
 	return ret;
 }
 
-static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t* data, size_t* sizep, int loss)
+static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t* data, size_t* sizep, uint8_t* payload_type, int loss)
 {
 	uint32_t pos, space;
 	size_t size, buffer_size;
 	int ret, i;
 	sim_frame_t* frame;
 	uint32_t max_ts, play_ready_ts;
+	uint8_t type;
 
 	buffer_size = *sizep;
 	*sizep = 0;
+	*payload_type = 0;
 
+	type = 0;
+	size = 0;
 	if (c->state == buffer_waiting)
 		real_video_cache_check_playing(s, c);
 	else
 		real_video_cache_check_waiting(s, c);
 
 	if (c->state != buffer_playing){
-		size = 0;
 		ret = -1;
 		goto err;
 	}
 
 	real_video_cache_sync_timestamp(s, c);
-
 	max_ts = c->frames[INDEX(c->max_fid)].ts;
 
-	size = 0;
 	pos = INDEX(c->min_fid + 1);
 	frame = &c->frames[pos];
 	if (frame->ts <= c->frame_ts && c->min_fid + 1 == frame->fid && real_video_cache_check_frame_full(s, frame) == 0){
@@ -282,6 +283,7 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 			if (size + frame->segments[i]->data_size <= buffer_size && frame->segments[i]->data_size <= SIM_VIDEO_SIZE){
 				memcpy(data + size, frame->segments[i]->data, frame->segments[i]->data_size);
 				size += frame->segments[i]->data_size;
+				type = frame->segments[i]->payload_type;
 			}
 			else{
 				size = 0;
@@ -319,6 +321,8 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 
 err:
 	*sizep = size;
+	*payload_type = type;
+
 	return ret;
 }
 
@@ -566,12 +570,12 @@ int sim_receiver_put(sim_session_t* s, sim_receiver_t* r, sim_segment_t* seg)
 }
 
 /*获取视频帧数据*/
-int sim_receiver_get(sim_session_t* s, sim_receiver_t* r, uint8_t* data, size_t* sizep)
+int sim_receiver_get(sim_session_t* s, sim_receiver_t* r, uint8_t* data, size_t* sizep, uint8_t* payload_type)
 {
 	if (r == NULL || r->actived == 0)
 		return -1;
 
-	return real_video_cache_get(s, r->cache, data, sizep, skiplist_size(r->loss));
+	return real_video_cache_get(s, r->cache, data, sizep, payload_type, skiplist_size(r->loss));
 }
 
 void sim_receiver_timer(sim_session_t* s, sim_receiver_t* r, int64_t now_ts)
