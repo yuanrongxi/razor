@@ -25,10 +25,11 @@ static void send_test(void* handler, uint32_t seq, int retrans, size_t size)
 	}
 }
 
+#define k_queue_ms 250
 static void test_min_bitrate()
 {
 	int64_t now_ts, send_ts;
-	pace_sender_t* pace = pace_create(NULL, send_test);
+	pace_sender_t* pace = pace_create(NULL, send_test, k_queue_ms);
 	uint32_t seq = 0, i = 0;
 
 	pace_set_estimate_bitrate(pace, 100 * 1000 * 8);
@@ -60,7 +61,7 @@ static void test_min_bitrate()
 static void test_max_bitrate()
 {
 	int64_t now_ts, send_ts;
-	pace_sender_t* pace = pace_create(NULL, send_test);
+	pace_sender_t* pace = pace_create(NULL, send_test, k_queue_ms);
 	uint32_t seq = 0, cur_bitrate, i = 0;
 
 	cur_bitrate = 100 * 1000 * 8;

@@ -3,6 +3,7 @@
 
 #define k_packet_size 1000
 #define k_packet_num 5
+#define k_queue_ms 200
 
 static void test_pacer_queue_push()
 {
@@ -11,7 +12,7 @@ static void test_pacer_queue_push()
 	int i;
 	int64_t now_ts, oldest_ts;
 
-	pacer_queue_init(&que);
+	pacer_queue_init(&que, k_queue_ms);
 
 	oldest_ts = now_ts = GET_SYS_MS();
 
@@ -41,7 +42,7 @@ static void test_pacer_queue_sent()
 	int i;
 	int64_t now_ts, oldest_ts;
 
-	pacer_queue_init(&que);
+	pacer_queue_init(&que, k_queue_ms);
 
 	oldest_ts = now_ts = GET_SYS_MS();
 
@@ -92,7 +93,7 @@ void test_pacer_queue_front()
 	int i;
 	int64_t now_ts, oldest_ts;
 
-	pacer_queue_init(&que);
+	pacer_queue_init(&que, k_queue_ms);
 
 	oldest_ts = now_ts = GET_SYS_MS();
 
