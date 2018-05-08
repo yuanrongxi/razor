@@ -32,9 +32,7 @@ typedef std::list<thread_msg_t>	msg_queue_t;
 
 static msg_queue_t main_queue;
 su_mutex main_mutex;
-static uint32_t g_sbw = 0;
-static uint32_t g_rbw = 0;
-static int g_rtt = 200;
+static char g_info[1024] = { 0 };
 
 static void notify_callback(void* event, int type, uint32_t val)
 {
@@ -65,11 +63,9 @@ static void notify_change_bitrate(void* event, uint32_t bitrate_kbps)
 {
 }
 
-static void notify_state(void* event, uint32_t rbw, uint32_t sbw, int32_t rtt)
+static void notify_state(void* event, const char* info)
 {
-	g_sbw = sbw;
-	g_rbw = rbw;
-	g_rtt = rtt;
+	strcpy(g_info, info);
 }
 
 static int64_t play_video(uint8_t* video_frame, size_t size)
@@ -154,7 +150,7 @@ static void main_loop_event()
 				packet_count++;
 				if (tick_ts + 1000 < now_ts){
 
-					printf("max_delay = %ums, sbw = %ukb/s, rbw = %ukb/s, rtt = %u\n", max_delay, g_sbw, g_rbw, g_rtt);
+					printf("max_delay = %ums, %s\n", max_delay, g_info);
 					packet_count = 0;
 					max_delay = 0;
 					tick_ts = now_ts;
