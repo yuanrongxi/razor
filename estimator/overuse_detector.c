@@ -12,7 +12,7 @@
 #include <stdlib.h>
 
 static double kMaxAdaptOffsetMs = 15.0;
-static double kOverUsingTimeThreshold = 20;
+static double kOverUsingTimeThreshold = 10;
 static int kMinNumDeltas = 60;
 static int kMaxTimeDeltaMs = 100;
 
@@ -20,7 +20,7 @@ overuse_detector_t* overuse_create()
 {
 	overuse_detector_t* detector = calloc(1, sizeof(overuse_detector_t));
 
-	detector->k_up = 0.0187;
+	detector->k_up = 0.0087;
 	detector->k_down = 0.039;
 	detector->ouveusing_time_threshold = kOverUsingTimeThreshold;
 	detector->threshold = 12.5;

@@ -122,7 +122,7 @@ int rbe_heartbeat(remote_bitrate_estimator_t* est, int64_t now_ts, uint32_t* rem
 			rbe_update_estimate(est, now_ts);
 
 		/*进行REMB的发送*/
-		if (est->last_packet_ts + k_max_update_timeout > GET_SYS_MS() && rbe_last_estimate(est, &bitrate) == 0){
+		if (rbe_last_estimate(est, &bitrate) == 0){
 			*remb = bitrate;
 			return 0;
 		}

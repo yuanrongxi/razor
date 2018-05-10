@@ -97,7 +97,7 @@ static void delay_bwe_process(delay_base_bwe_t* bwe, packet_feedback_t* packet, 
 		trendline_update(bwe->trendline_estimator, t_delta, ts_delta, packet->arrival_ts);
 
 		/*进行过载保护*/
-		overuse_detect(bwe->detector, trendline_slope(bwe->trendline_estimator), t_delta, bwe->trendline_estimator->num_of_deltas, packet->arrival_ts);
+		overuse_detect(bwe->detector, trendline_slope(bwe->trendline_estimator), ts_delta, bwe->trendline_estimator->num_of_deltas, packet->arrival_ts);
 	}
 }
 
