@@ -32,6 +32,9 @@ enum PIX_FORMAT
 	RGB24 = 2
 };
 
+#define WM_ENCODER_RESOLUTION	WM_USER + 100
+#define WM_DECODER_RESOLUTION	WM_ENCODER_RESOLUTION + 1
+
 #define MAX_PIC_SIZE 1024000
 
 typedef struct{
@@ -64,6 +67,8 @@ public:
 	void			enable_encode();
 	void			disable_encode();
 
+	std::string		get_resolution();
+
 private:
 	bool			get_device_info();
 
@@ -75,6 +80,7 @@ private:
 
 	std::wstring		dev_;
 	video_info_t		info_;
+	std::string			resolution_;
 
 	//视频抓捕的图形器
 	CameraPlay_Graph	cam_graph_;
@@ -110,6 +116,7 @@ public:
 	void close();
 
 	int write(const void* data, uint32_t size, uint8_t payload_type);
+	std::string get_resolution();
 private:
 	bool		open_;
 	HWND		hwnd_;
@@ -126,6 +133,8 @@ private:
 	uint8_t*	data_;
 	/*增加解码器对象*/
 	H264Decoder* decoder_;
+
+	std::string	resolution_;
 };
 
 int get_camera_input_devices(vector<std::wstring>& vec_cameras);

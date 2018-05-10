@@ -134,6 +134,10 @@ bool CFVideoRecorder::open()
 	if (!encoder_->init(info_.rate, info_.codec_width, info_.codec_height, info_.width, info_.height))
 		return false;
 
+	char tmp[64] = { 0 };
+	sprintf(tmp, "%dx%d", info_.codec_width, info_.codec_height);
+	resolution_ = tmp;
+
 	encode_on_ = true;
 
 	return true;
@@ -252,6 +256,12 @@ int CFVideoRecorder::read(void* data, uint32_t data_size, int& key_frame, uint8_
 				key_frame = ((key_frame == 0x0001 || key_frame == 0x0002) ? 1 : 0);
 				data_size = out_size;
 				payload_type = codec_h264;
+
+				char tmp[64] = { 0 };
+				info_.codec_width = encoder_->get_codec_width();
+				info_.codec_height = encoder_->get_codec_height();
+				sprintf(tmp, "%dx%d", info_.codec_width, info_.codec_height);
+				resolution_ = tmp;
 			}
 		}
 		else
@@ -267,8 +277,9 @@ void CFVideoRecorder::on_change_bitrate(uint32_t bitrate_kbps)
 {
 	AutoSpLock auto_lock(lock_);
 
-	if (encoder_ != NULL)
+	if (encoder_ != NULL){
 		encoder_->set_bitrate(bitrate_kbps);
+	}
 }
 
 void CFVideoRecorder::enable_encode()
@@ -281,6 +292,12 @@ void CFVideoRecorder::disable_encode()
 {
 	AutoSpLock auto_lock(lock_);
 	encode_on_ = false;
+}
+
+std::string	CFVideoRecorder::get_resolution()
+{
+	AutoSpLock auto_lock(lock_);
+	return resolution_;
 }
 
 bool CFVideoRecorder::get_device_info()
@@ -341,8 +358,6 @@ bool CFVideoRecorder::get_device_info()
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-
-#define MAX_PIC_SIZE (1024 * 1024)
 CFVideoPlayer::CFVideoPlayer(HWND hWnd, const RECT& rc)
 {
 	hwnd_ = hWnd;
@@ -350,6 +365,7 @@ CFVideoPlayer::CFVideoPlayer(HWND hWnd, const RECT& rc)
 	open_ = false;
 
 	//data_ = (uint8_t *)malloc(sizeof(uint8_t) * MAX_PIC_SIZE);
+	resolution_ = "";
 }
 
 CFVideoPlayer::~CFVideoPlayer()
@@ -423,7 +439,10 @@ int CFVideoPlayer::write(const void* data, uint32_t size, uint8_t payload_type)
 				dib_.destroy();
 
 			dib_.create(decode_data_width_, decode_data_height_);
-			::SetWindowPos(hwnd_, NULL, 0, 0, width, height, SWP_NOMOVE);
+
+			char tmp[64] = { 0 };
+			sprintf(tmp, "%dx%d", decode_data_width_, decode_data_height_);
+			resolution_ = tmp;
 		}
 
 		dib_.set_dib_bits((void *)data_, decode_data_width_ * decode_data_height_ * 3, false);
@@ -431,14 +450,20 @@ int CFVideoPlayer::write(const void* data, uint32_t size, uint8_t payload_type)
 		lock_.Lock();
 
 		if (hdc_ != NULL){
-			dib_.stretch_blt(hdc_, 0, 0, decode_data_width_, decode_data_height_,
-				0, 0, width, height);
+			dib_.stretch_blt(hdc_, 0, 0, rect_.right - rect_.left, rect_.bottom - rect_.top,
+				0, 0, decode_data_width_, decode_data_height_);
 		}
 
 		lock_.Unlock();
 	}
 
 	return 0;
+}
+
+std::string	CFVideoPlayer::get_resolution()
+{
+	AutoSpLock auto_lock(lock_);
+	return resolution_;
 }
 
 /////////////////////////////////////////////////////////////////////////////

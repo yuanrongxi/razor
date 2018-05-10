@@ -75,4 +75,7 @@ public:
 	CString m_strState;
 	CButton m_btnEcho;
 	CString m_strInfo;
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	CString m_strLocalRes;
+	CString m_strRemoteRes;
 };

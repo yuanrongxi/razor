@@ -65,6 +65,8 @@ CechoDlg::CechoDlg(CWnd* pParent /*=NULL*/)
 	, m_iUser(1000)
 	, m_strState(_T(""))
 	, m_strInfo(_T(""))
+	, m_strLocalRes(_T(""))
+	, m_strRemoteRes(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_viewing = FALSE;
@@ -91,6 +93,8 @@ void CechoDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_STATE, m_strState);
 	DDX_Control(pDX, IDC_BTNCONNECT, m_btnEcho);
 	DDX_Text(pDX, IDC_EDINFO, m_strInfo);
+	DDX_Text(pDX, IDC_LOCAL_RES, m_strLocalRes);
+	DDX_Text(pDX, IDC_REMOTE_RES, m_strRemoteRes);
 }
 
 BEGIN_MESSAGE_MAP(CechoDlg, CDialogEx)
@@ -114,6 +118,7 @@ BEGIN_MESSAGE_MAP(CechoDlg, CDialogEx)
 
 	ON_BN_CLICKED(IDC_BTNVIEW, &CechoDlg::OnBnClickedBtnview)
 	ON_BN_CLICKED(IDC_BTNCONNECT, &CechoDlg::OnBnClickedBtnconnect)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -155,13 +160,15 @@ BOOL CechoDlg::OnInitDialog()
 
 	::CoInitialize(NULL);
 
-	m_srcVideo.SetWindowPos(NULL, 0, 0, PIC_WIDTH_640, PIC_HEIGHT_480, SWP_NOMOVE);
-	m_dstVideo.SetWindowPos(NULL, 0, 0, PIC_WIDTH_640, PIC_HEIGHT_480, SWP_NOMOVE);
+	m_srcVideo.SetWindowPos(NULL, 0, 0, PIC_WIDTH_480, PIC_HEIGHT_360, SWP_NOMOVE);
+	m_dstVideo.SetWindowPos(NULL, 0, 0, PIC_WIDTH_480, PIC_HEIGHT_360, SWP_NOMOVE);
 
 	InitVideoDevices();
 
 	m_frame = new SimFramework(GetSafeHwnd());
 	m_frame->init(SIM_PORT, MIN_VIDEO_BITARE, START_VIDEO_BITRATE, MAX_VIDEO_BITRAE);
+
+	SetTimer(1000, 1000, NULL);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -274,6 +281,8 @@ void CechoDlg::OnDestroy()
 		delete m_frame;
 		m_frame = NULL;
 	}
+
+	KillTimer(1000);
 
 	CDialogEx::OnDestroy();
 
@@ -580,4 +589,26 @@ LRESULT CechoDlg::OnStateInfo(WPARAM wparam, LPARAM lparam)
 	free(info);
 
 	return 0L;
+}
+
+
+void CechoDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	if (nIDEvent == 1000){
+		std::string res;
+
+		if (m_viRecorder != NULL){
+			res = m_viRecorder->get_resolution();
+			m_strLocalRes = res.c_str();
+			UpdateData(FALSE);
+		}
+
+		if (m_viPlayer != NULL){
+			res = m_viPlayer->get_resolution();
+			m_strRemoteRes = res.c_str();
+			UpdateData(FALSE);
+		}
+	}
+
+	CDialogEx::OnTimer(nIDEvent);
 }

@@ -29,7 +29,7 @@ extern "C"
 
 #include "echo_h264_common.h"
 
-/*h264编码器，支持自动缩放编码,支持动态修改码率，不支持动态修改分辨率。为了更好的和razor进行配合传输，编码器被设置成inter-refresh模式*/
+/*h264编码器，支持自动缩放编码,支持动态修改码率，动态修改分辨率。为了更好的和razor进行配合传输，编码器被设置成inter-refresh模式*/
 class H264Encoder
 {
 public:
@@ -44,22 +44,29 @@ public:
 	void set_bitrate(uint32_t bitrate_kbps);
 	uint32_t get_bitrate() const;
 
+	int get_codec_width() const;
+	int get_codec_height() const;
+
 private:
 	void config_param();
+	bool open_encoder();
+	void close_encoder();
+
+	void try_change_resolution();
 
 private:
-	unsigned int	codec_width_;			// Output Width
-	unsigned int	codec_height_;			// Output Height
-
 	unsigned int	src_width_;				// Input Width
 	unsigned int	src_height_;			// Input Height
 	
 	int				frame_rate_;			// frame
+	uint32_t		bitrate_kbps_;			// 网络反馈的码率
 
-	int				resolution_;			//编码分辨率类型
+	int				max_resolution_;		// 初始编码分辨率,用户指定的最大分辨率
+	int				curr_resolution_;		// 当前编码器所处的分辨率
 
 	bool			inited_;
 
+	//RGB -> YUV转换对象
 	SwsContext*		sws_context_;
 
 	//X264对象参数
@@ -67,9 +74,6 @@ private:
 	x264_picture_t	en_picture_;
 	x264_t *		en_h_;
 	x264_param_t	en_param_;
-
-	unsigned int	max_rate_;
-	unsigned int	min_rate_;
 };
 
 #endif
