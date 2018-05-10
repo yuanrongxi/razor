@@ -276,6 +276,8 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 	c->f = 1.0f;
 	if (frame->ts + s->rtt_var > max_ts)
 		c->f = 0.8f;
+	else if (frame->ts + space * 3 < max_ts)
+		c->f = 1.2f;
 
 	if ((c->min_fid + 1 == frame->fid || frame->frame_type == 1) && real_video_cache_check_frame_full(s, frame) == 0){
 		play_ready_ts = real_video_ready_ms(s, c);
@@ -296,10 +298,8 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 				}
 			}
 			/*加速播放，缩小延迟,最小能缩小到2帧间隔的延迟，太短了不利在网络波动下进行传输*/
-			if (frame->ts + space * 3 < max_ts){
+			if (frame->ts + space * 3 < max_ts)
 				c->frame_ts = max_ts - space;
-				c->f = 1.2f;
-			}
 			else if (space * 3 / 2 < play_ready_ts)
 				c->frame_ts = c->frame_ts + SU_MAX(10, c->frame_timer / 4);
 			else if (space < play_ready_ts)
