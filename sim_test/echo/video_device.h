@@ -32,6 +32,8 @@ enum PIX_FORMAT
 	RGB24 = 2
 };
 
+#define MAX_PIC_SIZE 1024000
+
 typedef struct{
 	int				rate;			/*每秒的帧数*/
 	PIX_FORMAT		pix_format;		/*视频输入源格式*/

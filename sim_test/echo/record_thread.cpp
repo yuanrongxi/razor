@@ -27,7 +27,7 @@ void VideoRecordhread::run()
 {
 	uint8_t *data;
 	uint8_t payload_type;
-	int rc = 1024000, size;
+	int rc = MAX_PIC_SIZE, size;
 	int key;
 
 	data = (uint8_t*)malloc(rc * sizeof(uint8_t));

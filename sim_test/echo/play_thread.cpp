@@ -23,7 +23,6 @@ void VideoPlayhread::set_video_devices(CFVideoPlayer* play)
 	play_ = play;
 }
 
-#define MAX_PIC_SIZE 1024000
 void VideoPlayhread::run()
 {
 	uint8_t *data;

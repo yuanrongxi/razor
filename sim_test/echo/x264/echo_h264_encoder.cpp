@@ -182,10 +182,10 @@ void H264Encoder::config_param()
 		en_param_.rc.i_qp_max = 40;
 		en_param_.rc.i_qp_constant = 24;
 		en_param_.rc.i_bitrate = 640;
-		en_param_.rc.i_vbv_max_bitrate = 800;
+		en_param_.rc.i_vbv_max_bitrate = 1600;
 		en_param_.i_bframe = 0;
 
-		max_rate_ = 800;
+		max_rate_ = 1600;
 		min_rate_ = 640;
 		break;
 
@@ -198,7 +198,7 @@ void H264Encoder::config_param()
 		en_param_.i_bframe = 0;
 
 		max_rate_ = 1000;
-		min_rate_ = 400;
+		min_rate_ = 320;
 		break;
 
 	case VIDEO_360P:
