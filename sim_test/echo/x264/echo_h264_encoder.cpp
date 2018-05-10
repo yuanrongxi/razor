@@ -138,6 +138,7 @@ uint32_t H264Encoder::get_bitrate() const
 	return en_param_.rc.i_vbv_max_bitrate;
 }
 
+#define KEY_FRAME_SEC 4
 void H264Encoder::config_param()
 {
 	en_param_.i_threads = X264_THREADS_AUTO;
@@ -159,8 +160,6 @@ void H264Encoder::config_param()
 		en_param_.rc.i_qp_constant = 24;
 		en_param_.rc.i_bitrate = 1600;
 		en_param_.rc.i_vbv_max_bitrate = 3200;
-		en_param_.i_keyint_min = frame_rate_ * 6;
-		en_param_.i_keyint_max = frame_rate_ * 6;
 		en_param_.i_bframe = 0;
 
 		max_rate_ = 3200;
@@ -172,8 +171,6 @@ void H264Encoder::config_param()
 		en_param_.rc.i_qp_constant = 24;
 		en_param_.rc.i_bitrate = 1400;
 		en_param_.rc.i_vbv_max_bitrate = 2000;
-		en_param_.i_keyint_min = frame_rate_ * 6;
-		en_param_.i_keyint_max = frame_rate_ * 6;
 		en_param_.i_bframe = 0;
 
 		max_rate_ = 2000;
@@ -186,8 +183,6 @@ void H264Encoder::config_param()
 		en_param_.rc.i_qp_constant = 24;
 		en_param_.rc.i_bitrate = 640;
 		en_param_.rc.i_vbv_max_bitrate = 800;
-		en_param_.i_keyint_min = frame_rate_ * 6;
-		en_param_.i_keyint_max = frame_rate_ * 6;
 		en_param_.i_bframe = 0;
 
 		max_rate_ = 800;
@@ -200,8 +195,6 @@ void H264Encoder::config_param()
 		en_param_.rc.i_qp_constant = 28;
 		en_param_.rc.i_bitrate = 320;
 		en_param_.rc.i_vbv_max_bitrate = 640;
-		en_param_.i_keyint_min = frame_rate_ * 6;
-		en_param_.i_keyint_max = frame_rate_ * 6;
 		en_param_.i_bframe = 0;
 
 		max_rate_ = 1000;
@@ -214,8 +207,6 @@ void H264Encoder::config_param()
 		en_param_.rc.i_qp_constant = 24;
 		en_param_.rc.i_bitrate = 240;
 		en_param_.rc.i_vbv_max_bitrate = 320;
-		en_param_.i_keyint_min = frame_rate_ * 6;
-		en_param_.i_keyint_max = frame_rate_ * 6;
 		en_param_.i_bframe = 0;
 
 		max_rate_ = 320;
@@ -228,8 +219,6 @@ void H264Encoder::config_param()
 		en_param_.rc.i_qp_constant = 28;
 		en_param_.rc.i_bitrate = 100;
 		en_param_.rc.i_vbv_max_bitrate = 160;
-		en_param_.i_keyint_min = frame_rate_ * 5;
-		en_param_.i_keyint_max = frame_rate_ * 5;
 		en_param_.i_bframe = 0;
 
 		max_rate_ = 160;
@@ -242,8 +231,6 @@ void H264Encoder::config_param()
 		en_param_.rc.i_qp_constant = 24;
 		en_param_.rc.i_bitrate = 32;
 		en_param_.rc.i_vbv_max_bitrate = 40;
-		en_param_.i_keyint_min = frame_rate_ * 6;
-		en_param_.i_keyint_max = frame_rate_ * 6;
 		en_param_.i_bframe = 1;
 
 		max_rate_ = 40;
@@ -251,6 +238,9 @@ void H264Encoder::config_param()
 		break;
 	}
 	 
+	en_param_.i_keyint_min = frame_rate_ * KEY_FRAME_SEC;
+	en_param_.i_keyint_max = frame_rate_ * KEY_FRAME_SEC;
+
 	en_param_.rc.f_rate_tolerance = 1.0;
 	en_param_.rc.i_vbv_buffer_size = 800;
 	en_param_.rc.f_vbv_buffer_init = 0.9f;
@@ -307,7 +297,11 @@ bool H264Encoder::encode(uint8_t *in, int in_size, enum PixelFormat src_pix_fmt,
 		*out_size = ret;
 		memcpy(out, nal[0].p_payload, ret);
 
-		*frame_type = pic_out_.i_type;
+		/*如果是intra_refresh方式，将每一帧都设置成关键帧来适应sim transport的缓冲buffer*/
+		if (en_param_.b_intra_refresh == 1)
+			*frame_type = 0x0002;
+		else 
+			*frame_type = pic_out_.i_type;
 		return true;
 	}
 

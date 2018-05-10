@@ -23,7 +23,6 @@ using namespace std;
 
 // CAboutDlg dialog used for App About
 #define SIM_PORT 16008
-//180.150.184.115:16008
 
 class CAboutDlg : public CDialogEx
 {
@@ -561,7 +560,7 @@ LRESULT CechoDlg::OnNetRecover(WPARAM wparam, LPARAM lparam)
 	UpdateData(FALSE);
 
 	if (m_viRecorder != NULL)
-		m_viRecorder->disable_encode();
+		m_viRecorder->enable_encode();
 
 	return 0L;
 }

@@ -29,7 +29,7 @@ extern "C"
 
 #include "echo_h264_common.h"
 
-/*h264编码器，支持自动缩放编码,支持动态修改码率，不支持动态修改分辨率*/
+/*h264编码器，支持自动缩放编码,支持动态修改码率，不支持动态修改分辨率。为了更好的和razor进行配合传输，编码器被设置成inter-refresh模式*/
 class H264Encoder
 {
 public:

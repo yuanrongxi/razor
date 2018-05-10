@@ -36,8 +36,8 @@ void VideoPlayhread::run()
 		if (sim_recv_video(data, &rc, &payload_type) == 0 && play_ != NULL){
 			play_->write(data, rc, payload_type);
 		}
-
-		Sleep(5);
+		else
+			Sleep(5);
 	}
 
 	free(data);
