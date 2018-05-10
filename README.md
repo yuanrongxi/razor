@@ -31,7 +31,7 @@ razor是一个GCC算法实现项目，主体算法来源于webRTC的CC实现，�
  PS:也可以在linux下运行sim sender和sim receiver,直接在他们的目录下make即可编译。
  
  ## echo
-   echo是一个windows下的测试程序，它据说视频传输的所有功能，需要在windows下进行编译，依赖于dshow，它同样需要relay来配合。测试步骤如下：
+   echo是一个windows下的测试程序，它据有视频传输的所有功能，需要在windows下进行编译，依赖于dshow，它同样需要relay来配合。测试步骤如下：
  ### 运行relay
     在Linux下直接运行 ./sim_relay
  ### 编译echo
