@@ -102,7 +102,7 @@ static void notify_state(void* event, const char* info)
 }
 
 #define MAX_SEND_BITRATE (300 * 8 * 1000)
-#define MIN_SEND_BITRATE (100 * 8 * 1000)
+#define MIN_SEND_BITRATE (20 * 8 * 1000)
 #define START_SEND_BITRATE (140 * 8 * 1000)
 
 typedef struct
