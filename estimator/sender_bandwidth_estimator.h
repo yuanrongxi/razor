@@ -48,7 +48,7 @@ typedef struct
 	float					high_loss_threshold;
 	uint32_t				bitrate_threshold;
 
-	/*一个一秒钟之类带宽最小值历史记录*/
+	/*一个一秒钟之内带宽最小值历史记录*/
 	uint32_t				begin_index;
 	uint32_t				end_index;
 	min_bitrate_t			min_bitrates[MIN_HISTORY_ARR_SIZE];
