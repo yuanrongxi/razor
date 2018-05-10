@@ -63,6 +63,7 @@ int						sim_receiver_put(sim_session_t* s, sim_receiver_t* r, sim_segment_t* se
 int						sim_receiver_get(sim_session_t* s, sim_receiver_t* r, uint8_t* data, size_t* sizep, uint8_t* payload_type);
 void					sim_receiver_timer(sim_session_t* s, sim_receiver_t* r, int64_t now_ts);
 void					sim_receiver_update_rtt(sim_session_t* s, sim_receiver_t* r);
+uint32_t				sim_receiver_cache_delay(sim_session_t* s, sim_receiver_t* r);
 /**************************************************************************************************/
 
 sim_session_t*			sim_session_create(uint16_t port, void* event, sim_notify_fn notify_cb, sim_change_bitrate_fn change_bitrate_cb, sim_state_fn state_cb);

@@ -245,9 +245,9 @@ int sim_session_recv_video(sim_session_t* s, uint8_t* data, size_t* sizep, uint8
 
 void sim_session_set_bitrates(sim_session_t* s, uint32_t min_bitrate, uint32_t start_bitrate, uint32_t max_bitrate)
 {
-	s->min_bitrate = (int)(min_bitrate * 1.05f);
-	s->max_bitrate = (int)(max_bitrate * 1.05f);
-	s->start_bitrate = (int)(start_bitrate * (SIM_SEGMENT_HEADER_SIZE + SIM_VIDEO_SIZE) * 1.05 / SIM_VIDEO_SIZE);
+	s->min_bitrate = (int)(min_bitrate * 1.07f);
+	s->max_bitrate = (int)(max_bitrate * 1.07f);
+	s->start_bitrate = (int)(start_bitrate * (SIM_SEGMENT_HEADER_SIZE + SIM_VIDEO_SIZE) * 1.07 / SIM_VIDEO_SIZE);
 	s->start_bitrate = SU_MIN(max_bitrate, s->start_bitrate);
 
 	/*如果sender没有创建，在sender create的时候进行设置*/
@@ -477,14 +477,14 @@ static void process_sim_pong(sim_session_t* s, sim_header_t* header, bin_stream_
 
 static void process_sim_seg(sim_session_t* s, sim_header_t* header, bin_stream_t* strm, su_addr* addr)
 {
-	sim_segment_t seg;
-
-	if (sim_decode_msg(strm, header, &seg) != 0){
+	sim_segment_t* seg;
+	if (s->receiver == NULL)
 		return;
-	}
 
-	if (s->receiver != NULL)
-		sim_receiver_put(s, s->receiver, &seg);
+	seg = (sim_segment_t*)malloc(sizeof(sim_segment_t));
+	if (sim_decode_msg(strm, header, seg) != 0 || sim_receiver_put(s, s->receiver, seg) != 0){
+		free(seg);
+	}
 }
 
 static void process_sim_seg_ack(sim_session_t* s, sim_header_t* header, bin_stream_t* strm, su_addr* addr)
@@ -595,7 +595,7 @@ static void sim_session_send_ping(sim_session_t* s, int64_t now_ts)
 typedef void(*sim_session_command_func)(sim_session_t* s, int64_t now_ts);
 static void sim_session_state_timer(sim_session_t* s, int64_t now_ts, sim_session_command_func fn, int type, int tick_delay)
 {
-	uint32_t delay, pacer_ms;
+	uint32_t delay, pacer_ms, cache_delay;
 	char info[SIM_INFO_SIZE];
 
 	if (s->stat_ts + 1000 < now_ts){
@@ -607,9 +607,13 @@ static void sim_session_state_timer(sim_session_t* s, int64_t now_ts, sim_sessio
 		if (s->sender != NULL && s->sender->cc != NULL)
 			pacer_ms = s->sender->cc->get_pacer_queue_ms(s->sender->cc);
 
+		cache_delay = 0;
+		if (s->receiver)
+			cache_delay = sim_receiver_cache_delay(s, s->receiver);
+
 		if (s->state_cb != NULL){
-			sprintf(info, "video rate = %ukb/s, send = %ukb/s, recv = %ukb/s, rtt = %dms, max frame = %u, pacer delay = %ums",
-				s->video_bytes * 1000 / delay, s->sbandwidth * 1000 / delay, s->rbandwidth * 1000 / delay, s->rtt + s->rtt_var, s->max_frame_size, pacer_ms);
+			sprintf(info, "video rate = %ukb/s, send = %ukb/s, recv = %ukb/s, rtt = %d + %dms, max frame = %u, pacer delay = %ums, cache delay = %ums",
+				s->video_bytes * 1000 / delay, s->sbandwidth * 1000 / delay, s->rbandwidth * 1000 / delay, s->rtt, s->rtt_var, s->max_frame_size, pacer_ms, cache_delay);
 			s->state_cb(s->event, info);
 		}
 

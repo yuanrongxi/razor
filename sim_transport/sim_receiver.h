@@ -40,6 +40,8 @@ typedef struct
 	int					state;
 	int					loss_flag;
 
+	float				f;
+
 	sim_frame_t*		frames;
 }sim_frame_cache_t;
 

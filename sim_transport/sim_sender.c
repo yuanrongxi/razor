@@ -37,10 +37,10 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate_kbps, uint8_t fra
 	loss = s->loss_fraction / 255.0;
 	/*todo:通过丢包率计算FEC比例，FEC机制在这进行计算！！！！*/
 
-	/*留出5%码率做nack和feedback*/
-	loss += 0.05;
-	if (loss > 0.5) /*重传的带宽不能大于半*/
-		loss = 0.5;
+	/*留出7%码率做nack和feedback*/
+	loss += 0.07;
+	if (loss > 0.7) /*重传的带宽不能大于半*/
+		loss = 0.7;
 
 	/*计算视频编码器的码率,单位kbps*/
 	video_bitrate_kbps = (uint32_t)((1.0 - loss) * payload_bitrate) / 1000;
@@ -301,8 +301,8 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 	iter = skiplist_search(sender->cache, key);
 	if (iter != NULL){
 		seg = (sim_segment_t*)iter->val.ptr;
-		if (now_ts > seg->timestamp + seg->send_ts + sender->first_ts)
-			sim_session_calculate_rtt(s, (uint16_t)(now_ts - seg->timestamp - seg->send_ts - sender->first_ts));
+		/*if (now_ts > seg->timestamp + seg->send_ts + sender->first_ts)
+			sim_session_calculate_rtt(s, (uint16_t)(now_ts - seg->timestamp - seg->send_ts - sender->first_ts));*/
 	}
 
 	return 0;

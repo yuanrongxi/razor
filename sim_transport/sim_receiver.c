@@ -20,6 +20,7 @@ static sim_frame_cache_t* open_real_video_cache(sim_session_t* s)
 	cache->state = buffer_waiting;
 	cache->min_seq = 0;
 	cache->frame_timer = 100;
+	cache->f = 1.0f;
 	cache->size = CACHE_SIZE;
 	cache->frames = calloc(cache->size, sizeof(sim_frame_cache_t));
 	return cache;
@@ -72,6 +73,7 @@ static void reset_real_video_cache(sim_session_t* s, sim_frame_cache_t* cache)
 	cache->frame_ts = 0;
 	cache->max_ts = 100;
 	cache->frame_timer = 100;
+	cache->f = 1.0f;
 
 	cache->state = buffer_waiting;
 	cache->wait_timer = SU_MAX(100, s->rtt + 2 * s->rtt_var);
@@ -121,9 +123,8 @@ static void evict_gop_frame(sim_session_t* s, sim_frame_cache_t* c)
 static int real_video_cache_put(sim_session_t* s, sim_frame_cache_t* c, sim_segment_t* seg)
 {
 	sim_frame_t* frame;
-	sim_segment_t* tmp;
-
 	int ret = -1;
+
 	if (seg->index >= seg->total){
 		assert(0);
 		return ret;
@@ -156,19 +157,15 @@ static int real_video_cache_put(sim_session_t* s, sim_frame_cache_t* c, sim_segm
 	frame->ts = seg->timestamp;
 
 	if (frame->seg_number == 0){
-		tmp = (sim_segment_t*)malloc(sizeof(sim_segment_t));
-		*tmp = *seg;
 		frame->seg_number = seg->total;
 		frame->segments = calloc(frame->seg_number, sizeof(seg));
-		frame->segments[seg->index] = tmp;
+		frame->segments[seg->index] = seg;
 
 		ret = 0;
 	}
 	else{
 		if (frame->segments[seg->index] == NULL){
-			tmp = (sim_segment_t*)malloc(sizeof(sim_segment_t));
-			*tmp = *seg;
-			frame->segments[seg->index] = tmp;
+			frame->segments[seg->index] = seg;
 			ret = 0;
 		}
 	}
@@ -184,7 +181,7 @@ static void real_video_cache_check_playing(sim_session_t* s, sim_frame_cache_t* 
 		max_ts = c->frames[INDEX(c->max_fid)].ts;
 		min_ts = c->frames[INDEX(c->min_fid + 1)].ts;
 
-		if (max_ts >= min_ts + c->frame_timer && c->max_fid >= c->min_fid + 1){
+		if (max_ts >= min_ts + c->wait_timer && c->max_fid >= c->min_fid + 1){
 			c->state = buffer_playing;
 
 			c->play_ts = GET_SYS_MS();
@@ -196,10 +193,6 @@ static void real_video_cache_check_playing(sim_session_t* s, sim_frame_cache_t* 
 
 static inline void real_video_cache_check_waiting(sim_session_t* s, sim_frame_cache_t* c)
 {
-	if (c->max_fid <= c->min_fid){
-		c->state = buffer_waiting;
-		/*sim_debug("buffer waiting ...........\n");*/
-	}
 }
 
 static inline int real_video_cache_check_frame_full(sim_session_t* s, sim_frame_t* frame)
@@ -217,7 +210,7 @@ static inline void real_video_cache_sync_timestamp(sim_session_t* s, sim_frame_c
 	uint64_t cur_ts = GET_SYS_MS();
 
 	if (cur_ts > c->play_ts){
-		c->frame_ts = (uint32_t)(cur_ts - c->play_ts) + c->frame_ts;
+		c->frame_ts = (uint32_t)((cur_ts - c->play_ts) * c->f) + c->frame_ts;
 		c->play_ts = cur_ts;
 	}
 }
@@ -262,56 +255,68 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 
 	type = 0;
 	size = 0;
+	ret = -1;
+
 	if (c->state == buffer_waiting)
 		real_video_cache_check_playing(s, c);
 	else
 		real_video_cache_check_waiting(s, c);
 
-	if (c->state != buffer_playing){
-		ret = -1;
+	if (c->state != buffer_playing || c->min_fid == c->max_fid)
 		goto err;
-	}
 
 	real_video_cache_sync_timestamp(s, c);
 	max_ts = c->frames[INDEX(c->max_fid)].ts;
 
 	pos = INDEX(c->min_fid + 1);
 	frame = &c->frames[pos];
-	if (frame->ts <= c->frame_ts && c->min_fid + 1 == frame->fid && real_video_cache_check_frame_full(s, frame) == 0){
-		size = 0;
-		for (i = 0; i < frame->seg_number; ++i){
-			if (size + frame->segments[i]->data_size <= buffer_size && frame->segments[i]->data_size <= SIM_VIDEO_SIZE){
-				memcpy(data + size, frame->segments[i]->data, frame->segments[i]->data_size);
-				size += frame->segments[i]->data_size;
-				type = frame->segments[i]->payload_type;
-			}
-			else{
-				size = 0;
-				break;
-			}
-		}
 
-		space = SU_MAX(c->wait_timer, c->frame_timer);
-	
+	space = SU_MAX(c->wait_timer, c->frame_timer);
+
+	c->f = 1.0f;
+	if (frame->ts + s->rtt_var > max_ts)
+		c->f = 0.8f;
+
+	if ((c->min_fid + 1 == frame->fid || frame->frame_type == 1) && real_video_cache_check_frame_full(s, frame) == 0){
 		play_ready_ts = real_video_ready_ms(s, c);
-		/*加速播放，缩小延迟,最小能缩小到2帧间隔的延迟，太短了不利在网络波动下进行传输*/	
-		if (frame->ts + space * 4 < max_ts)
-			c->frame_ts = frame->ts + 10;
-		else if (space * 3 / 2 < play_ready_ts)
-			c->frame_ts = frame->ts + 5;
-		else if (space < play_ready_ts && frame->ts + space <= max_ts)
-			c->frame_ts = c->frame_ts + 3;
-		else if (c->min_fid + 1 == c->max_fid && frame->ts > 5) /*放慢速度*/
-			c->frame_ts = frame->ts - 5;
-		else
-			c->frame_ts = frame->ts;
-		
-		real_video_clean_frame(s, c, frame);
-		ret = 0;
+
+		/*进行间歇性快进*/
+		if (frame->ts > c->frame_ts + 2 * space && play_ready_ts > space)
+			c->frame_ts = frame->ts - space;
+		else if (frame->ts <= c->frame_ts){
+			for (i = 0; i < frame->seg_number; ++i){
+				if (size + frame->segments[i]->data_size <= buffer_size && frame->segments[i]->data_size <= SIM_VIDEO_SIZE){
+					memcpy(data + size, frame->segments[i]->data, frame->segments[i]->data_size);
+					size += frame->segments[i]->data_size;
+					type = frame->segments[i]->payload_type;
+				}
+				else{
+					size = 0;
+					break;
+				}
+			}
+			/*加速播放，缩小延迟,最小能缩小到2帧间隔的延迟，太短了不利在网络波动下进行传输*/
+			if (frame->ts + space * 3 < max_ts){
+				c->frame_ts = max_ts - space;
+				c->f = 1.2f;
+			}
+			else if (space * 3 / 2 < play_ready_ts)
+				c->frame_ts = c->frame_ts + SU_MAX(10, c->frame_timer / 4);
+			else if (space < play_ready_ts)
+				c->frame_ts = c->frame_ts + 2;
+			else if (space + frame->ts > max_ts){ /*放慢速度*/
+				c->frame_ts = frame->ts - 5;
+				c->f = 0.8f;
+			}
+			else
+				c->frame_ts = frame->ts;
+
+			real_video_clean_frame(s, c, frame);
+			ret = 0;
+		}
 	}
 	else{
-		if (frame->ts + SU_MAX(MAX_VIDEO_DELAY_MS, 4 * c->wait_timer) < max_ts
-			&& real_video_cache_check_frame_full(s, frame)){ /*驱逐一个GOP，延迟太大，需要做驱逐*/
+		if (frame->ts + SU_MAX(MAX_VIDEO_DELAY_MS, 4 * c->wait_timer) < max_ts){ /*驱逐一个GOP，延迟太大，需要做驱逐*/
 			evict_gop_frame(s, c);
 		}
 
@@ -329,6 +334,19 @@ err:
 static uint32_t real_video_cache_get_min_seq(sim_session_t* s, sim_frame_cache_t* c)
 {
 	return c->min_seq;
+}
+
+static uint32_t real_video_cache_delay(sim_session_t* s, sim_frame_cache_t* c)
+{
+	uint32_t max_ts, min_ts;
+
+	if (c->max_fid == c->min_fid)
+		return 0;
+
+	max_ts = c->frames[INDEX(c->max_fid)].ts;
+	min_ts = c->frames[INDEX(c->min_fid + 1)].ts;
+	
+	return max_ts - min_ts + c->frame_timer;
 }
 
 /*********************************************视频接收端处理*************************************************/
@@ -527,12 +545,10 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 	if (max_count > 1){
 		delay = (max_count + 8) * (s->rtt + s->rtt_var) / 8;
 		if (delay > r->cache->wait_timer)
-			r->cache->wait_timer = SU_MIN(delay, 2000);
-	}
-	else if (skiplist_size(r->loss) > 0)
-		r->cache->wait_timer = SU_MAX((s->rtt + s->rtt_var), r->cache->wait_timer);
+			r->cache->wait_timer = SU_MIN(delay, 3000);
 
-	r->cache->wait_timer = SU_MAX(r->cache->frame_timer, r->cache->wait_timer);
+		r->cache->wait_timer = SU_MAX(r->cache->frame_timer, r->cache->wait_timer);
+	}
 }
 
 int sim_receiver_put(sim_session_t* s, sim_receiver_t* r, sim_segment_t* seg)
@@ -604,5 +620,9 @@ void sim_receiver_update_rtt(sim_session_t* s, sim_receiver_t* r)
 		r->cc->update_rtt(r->cc, s->rtt + s->rtt_var);
 }
 
+uint32_t sim_receiver_cache_delay(sim_session_t* s, sim_receiver_t* r)
+{
+	return real_video_cache_delay(s, r->cache);
+}
 
 
