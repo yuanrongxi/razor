@@ -96,7 +96,7 @@ static void delay_bwe_process(delay_base_bwe_t* bwe, packet_feedback_t* packet, 
 		/*进行斜率计算*/
 		trendline_update(bwe->trendline_estimator, t_delta, ts_delta, packet->arrival_ts);
 
-		/*进行过载保护*/
+		/*进行过载检查*/
 		overuse_detect(bwe->detector, trendline_slope(bwe->trendline_estimator), ts_delta, bwe->trendline_estimator->num_of_deltas, packet->arrival_ts);
 	}
 }
@@ -106,7 +106,7 @@ static inline bwe_result_t delay_bwe_long_feedback_delay(delay_base_bwe_t* bwe, 
 	bwe_result_t result;
 	init_bwe_result_null(result);
 
-	aimd_set_estimate(bwe->rate_control, bwe->rate_control->curr_rate * 3 / 4, arrival_ts);
+	aimd_set_estimate(bwe->rate_control, bwe->rate_control->curr_rate * 1 / 2, arrival_ts);
 	result.updated = 0;
 	result.probe = -1;
 	result.bitrate = bwe->rate_control->curr_rate;
