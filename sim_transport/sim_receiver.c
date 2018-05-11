@@ -10,7 +10,7 @@
 
 #define CACHE_SIZE 1024
 #define INDEX(i)	((i) % CACHE_SIZE)
-#define MAX_VIDEO_DELAY_MS 4000
+#define MAX_VIDEO_DELAY_MS 5000
 
 /************************************************播放缓冲区的定义**********************************************************/
 static sim_frame_cache_t* open_real_video_cache(sim_session_t* s)
@@ -42,11 +42,13 @@ static inline void real_video_clean_frame(sim_session_t* session, sim_frame_cach
 
 	free(frame->segments);
 
+	c->play_frame_ts = frame->ts;
 	frame->ts = 0;
 	frame->frame_type = 0;
 	frame->seg_number = 0;
 
 	c->min_fid = frame->fid;
+	sim_debug("clean frame = %u\n", frame->fid);
 }
 
 static void close_real_video_cache(sim_session_t* s, sim_frame_cache_t* cache)
@@ -113,6 +115,9 @@ static void evict_gop_frame(sim_session_t* s, sim_frame_cache_t* c)
 		}
 	}
 
+	if (key_frame_id == 0)
+		return;
+
 	sim_debug("evict_gop_frame, from frame = %u, to frame = %u!! \n", c->min_fid + 1, key_frame_id);
 	for (i = c->min_fid + 1; i < key_frame_id; i++){
 		c->frame_ts = c->frames[INDEX(i)].ts;
@@ -135,8 +140,10 @@ static int real_video_cache_put(sim_session_t* s, sim_frame_cache_t* c, sim_segm
 	if (seg->fid > c->max_fid){
 		if (c->max_fid > 0)
 			real_video_evict_frame(s, c, seg->fid);
-		else if (c->min_fid == 0)
+		else if (c->min_fid == 0){
 			c->min_fid = seg->fid - 1;
+			c->play_frame_ts = seg->timestamp;
+		}
 
 		if (c->max_fid >= 0 && c->max_fid < seg->fid && c->max_ts < seg->timestamp){
 			c->frame_timer = (seg->timestamp - c->max_ts) / (seg->fid - c->max_fid);
@@ -175,17 +182,14 @@ static int real_video_cache_put(sim_session_t* s, sim_frame_cache_t* c, sim_segm
 
 static void real_video_cache_check_playing(sim_session_t* s, sim_frame_cache_t* c)
 {
-	uint32_t max_ts, min_ts;
+	uint32_t space = SU_MAX(c->wait_timer, c->frame_timer);
 
 	if (c->max_fid > c->min_fid){
-		max_ts = c->frames[INDEX(c->max_fid)].ts;
-		min_ts = c->frames[INDEX(c->min_fid + 1)].ts;
-
-		if (max_ts >= min_ts + c->wait_timer && c->max_fid >= c->min_fid + 1){
+		if (c->max_ts >= c->play_frame_ts + space && c->max_fid >= c->min_fid + 1){
 			c->state = buffer_playing;
 
 			c->play_ts = GET_SYS_MS();
-			c->frame_ts = max_ts - c->frame_timer * (c->max_fid - c->min_fid - 1);
+			c->frame_ts = c->max_ts - c->frame_timer * (c->max_fid - c->min_fid - 1);
 			/*sim_debug("buffer playing, frame ts = %u, min_ts = %u, c->frame_timer = %u, max ts = %u\n", c->frame_ts, min_ts, c->frame_timer, max_ts);*/
 		}
 	}
@@ -198,6 +202,9 @@ static inline void real_video_cache_check_waiting(sim_session_t* s, sim_frame_ca
 static inline int real_video_cache_check_frame_full(sim_session_t* s, sim_frame_t* frame)
 {
 	int i;
+	if (frame->seg_number <= 0)
+		return -1;
+
 	for (i = 0; i < frame->seg_number; ++i)
 		if (frame->segments[i] == NULL)
 			return -1;
@@ -246,7 +253,7 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 	size_t size, buffer_size;
 	int ret, i;
 	sim_frame_t* frame;
-	uint32_t max_ts, play_ready_ts;
+	uint32_t play_ready_ts;
 	uint8_t type;
 
 	buffer_size = *sizep;
@@ -265,20 +272,25 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 	if (c->state != buffer_playing || c->min_fid == c->max_fid)
 		goto err;
 
+	space = SU_MAX(c->wait_timer, c->frame_timer);
+
+	/*计算播放时间同步*/
+	c->f = 1.0f;
+	if (c->play_frame_ts + space > c->max_ts)
+		c->f = 0.6f;
+	else if (c->play_frame_ts + space * 2 < c->max_ts)
+		c->f = 1.6f;
+	else if (c->play_frame_ts + space * 3 / 2 < c->max_ts)
+		c->f = 1.2f;
+
 	real_video_cache_sync_timestamp(s, c);
-	max_ts = c->frames[INDEX(c->max_fid)].ts;
+
+	if (c->play_frame_ts + SU_MAX(MAX_VIDEO_DELAY_MS, 4 * c->wait_timer) < c->max_ts){
+		evict_gop_frame(s, c);
+	}
 
 	pos = INDEX(c->min_fid + 1);
 	frame = &c->frames[pos];
-
-	space = SU_MAX(c->wait_timer, c->frame_timer);
-
-	c->f = 1.0f;
-	if (frame->ts + s->rtt_var > max_ts)
-		c->f = 0.8f;
-	else if (frame->ts + space * 3 < max_ts)
-		c->f = 1.2f;
-
 	if ((c->min_fid + 1 == frame->fid || frame->frame_type == 1) && real_video_cache_check_frame_full(s, frame) == 0){
 		play_ready_ts = real_video_ready_ms(s, c);
 
@@ -287,7 +299,7 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 			c->frame_ts = frame->ts - space;
 		else if (frame->ts <= c->frame_ts){
 			for (i = 0; i < frame->seg_number; ++i){
-				if (size + frame->segments[i]->data_size <= buffer_size && frame->segments[i]->data_size <= SIM_VIDEO_SIZE){
+				if (size + frame->segments[i]->data_size <= buffer_size && frame->segments[i]->data_size <= SIM_VIDEO_SIZE){ /*数据拷贝*/
 					memcpy(data + size, frame->segments[i]->data, frame->segments[i]->data_size);
 					size += frame->segments[i]->data_size;
 					type = frame->segments[i]->payload_type;
@@ -297,29 +309,22 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 					break;
 				}
 			}
-			/*加速播放，缩小延迟,最小能缩小到2帧间隔的延迟，太短了不利在网络波动下进行传输*/
-			if (frame->ts + space * 3 < max_ts)
-				c->frame_ts = max_ts - space;
-			else if (space * 3 / 2 < play_ready_ts)
-				c->frame_ts = c->frame_ts + SU_MAX(10, c->frame_timer / 4);
-			else if (space < play_ready_ts)
-				c->frame_ts = c->frame_ts + 2;
-			else if (space + frame->ts > max_ts){ /*放慢速度*/
-				c->frame_ts = frame->ts - 5;
-				c->f = 0.8f;
+			/*毕竟等待缓冲的时间*/
+			if (space * 3 / 2 < play_ready_ts){
+				c->frame_ts = frame->ts + c->frame_timer;
 			}
+			if (space < play_ready_ts)
+				c->frame_ts = frame->ts + 2;
 			else
 				c->frame_ts = frame->ts;
+
+			c->play_frame_ts = frame->ts;
 
 			real_video_clean_frame(s, c, frame);
 			ret = 0;
 		}
 	}
 	else{
-		if (frame->ts + SU_MAX(MAX_VIDEO_DELAY_MS, 4 * c->wait_timer) < max_ts){ /*驱逐一个GOP，延迟太大，需要做驱逐*/
-			evict_gop_frame(s, c);
-		}
-
 		size = 0;
 		ret = -1;
 	}
@@ -338,15 +343,10 @@ static uint32_t real_video_cache_get_min_seq(sim_session_t* s, sim_frame_cache_t
 
 static uint32_t real_video_cache_delay(sim_session_t* s, sim_frame_cache_t* c)
 {
-	uint32_t max_ts, min_ts;
-
-	if (c->max_fid == c->min_fid)
+	if (c->max_fid <= c->min_fid)
 		return 0;
 
-	max_ts = c->frames[INDEX(c->max_fid)].ts;
-	min_ts = c->frames[INDEX(c->min_fid + 1)].ts;
-	
-	return max_ts - min_ts + c->frame_timer;
+	return c->max_ts - c->play_frame_ts;
 }
 
 /*********************************************视频接收端处理*************************************************/

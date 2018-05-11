@@ -29,10 +29,11 @@ typedef struct
 
 	uint32_t			min_fid;
 	uint32_t			max_fid;
+	uint32_t			play_frame_ts;
+	uint32_t			max_ts;			/*缓冲区中最大的ts*/
+
 	uint32_t			frame_ts;		/*已经播放的相对视频时间戳*/
 	uint64_t			play_ts;		/*当前系统时钟的时间戳*/
-
-	uint32_t			max_ts;			/*缓冲区中最大的ts*/
 
 	uint32_t			frame_timer;	/*帧间隔时间*/
 	uint32_t			wait_timer;		/*cache缓冲时间，以毫秒为单位，这个cache的时间长度应该是> rtt + 2 * rtt_val,根据重发报文的次数来决定*/
