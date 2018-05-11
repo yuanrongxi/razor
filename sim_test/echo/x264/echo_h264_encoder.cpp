@@ -23,7 +23,7 @@ typedef struct
 
 static encoder_resolution_t resolution_infos[RESOLUTIONS_NUMBER] = {
 	{ VIDEO_120P, PIC_WIDTH_160, PIC_HEIGHT_120, 64, 32 },
-	{ VIDEO_240P, PIC_WIDTH_320, PIC_HEIGHT_240, 200, 56 },
+	{ VIDEO_240P, PIC_WIDTH_320, PIC_HEIGHT_240, 200, 64 },
 	{ VIDEO_360P, PIC_WIDTH_480, PIC_HEIGHT_360, 480, 120 },
 	{ VIDEO_480P, PIC_WIDTH_640, PIC_HEIGHT_480, 1000, 320},
 	{ VIDEO_640P, PIC_WIDTH_960, PIC_HEIGHT_640, 1600, 640 },
@@ -242,7 +242,7 @@ void H264Encoder::try_change_resolution()
 		uint32_t frame_index = (en_param_.i_frame_total + 1) % (frame_rate_ * KEY_FRAME_SEC);
 		if (frame_index >= ((KEY_FRAME_SEC / 2) * frame_rate_)){
 			const encoder_resolution_t& res = resolution_infos[curr_resolution_];
-			if (res.min_rate > bitrate_kbps_ && curr_resolution_ > VIDEO_120P + 1){
+			if (res.min_rate > bitrate_kbps_ && curr_resolution_ > VIDEO_120P){
 				/*ΩµµÕ“ª≤„∑÷±Ê¬ */
 				curr_resolution_--;
 				close_encoder();
