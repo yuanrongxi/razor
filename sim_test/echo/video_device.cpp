@@ -106,10 +106,6 @@ bool CFVideoRecorder::open()
 	if (!get_device_info())
 		return false;
 
-	//分配一个视频数据缓冲区
-	video_data_size_ = info_.width * info_.height * 3;
-	video_data_ = new uint8_t[video_data_size_];
-
 	//启动视频图形器
 	hr = cam_graph_.RunGraph();
 	if (FAILED(hr))
@@ -128,6 +124,10 @@ bool CFVideoRecorder::open()
 
 		dib_.create(info_.width, info_.height, 24);
 	}
+
+	//分配一个视频数据缓冲区
+	video_data_size_ = info_.width * info_.height * 3;
+	video_data_ = new uint8_t[video_data_size_];
 
 	/*初始化编码器*/
 	encoder_ = new H264Encoder();
