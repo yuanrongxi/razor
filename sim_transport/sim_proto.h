@@ -48,7 +48,7 @@ typedef struct
 	h.uid = (userid)
 
 #define SIM_HEADER_SIZE			6
-#define SIM_VIDEO_SIZE			800
+#define SIM_VIDEO_SIZE			1000
 #define SIM_TOKEN_SIZE			128
 #define NACK_NUM				80
 #define SIM_FEEDBACK_SIZE		1000
