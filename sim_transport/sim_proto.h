@@ -29,6 +29,7 @@ enum
 	SIM_SEG,
 	SIM_SEG_ACK,
 	SIM_FEEDBACK,
+	SIM_FIR,				/*请求关键帧重传*/
 
 	MAX_MSG_ID
 };
@@ -115,6 +116,11 @@ typedef struct
 	uint16_t	feedback_size;						/*cc中的反馈信息,由接收端的拥塞控制对象产生*/
 	uint8_t		feedback[SIM_FEEDBACK_SIZE];
 }sim_feedback_t;
+
+typedef struct
+{
+	uint32_t	fir_seq;							/*fir的序号，每次接收端触发条件时递增*/
+}sim_fir_t;
 
 void							sim_encode_msg(bin_stream_t* strm, sim_header_t* header, void* body);
 int								sim_decode_header(bin_stream_t* strm, sim_header_t* header);

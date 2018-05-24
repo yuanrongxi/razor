@@ -198,6 +198,17 @@ static inline int sim_segment_ack_decode(bin_stream_t* strm, sim_segment_ack_t* 
 	return 0;
 }
 
+static inline void sim_fir_encode(bin_stream_t* strm, sim_fir_t* body)
+{
+	mach_uint32_write(strm, body->fir_seq);
+}
+
+static inline int sim_fir_decode(bin_stream_t* strm, sim_fir_t* body)
+{
+	mach_uint32_read(strm, &body->fir_seq);
+	return 0;
+}
+
 
 
 

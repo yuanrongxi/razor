@@ -75,6 +75,10 @@ void sim_encode_msg(bin_stream_t* strm, sim_header_t* header, void* body)
 		sim_feedbak_encode(strm, body);
 		break;
 
+	case SIM_FIR:
+		sim_fir_encode(strm, body);
+		break;
+
 	default:
 		;
 	}
@@ -118,6 +122,10 @@ int sim_decode_msg(bin_stream_t* strm, sim_header_t* header, void* body)
 		ret = sim_feedbak_decode(strm, body);
 		break;
 
+	case SIM_FIR:
+		ret = sim_fir_decode(strm, body);
+		break;
+
 	default:
 		;
 	}
@@ -154,6 +162,9 @@ const char* sim_get_msg_name(uint8_t msg_id)
 
 	case SIM_FEEDBACK:
 		return "SIM_FEEDBACK";
+
+	case SIM_FIR:
+		return "SIM_FIR";
 
 	default:
 		return "unknown message";
