@@ -285,15 +285,15 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 
 	real_video_cache_sync_timestamp(s, c);
 
-	if (c->play_frame_ts + SU_MAX(MAX_VIDEO_DELAY_MS, 4 * c->wait_timer) < c->max_ts){
+	/*计算能播放的帧时间*/
+	play_ready_ts = real_video_ready_ms(s, c);
+	if (play_ready_ts == 0 && c->play_frame_ts + SU_MAX(MAX_VIDEO_DELAY_MS, 4 * c->wait_timer) < c->max_ts){
 		evict_gop_frame(s, c);
 	}
 
 	pos = INDEX(c->min_fid + 1);
 	frame = &c->frames[pos];
 	if ((c->min_fid + 1 == frame->fid || frame->frame_type == 1) && real_video_cache_check_frame_full(s, frame) == 0){
-		play_ready_ts = real_video_ready_ms(s, c);
-
 		/*进行间歇性快进*/
 		if (frame->ts > c->frame_ts + 2 * space && play_ready_ts > space)
 			c->frame_ts = frame->ts - space;
@@ -471,7 +471,7 @@ static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32
 		iter = skiplist_search(r->loss, key);
 		if (iter == NULL){
 			sim_loss_t* l = calloc(1, sizeof(sim_loss_t));
-			l->ts = now_ts - s->rtt/ 2;						/*设置下一个请求重传的时刻*/
+			l->ts = now_ts - s->rtt_var;						/*设置下一个请求重传的时刻*/
 			l->count = 0;
 			val.ptr = l;
 
@@ -523,8 +523,8 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 			if (iter->key.u32 <= r->base_seq)
 				continue;
 
-			space_factor = (SU_MIN(2, l->count / 2 + 1)) * (s->rtt + s->rtt_var); /*用于简单的拥塞限流，防止GET洪水*/
-			if (l->ts + space_factor <= cur_ts && l->count < 30 && ack.nack_num < NACK_NUM){
+			space_factor = (SU_MIN(1.5, l->count * 0.1 + 1)) * (s->rtt + s->rtt_var); /*用于简单的拥塞限流，防止GET洪水*/
+			if (l->ts + space_factor <= cur_ts && l->count < 10 && ack.nack_num < NACK_NUM){
 				ack.nack[ack.nack_num++] = iter->key.u32 - r->base_seq;
 				l->ts = cur_ts;
 
