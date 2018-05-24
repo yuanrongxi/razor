@@ -258,7 +258,7 @@ void H264Encoder::try_change_resolution()
 	}
 }
 
-bool H264Encoder::encode(uint8_t *in, int in_size, enum PixelFormat src_pix_fmt, uint8_t *out, int *out_size, int *frame_type)
+bool H264Encoder::encode(uint8_t *in, int in_size, enum PixelFormat src_pix_fmt, uint8_t *out, int *out_size, int *frame_type, bool request_keyframe)
 {
 	if (!inited_)
 		return false;
@@ -281,6 +281,10 @@ bool H264Encoder::encode(uint8_t *in, int in_size, enum PixelFormat src_pix_fmt,
 
 	x264_nal_t *nal = NULL;
 	int i_nal = 0;
+
+	/*指定编码输出关键帧*/
+	if (request_keyframe)
+		en_picture_.i_type = X264_TYPE_KEYFRAME;
 
 	//X.264 编码
 	ret = x264_encoder_encode(en_h_, &nal, &i_nal, &en_picture_, &pic_out_);

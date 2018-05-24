@@ -39,7 +39,7 @@ public:
 	bool init(int frame_rate, int src_width, int src_height, int dst_width, int dst_height);
 	void destroy();
 
-	bool encode(uint8_t *in, int in_size, enum PixelFormat pix_fmt, uint8_t *out, int *out_size, int *frame_type);
+	bool encode(uint8_t *in, int in_size, enum PixelFormat pix_fmt, uint8_t *out, int *out_size, int *frame_type, bool request_keyframe = false);
 
 	void set_bitrate(uint32_t bitrate_kbps);
 	uint32_t get_bitrate() const;
