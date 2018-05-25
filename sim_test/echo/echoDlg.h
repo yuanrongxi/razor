@@ -36,6 +36,8 @@ protected:
 	LRESULT		OnNetInterrupt(WPARAM wparam, LPARAM lparam);
 	LRESULT		OnNetRecover(WPARAM wparam, LPARAM lparam);
 
+	LRESULT		OnFirNotify(WPARAM wparam, LPARAM lparam);
+
 	LRESULT		OnStateInfo(WPARAM wparam, LPARAM lparam);
 
 // Implementation

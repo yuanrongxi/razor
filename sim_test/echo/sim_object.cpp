@@ -190,6 +190,11 @@ void SimFramework::on_notify(int type, uint32_t val)
 		if (state_ == eframe_connected)
 			::PostMessage(hwnd_, WM_NET_RECOVER, (WPARAM)val, NULL);
 		break;
+
+	case sim_fir_notify:
+		if (state_ == eframe_connected)
+			::PostMessage(hwnd_, WM_FIR_NOTIFY, NULL, NULL);
+		break;
 	}
 }
 

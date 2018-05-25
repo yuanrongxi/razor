@@ -110,6 +110,7 @@ BEGIN_MESSAGE_MAP(CechoDlg, CDialogEx)
 
 	ON_MESSAGE(WM_NET_INTERRUPT, OnNetInterrupt)
 	ON_MESSAGE(WM_NET_RECOVER, OnNetRecover)
+	ON_MESSAGE(WM_FIR_NOTIFY, OnFirNotify)
 	ON_MESSAGE(WM_CHANGE_BITRATE, OnChangeBitrate)
 
 	ON_MESSAGE(WM_START_PLAY, OnStartPlay)
@@ -571,6 +572,13 @@ LRESULT CechoDlg::OnNetRecover(WPARAM wparam, LPARAM lparam)
 	if (m_viRecorder != NULL)
 		m_viRecorder->enable_encode();
 
+	return 0L;
+}
+
+LRESULT CechoDlg::OnFirNotify(WPARAM wparam, LPARAM lparam)
+{
+	if (m_viRecorder != NULL)
+		m_viRecorder->set_intra_frame();
 	return 0L;
 }
 

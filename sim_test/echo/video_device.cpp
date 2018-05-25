@@ -39,6 +39,8 @@ CFVideoRecorder::CFVideoRecorder(const std::wstring& dev_name) : frame_intval_(1
 
 	encoder_ = NULL;
 	open_ = false;
+	intra_frame_ = false;
+	encode_on_ = false;
 }
 
 CFVideoRecorder::~CFVideoRecorder()
@@ -252,7 +254,7 @@ int CFVideoRecorder::read(void* data, uint32_t data_size, int& key_frame, uint8_
 
 		if (encode_on_){
 			/*编码，确定编码数据和是否是关键帧，如果是关键帧，key_frame = 1,否者 = 0*/
-			if (encoder_->encode(video_data_, video_data_size_, (PixelFormat)info_.pix_format, (uint8_t*)data, &out_size, &key_frame) && out_size > 0){
+			if (encoder_->encode(video_data_, video_data_size_, (PixelFormat)info_.pix_format, (uint8_t*)data, &out_size, &key_frame, intra_frame_) && out_size > 0){
 				key_frame = ((key_frame == 0x0001 || key_frame == 0x0002) ? 1 : 0);
 				data_size = out_size;
 				payload_type = codec_h264;
@@ -262,6 +264,8 @@ int CFVideoRecorder::read(void* data, uint32_t data_size, int& key_frame, uint8_
 				info_.codec_height = encoder_->get_codec_height();
 				sprintf(tmp, "%dx%d", info_.codec_width, info_.codec_height);
 				resolution_ = tmp;
+
+				intra_frame_ = false;
 			}
 		}
 		else
@@ -292,6 +296,12 @@ void CFVideoRecorder::disable_encode()
 {
 	AutoSpLock auto_lock(lock_);
 	encode_on_ = false;
+}
+
+void CFVideoRecorder::set_intra_frame()
+{
+	AutoSpLock auto_lock(lock_);
+	intra_frame_ = true;
 }
 
 std::string	CFVideoRecorder::get_resolution()

@@ -67,6 +67,8 @@ public:
 	void			enable_encode();
 	void			disable_encode();
 
+	void			set_intra_frame();
+
 	std::string		get_resolution();
 
 private:
@@ -104,6 +106,7 @@ private:
 	/*增加编码器对象*/
 	H264Encoder*		encoder_;
 	bool				encode_on_;
+	bool				intra_frame_;
 };
 
 class CFVideoPlayer 

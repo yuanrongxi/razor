@@ -26,6 +26,7 @@
 #define WM_STATE_INFO				(WM_CONNECT_SUCC + 7)
 #define WM_START_PLAY				(WM_CONNECT_SUCC + 8)
 #define WM_STOP_PLAY				(WM_CONNECT_SUCC + 9)
+#define WM_FIR_NOTIFY				(WM_CONNECT_SUCC + 10)
 
 
 class SimFramework
