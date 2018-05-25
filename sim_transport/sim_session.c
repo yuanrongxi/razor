@@ -511,6 +511,18 @@ static void process_sim_feedback(sim_session_t* s, sim_header_t* header, bin_str
 		sim_sender_feedback(s, s->sender, &feedback);
 }
 
+static void process_sim_fir(sim_session_t* s, sim_header_t* header, bin_stream_t* strm, su_addr* addr)
+{
+	sim_fir_t fir;
+	if (sim_decode_msg(strm, header, &fir) != 0)
+		return;
+
+	if (s->fir_seq < fir.fir_seq){
+		s->fir_seq = fir.fir_seq;
+		s->notify_cb(s->event, sim_fir_notify, 0);
+	}
+}
+
 static void sim_session_process(sim_session_t* s, bin_stream_t* strm, su_addr* addr)
 {
 	sim_header_t header;
@@ -566,6 +578,8 @@ static void sim_session_process(sim_session_t* s, bin_stream_t* strm, su_addr* a
 		process_sim_feedback(s, &header, strm, addr);
 		break;
 
+	case SIM_FIR:
+		process_sim_fir(s, &header, strm, addr);
 	}
 }
 

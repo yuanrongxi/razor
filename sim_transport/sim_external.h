@@ -24,6 +24,7 @@ enum{
 	sim_stop_play_notify,
 	net_interrupt_notify,
 	net_recover_notify,
+	sim_fir_notify,
 };
 
 typedef void(*sim_notify_fn)(void* event, int type, uint32_t val);

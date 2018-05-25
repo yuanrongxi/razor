@@ -16,6 +16,7 @@ struct __sim_session
 	uint32_t		rtt;				/*rtt值*/
 	uint32_t		rtt_var;			/*rtt误差修正值*/
 	uint8_t			loss_fraction;		/*丢包率, 0 ~ 255之间的数，100% = 255*/
+	uint32_t		fir_seq;
 
 	int				state;				/*状态*/
 	int				interrupt;			/*中断*/

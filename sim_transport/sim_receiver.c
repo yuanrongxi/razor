@@ -101,12 +101,13 @@ static void real_video_evict_frame(sim_session_t* s, sim_frame_cache_t* c, uint3
 		real_video_clean_frame(s, c, &c->frames[INDEX(i)]);
 }
 
-static void evict_gop_frame(sim_session_t* s, sim_frame_cache_t* c)
+static int evict_gop_frame(sim_session_t* s, sim_frame_cache_t* c)
 {
 	uint32_t i, key_frame_id;
 	sim_frame_t* frame = NULL;
 
 	key_frame_id = 0;
+	/*第一帧确定被驱逐，从第二帧开始检查*/
 	for (i = c->min_fid + 2; i < c->max_fid; ++i){
 		frame = &c->frames[INDEX(i)];
 		if (frame->frame_type == 1){
@@ -116,13 +117,15 @@ static void evict_gop_frame(sim_session_t* s, sim_frame_cache_t* c)
 	}
 
 	if (key_frame_id == 0)
-		return;
+		return -1;
 
 	sim_debug("evict_gop_frame, from frame = %u, to frame = %u!! \n", c->min_fid + 1, key_frame_id);
 	for (i = c->min_fid + 1; i < key_frame_id; i++){
 		c->frame_ts = c->frames[INDEX(i)].ts;
 		real_video_clean_frame(s, c, &c->frames[INDEX(i)]);
 	}
+
+	return 0;
 }
 
 static int real_video_cache_put(sim_session_t* s, sim_frame_cache_t* c, sim_segment_t* seg)
@@ -396,6 +399,7 @@ sim_receiver_t* sim_receiver_create(sim_session_t* s)
 	r->cache = open_real_video_cache(s);
 	r->cache_ts = GET_SYS_MS();
 	r->s = s;
+	r->fir_state = fir_normal;
 
 	/*创建一个接收端的拥塞控制对象*/
 	r->cc = razor_receiver_create(MIN_BITRATE, MAX_BITRATE, SIM_SEGMENT_HEADER_SIZE, r, send_sim_feedback);
@@ -433,6 +437,8 @@ void sim_receiver_reset(sim_session_t* s, sim_receiver_t* r)
 	r->ack_ts = GET_SYS_MS();
 	r->active_ts = r->ack_ts;
 	r->loss_count = 0;
+	r->fir_state = fir_normal;
+	r->fir_seq = 0;
 
 	/*重新创建一个CC对象*/
 	if (r->cc != NULL){
@@ -452,6 +458,7 @@ int sim_receiver_active(sim_session_t* s, sim_receiver_t* r, uint32_t uid)
 
 	r->base_uid = uid;
 	r->active_ts = GET_SYS_MS();
+	r->fir_state = fir_normal;
 	return 0;
 }
 
@@ -490,6 +497,39 @@ static inline void sim_receiver_send_ack(sim_session_t* s, sim_segment_ack_t* ac
 	/*sim_debug("send SEG_ACK, base = %u, ack_id = %u\n", ack->base_packet_id, ack->acked_packet_id);*/
 }
 
+static void sim_receiver_send_fir(sim_session_t* s, sim_receiver_t* r)
+{
+	sim_fir_t fir;
+	sim_header_t header;
+
+	INIT_SIM_HEADER(header, SIM_FIR, s->uid);
+	fir.fir_seq = (r->fir_state == fir_flightting) ? r->fir_seq : (++r->fir_seq);
+
+	sim_encode_msg(&s->sstrm, &header, &fir);
+	sim_session_network_send(s, &s->sstrm);
+}
+
+static void sim_receiver_check_lost_frame(sim_session_t* s, sim_receiver_t* r, uint64_t now_ts)
+{
+	skiplist_iter_t* iter;
+	sim_loss_t* loss;
+
+	if (skiplist_size(r->loss) == 0)
+		return;
+
+	/*进行丢帧判断*/
+	iter = skiplist_first(r->loss);
+	loss = (sim_loss_t*)iter->val.ptr;
+	if (loss->count >= 10){ /*确定报文丢失*/
+		if (evict_gop_frame(s, r->cache) != 0){ /*尝试驱逐丢失而无法播放的帧,如果无法驱逐，进行fir请求关键帧*/
+			sim_receiver_send_fir(s, r);
+			r->fir_state = fir_flightting;
+		}
+		else
+			r->fir_state = fir_normal;
+	}
+}
+
 /*进行ack和nack确认，并计算缓冲区的等待时间*/
 #define ACK_REAL_TIME	20
 #define ACK_HB_TIME		200
@@ -506,14 +546,17 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 	cur_ts = GET_SYS_MS();
 	/*如果是心跳触发*/
 	if ((hb == 0 && r->ack_ts + ACK_REAL_TIME < cur_ts) || (r->ack_ts + ACK_HB_TIME < cur_ts)){
+
 		ack.acked_packet_id = seq;
-		/**/
 		min_seq = real_video_cache_get_min_seq(s, r->cache);
 		if (min_seq > r->base_seq){
 			for (key.u32 = r->base_seq + 1; key.u32 <= min_seq; ++key.u32)
 				skiplist_remove(r->loss, key);
 			r->base_seq = min_seq;
 		}
+
+		/*进行丢帧判断，如果发现有丢帧，进行evict frame*/
+		sim_receiver_check_lost_frame(s, r, cur_ts);
 
 		ack.base_packet_id = r->base_seq;
 		ack.nack_num = 0;
@@ -523,7 +566,7 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 			if (iter->key.u32 <= r->base_seq)
 				continue;
 
-			space_factor = (SU_MIN(1.5, l->count * 0.1 + 1)) * (s->rtt + s->rtt_var); /*用于简单的拥塞限流，防止GET洪水*/
+			space_factor = (SU_MIN(1.3, 1 + (l->count * 0.1))) * (s->rtt + s->rtt_var); /*用于简单的拥塞限流，防止GET洪水*/
 			if (l->ts + space_factor <= cur_ts && l->count < 10 && ack.nack_num < NACK_NUM){
 				ack.nack[ack.nack_num++] = iter->key.u32 - r->base_seq;
 				l->ts = cur_ts;
@@ -574,6 +617,9 @@ int sim_receiver_put(sim_session_t* s, sim_receiver_t* r, sim_segment_t* seg)
 	sim_receiver_update_loss(s, r, seq);
 	if (real_video_cache_put(s, r->cache, seg) != 0)
 		return -1;
+
+	if (seg->ftype == 1)
+		r->fir_state = fir_normal;
 
 	if (seq == r->base_seq + 1)
 		r->base_seq = seq;

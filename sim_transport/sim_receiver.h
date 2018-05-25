@@ -46,6 +46,11 @@ typedef struct
 	sim_frame_t*		frames;
 }sim_frame_cache_t;
 
+enum{
+	fir_normal,
+	fir_flightting,
+};
+
 struct __sim_receiver
 {
 	uint32_t			base_uid;
@@ -62,6 +67,11 @@ struct __sim_receiver
 	uint64_t			active_ts;
 
 	int					actived;
+
+	/*和FIR有关的参数*/
+	uint32_t			fir_seq;			/*请求关键帧的消息seq*/
+	int					fir_state;			/*当前fir的状态，*/
+	
 
 	razor_receiver_t*	cc;
 	sim_session_t*		s;

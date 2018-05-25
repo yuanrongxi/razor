@@ -303,6 +303,7 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 		seg = (sim_segment_t*)iter->val.ptr;
 		/*if (now_ts > seg->timestamp + seg->send_ts + sender->first_ts)
 			sim_session_calculate_rtt(s, (uint16_t)(now_ts - seg->timestamp - seg->send_ts - sender->first_ts));*/
+		skiplist_remove(sender->cache, key);
 	}
 
 	return 0;
