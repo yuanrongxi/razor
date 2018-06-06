@@ -284,7 +284,9 @@ bool H264Encoder::encode(uint8_t *in, int in_size, enum PixelFormat src_pix_fmt,
 
 	/*指定编码输出关键帧*/
 	if (request_keyframe)
-		en_picture_.i_type = X264_TYPE_KEYFRAME;
+		en_picture_.i_type = X264_TYPE_IDR;
+	else
+		en_picture_.i_type = X264_TYPE_AUTO;
 
 	//X.264 编码
 	ret = x264_encoder_encode(en_h_, &nal, &i_nal, &en_picture_, &pic_out_);
