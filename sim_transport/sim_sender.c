@@ -39,8 +39,8 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate_kbps, uint8_t fra
 
 	/*留出7%码率做nack和feedback*/
 	loss += 0.07;
-	if (loss > 0.7) /*重传的带宽不能大于半*/
-		loss = 0.7;
+	if (loss > 0.5) /*重传的带宽不能大于半*/
+		loss = 0.5;
 
 	/*计算视频编码器的码率,单位kbps*/
 	video_bitrate_kbps = (uint32_t)((1.0 - loss) * payload_bitrate) / 1000;
@@ -104,7 +104,7 @@ sim_sender_t* sim_sender_create(sim_session_t* s)
 
 	sender->cache = skiplist_create(idu32_compare, free_video_seg, s);
 	/*pacer queue的延迟不大于250ms*/
-	sender->cc = razor_sender_create(s, sim_bitrate_change, sender, sim_send_packet, 500);
+	sender->cc = razor_sender_create(s, sim_bitrate_change, sender, sim_send_packet, 1000);
 	
 	sim_limiter_init(&sender->limiter, 300);
 

@@ -10,7 +10,8 @@
 
 #define CACHE_SIZE 1024
 #define INDEX(i)	((i) % CACHE_SIZE)
-#define MAX_VIDEO_DELAY_MS 5000
+#define MAX_EVICT_DELAY_MS 5000
+#define MIN_EVICT_DELAY_MS 3000
 
 /************************************************播放缓冲区的定义**********************************************************/
 static sim_frame_cache_t* open_real_video_cache(sim_session_t* s)
@@ -48,7 +49,6 @@ static inline void real_video_clean_frame(sim_session_t* session, sim_frame_cach
 	frame->seg_number = 0;
 
 	c->min_fid = frame->fid;
-	sim_debug("clean frame = %u\n", frame->fid);
 }
 
 static void close_real_video_cache(sim_session_t* s, sim_frame_cache_t* cache)
@@ -250,6 +250,26 @@ static uint32_t real_video_ready_ms(sim_session_t* s, sim_frame_cache_t* c)
 	return ret;
 }
 
+/*判断是否发起FIR请求*/
+static int real_video_check_fir(sim_session_t* s, sim_frame_cache_t* c)
+{
+	uint32_t pos;
+	sim_frame_t* frame;
+
+	pos = INDEX(c->min_fid + 1);
+	frame = &c->frames[pos];
+
+	/*第一帧是完整的，不做F.I.R重传*/
+	if (real_video_cache_check_frame_full(s, frame) == 0)
+		return -1;
+
+	/*缓冲区长度小于3秒，继续等待*/
+	if (c->play_frame_ts + MAX_EVICT_DELAY_MS * 3 / 5 > c->max_ts)
+		return -1;
+
+	return 0;
+}
+
 static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t* data, size_t* sizep, uint8_t* payload_type, int loss)
 {
 	uint32_t pos, space;
@@ -289,10 +309,11 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 	real_video_cache_sync_timestamp(s, c);
 
 	/*计算能播放的帧时间*/
-	play_ready_ts = real_video_ready_ms(s, c);
-	if (play_ready_ts == 0 && c->play_frame_ts + SU_MAX(MAX_VIDEO_DELAY_MS, 4 * c->wait_timer) < c->max_ts){
+	if (c->play_frame_ts + SU_MIN(MAX_EVICT_DELAY_MS, SU_MAX(MIN_EVICT_DELAY_MS, 4 * c->wait_timer)) < c->max_ts){
 		evict_gop_frame(s, c);
 	}
+
+	play_ready_ts = real_video_ready_ms(s, c);
 
 	pos = INDEX(c->min_fid + 1);
 	frame = &c->frames[pos];
@@ -388,7 +409,7 @@ static void send_sim_feedback(void* handler, const uint8_t* payload, int payload
 	sim_encode_msg(&s->sstrm, &header, &feedback);
 	sim_session_network_send(s, &s->sstrm);
 
-	sim_debug("sim send SIM_FEEDBACK, feedback size = %u\n", payload_size);
+	/*sim_debug("sim send SIM_FEEDBACK, feedback size = %u\n", payload_size);*/
 }
 
 sim_receiver_t* sim_receiver_create(sim_session_t* s)
@@ -520,8 +541,8 @@ static void sim_receiver_check_lost_frame(sim_session_t* s, sim_receiver_t* r, u
 	/*进行丢帧判断*/
 	iter = skiplist_first(r->loss);
 	loss = (sim_loss_t*)iter->val.ptr;
-	if (loss->count >= 10){ /*确定报文丢失*/
-		if (evict_gop_frame(s, r->cache) != 0){ /*尝试驱逐丢失而无法播放的帧,如果无法驱逐，进行fir请求关键帧*/
+	if (loss->count >= 10 || real_video_check_fir(s, r->cache) == 0){ /*确定报文丢失*/
+		if (evict_gop_frame(s, r->cache) != 0){
 			sim_receiver_send_fir(s, r);
 			r->fir_state = fir_flightting;
 		}
@@ -585,13 +606,13 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 	}
 
 	/*根据丢包重传确定视频缓冲区需要的缓冲时间*/
-	if (max_count > 1){
+	if (max_count > 1)
 		delay = (max_count + 8) * (s->rtt + s->rtt_var) / 8;
-		if (delay > r->cache->wait_timer)
-			r->cache->wait_timer = SU_MIN(delay, 3000);
+	else
+		delay = s->rtt + s->rtt_var;
 
-		r->cache->wait_timer = SU_MAX(r->cache->frame_timer, r->cache->wait_timer);
-	}
+	r->cache->wait_timer = (r->cache->wait_timer * 7 + delay) / 8;
+	r->cache->wait_timer = SU_MAX(r->cache->frame_timer, r->cache->wait_timer);
 }
 
 int sim_receiver_put(sim_session_t* s, sim_receiver_t* r, sim_segment_t* seg)
