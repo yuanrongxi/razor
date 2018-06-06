@@ -41,6 +41,9 @@ sender_estimation_t* sender_estimation_create(uint32_t min_bitrate, uint32_t max
 
 	estimator->begin_index = 0;
 	estimator->end_index = 0;
+	estimator->prev_fraction_loss = -1;
+
+	estimator->state = kBwNormal;
 
 	return estimator;
 }
@@ -88,15 +91,33 @@ void sender_estimation_update_remb(sender_estimation_t* est, int64_t cur_ts, uin
 	cap_bitrate_to_threshold(est, cur_ts, est->curr_bitrate);
 }
 
-void sender_estimation_update_delay_base(sender_estimation_t* est, int64_t cur_ts, uint32_t bitrate)
+void sender_estimation_update_delay_base(sender_estimation_t* est, int64_t cur_ts, uint32_t bitrate, int state)
 {
 	razor_debug("sender_estimation_update_delay_base, bitrate = %u\n", bitrate);
 	est->delay_base_bitrate = bitrate;
+	est->state = state;
 	cap_bitrate_to_threshold(est, cur_ts, est->curr_bitrate);
 }
 
+static double slope_filter_update(slope_filter_t* slope, int delta)
+{
+	slope->slope = 255;
+
+	slope->index++;
+	slope->acc -= slope->frags[slope->index % LOSS_WND_SIZE];
+	slope->frags[slope->index % LOSS_WND_SIZE] = delta;
+	slope->acc += delta;
+
+	if (slope->index > LOSS_WND_SIZE)
+		slope->slope = slope->acc * 1.0f / LOSS_WND_SIZE;
+	else if (slope->index > 10)
+		slope->slope = slope->acc * 1.0f / slope->index;
+
+	return slope->slope;
+}
+
 /*更新接收端汇报的丢包延迟数据*/
-void sender_estimation_update_block(sender_estimation_t* est, uint8_t fraction_loss, uint32_t rtt, int number_of_packets, int64_t cur_ts)
+void sender_estimation_update_block(sender_estimation_t* est, uint8_t fraction_loss, uint32_t rtt, int number_of_packets, int64_t cur_ts, uint32_t acked_bitrate)
 {
 	int lost_packets_Q8;
 
@@ -123,7 +144,12 @@ void sender_estimation_update_block(sender_estimation_t* est, uint8_t fraction_l
 		est->expected_packets_since_last_loss_update = 0;
 		est->last_packet_report_ts = cur_ts;
 
-		sender_estimation_update(est, cur_ts);
+		/*进行丢包率差滤波，可以判断出是噪声丢包还是限制性拥塞丢包*/
+		if (est->prev_fraction_loss != -1)
+			slope_filter_update(&est->slopes, est->last_fraction_loss - (int)est->prev_fraction_loss);
+		est->prev_fraction_loss = est->last_fraction_loss;
+
+		sender_estimation_update(est, cur_ts, acked_bitrate);
 	}
 }
 
@@ -192,7 +218,7 @@ static void cap_bitrate_to_threshold(sender_estimation_t* est, int64_t cur_ts, u
 	est->curr_bitrate = bitrate;
 }
 
-void sender_estimation_update(sender_estimation_t* est, int64_t cur_ts)
+void sender_estimation_update(sender_estimation_t* est, int64_t cur_ts, uint32_t acked_bitrate)
 {
 	uint32_t new_bitrate = est->curr_bitrate, pos;
 	int64_t time_since_packet_report_ms, time_since_feedback_ms;
@@ -230,25 +256,32 @@ void sender_estimation_update(sender_estimation_t* est, int64_t cur_ts)
 		/*丢包率是用0 ~ 255来表示，在网络数据包中是采用uint8_t表示，所以我们在计算的时候需要转换成百分数来进行判断*/
 		loss = est->last_fraction_loss / 256.0;
 
-		/*网络发送丢包率 < 2%时，进行码率上升*/
-		if (est->curr_bitrate < est->bitrate_threshold || loss < est->low_loss_threshold){
+		if (est->slopes.slope < 0.8f && loss > est->low_loss_threshold && est->state != kBwOverusing){ /*网络延迟并没有增大，丢包率处于固定的范围内，说明是噪声丢包，进行带宽抢占*/
 			pos = est->begin_index % MIN_HISTORY_ARR_SIZE;
-			new_bitrate = (uint32_t)(est->min_bitrates[pos].bitrate * 1.08 + 0.5 + 1000); /*1000是防止min_bitrate太小造成叠加无效*/
-			/*razor_debug("sender_estimation_update, loss < 2, new_bitrate = %u\n", new_bitrate);*/
-
+			new_bitrate = (uint32_t)(est->min_bitrates[pos].bitrate * 1.08 + 0.5 + 1000);
 		}
-		else if (est->curr_bitrate > est->bitrate_threshold){ /*码率过载，根据丢包率进行码率下降调整*/
-			/* 2% < loss < 10%*/
-			if (loss < est->high_loss_threshold){
-				/*维持当前发送码率*/
+		else {
+			/*网络发送丢包率 < 2%时，进行码率上升*/
+			if (est->curr_bitrate < est->bitrate_threshold || loss < est->low_loss_threshold){
+				pos = est->begin_index % MIN_HISTORY_ARR_SIZE;
+				new_bitrate = (uint32_t)(est->min_bitrates[pos].bitrate * 1.08 + 0.5 + 1000); /*1000是防止min_bitrate太小造成叠加无效*/
+				/*razor_debug("sender_estimation_update, loss < 2, new_bitrate = %u\n", new_bitrate);*/
 			}
-			else{ /*loss > 10%,进行码率下降，根据丢包率占比来进行下降的*/
-				if (est->has_decreased_since_last_fraction_loss == -1 && cur_ts >= est->last_decrease_ts + k_bwe_decrease_interval_ms + est->last_rtt){
-					est->last_decrease_ts = cur_ts;
-					est->has_decreased_since_last_fraction_loss = 0;
+			else if (est->curr_bitrate > est->bitrate_threshold){ /*码率过载，根据丢包率进行码率下降调整*/
+				/* 2% < loss < 10%*/
+				if (loss < est->high_loss_threshold){
+					/*维持当前发送码率*/
+				}
+				else{ /*loss > 10%,进行码率下降，根据丢包率占比来进行下降的*/
+					if (est->has_decreased_since_last_fraction_loss == -1 && cur_ts >= est->last_decrease_ts + k_bwe_decrease_interval_ms + est->last_rtt){
+						est->last_decrease_ts = cur_ts;
+						est->has_decreased_since_last_fraction_loss = 0;
 
-					new_bitrate = (uint32_t)(est->curr_bitrate * (512 - est->last_fraction_loss) / 512.0f);
-					/*razor_debug("sender_estimation_update, loss >= 10, new_bitrate = %u\n", new_bitrate);*/
+						new_bitrate = (uint32_t)(est->curr_bitrate * (512 - est->last_fraction_loss) / 512.0f);
+						if (acked_bitrate > 0)
+							new_bitrate = SU_MAX(acked_bitrate, new_bitrate);
+						razor_debug("sender_estimation_update, loss >= 10, new_bitrate = %u\n", new_bitrate);
+					}
 				}
 			}
 		}

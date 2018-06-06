@@ -96,7 +96,7 @@ void sender_cc_heartbeat(sender_cc_t* cc)
 	pace_try_transmit(cc->pacer, now_ts);
 
 	/*进行带宽调节*/
-	bitrate_controller_heartbeat(cc->bitrate_controller, now_ts);
+	bitrate_controller_heartbeat(cc->bitrate_controller, now_ts, ack_estimator_bitrate_bps(cc->ack));
 }
 
 int sender_cc_add_pace_packet(sender_cc_t* cc, uint32_t packet_id, int retrans, size_t size)
@@ -151,7 +151,7 @@ void sender_on_feedback(sender_cc_t* cc, uint8_t* feedback, int feedback_size)
 
 		/*进行码率调节*/
 		if (bwe_result.updated == 0)
-			bitrate_controller_on_basedelay_result(cc->bitrate_controller, bwe_result.updated, bwe_result.probe, bwe_result.bitrate, bwe_result.recovered_from_overuse);
+			bitrate_controller_on_basedelay_result(cc->bitrate_controller, bwe_result.updated, bwe_result.probe, bwe_result.bitrate, cc->bwe->detector->state);
 	}
 	/*处理remb*/
 	if ((msg.flag & remb_msg) == remb_msg){
@@ -161,7 +161,7 @@ void sender_on_feedback(sender_cc_t* cc, uint8_t* feedback, int feedback_size)
 	/*处理loss info*/
 	if ((msg.flag & loss_info_msg) == loss_info_msg){
 		razor_debug("sender receive loss info, fraction_loss = %u, packets_num = %u\n", msg.fraction_loss, msg.packet_num);
-		bitrate_controller_on_report(cc->bitrate_controller, cc->rtt, now_ts, msg.fraction_loss, msg.packet_num);
+		bitrate_controller_on_report(cc->bitrate_controller, cc->rtt, now_ts, msg.fraction_loss, msg.packet_num, ack_estimator_bitrate_bps(cc->ack));
 	}
 }
 

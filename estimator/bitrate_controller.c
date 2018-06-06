@@ -102,10 +102,10 @@ void bitrate_controller_on_remb(bitrate_controller_t* ctrl, uint32_t bitrate)
 	maybe_trigger_network_changed(ctrl);
 }
 
-void bitrate_controller_on_report(bitrate_controller_t* ctrl, uint32_t rtt, int64_t cur_ts, uint8_t fraction_loss, int packets_num)
+void bitrate_controller_on_report(bitrate_controller_t* ctrl, uint32_t rtt, int64_t cur_ts, uint8_t fraction_loss, int packets_num, uint32_t acked_bitrate)
 {
 	if (packets_num > 0){
-		sender_estimation_update_block(ctrl->est, fraction_loss, rtt, packets_num, cur_ts);
+		sender_estimation_update_block(ctrl->est, fraction_loss, rtt, packets_num, cur_ts, acked_bitrate);
 		maybe_trigger_network_changed(ctrl);
 	}
 	else{
@@ -113,17 +113,17 @@ void bitrate_controller_on_report(bitrate_controller_t* ctrl, uint32_t rtt, int6
 	}
 }
 
-void bitrate_controller_on_basedelay_result(bitrate_controller_t* ctrl, int update, int probe, uint32_t target_bitrate, int recovered_from_overuse)
+void bitrate_controller_on_basedelay_result(bitrate_controller_t* ctrl, int update, int probe, uint32_t target_bitrate, int state)
 {
 	if (update == -1)
 		return;
 
-	sender_estimation_update_delay_base(ctrl->est, GET_SYS_MS(), target_bitrate);
+	sender_estimation_update_delay_base(ctrl->est, GET_SYS_MS(), target_bitrate, state);
 	maybe_trigger_network_changed(ctrl);
 }
 
 #define k_normal_notify_timer 2000
-void bitrate_controller_heartbeat(bitrate_controller_t* ctrl, int64_t cur_ts)
+void bitrate_controller_heartbeat(bitrate_controller_t* ctrl, int64_t cur_ts, uint32_t acked_bitrate)
 {
 	uint32_t bitrate, rtt;
 	uint8_t fraction_loss;
@@ -131,7 +131,7 @@ void bitrate_controller_heartbeat(bitrate_controller_t* ctrl, int64_t cur_ts)
 	if (cur_ts < ctrl->last_bitrate_update_ts + 100)
 		return;
 
-	sender_estimation_update(ctrl->est, cur_ts);
+	sender_estimation_update(ctrl->est, cur_ts, acked_bitrate);
 
 	if (ctrl->trigger != NULL && ctrl->trigger_func != NULL){
 		if (bitrate_controller_get_parameter(ctrl, &bitrate, &fraction_loss, &rtt) == 0){ /*网络状态发生变更，进行通知*/

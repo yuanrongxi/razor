@@ -46,11 +46,11 @@ void					bitrate_controller_set_reserved(bitrate_controller_t* ctrl, uint32_t re
 
 int						bitrate_controller_get_parameter(bitrate_controller_t* ctrl, uint32_t* bitrate, uint8_t* fraction_loss, uint32_t* rtt);
 
-void					bitrate_controller_on_basedelay_result(bitrate_controller_t* ctrl, int update, int probe, uint32_t target_bitrate, int recovered_from_overuse);
+void					bitrate_controller_on_basedelay_result(bitrate_controller_t* ctrl, int update, int probe, uint32_t target_bitrate, int state);
 
-void					bitrate_controller_heartbeat(bitrate_controller_t* ctrl, int64_t cur_ts);
+void					bitrate_controller_heartbeat(bitrate_controller_t* ctrl, int64_t cur_ts, uint32_t acked_bitrate);
 
-void					bitrate_controller_on_report(bitrate_controller_t* ctrl, uint32_t rtt, int64_t cur_ts, uint8_t fraction_loss, int packets_num);
+void					bitrate_controller_on_report(bitrate_controller_t* ctrl, uint32_t rtt, int64_t cur_ts, uint8_t fraction_loss, int packets_num, uint32_t acked_bitrate);
 void					bitrate_controller_on_remb(bitrate_controller_t* ctrl, uint32_t bitrate);
 
 #endif

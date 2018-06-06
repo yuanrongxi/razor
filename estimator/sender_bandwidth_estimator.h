@@ -11,6 +11,18 @@
 #include "estimator_common.h"
 #include "cf_platform.h"
 
+#define LOSS_WND_SIZE 20
+typedef struct
+{
+	int				frags[LOSS_WND_SIZE];
+	int				index;
+
+	int				acc;
+	int				count;
+
+	double			slope;
+}slope_filter_t;
+
 typedef struct
 {
 	int64_t ts;
@@ -35,6 +47,7 @@ typedef struct
 
 	uint32_t				bwe_incoming;			/*REMB*/
 	uint32_t				delay_base_bitrate;		/*sender delay estimator's bandwidth*/
+	int						state;
 
 	int64_t					last_decrease_ts;
 	int64_t					first_report_ts;
@@ -52,16 +65,19 @@ typedef struct
 	uint32_t				begin_index;
 	uint32_t				end_index;
 	min_bitrate_t			min_bitrates[MIN_HISTORY_ARR_SIZE];
+
+	int						prev_fraction_loss;
+	slope_filter_t			slopes;
 }sender_estimation_t;
 
 sender_estimation_t*		sender_estimation_create(uint32_t min_bitrate, uint32_t max_bitrate);
 void						sender_estimation_destroy(sender_estimation_t* estimation);
 
-void						sender_estimation_update(sender_estimation_t* estimation, int64_t cur_ts);
+void						sender_estimation_update(sender_estimation_t* estimation, int64_t cur_ts, uint32_t acked_bitrate);
 void						sender_estimation_update_remb(sender_estimation_t* estimation, int64_t cur_ts, uint32_t bitrate);
-void						sender_estimation_update_delay_base(sender_estimation_t* estimation, int64_t cur_ts, uint32_t bitrate);
+void						sender_estimation_update_delay_base(sender_estimation_t* estimation, int64_t cur_ts, uint32_t bitrate, int state);
 
-void						sender_estimation_update_block(sender_estimation_t* estimation, uint8_t fraction_loss, uint32_t rtt, int number_of_packets, int64_t cur_ts);
+void						sender_estimation_update_block(sender_estimation_t* estimation, uint8_t fraction_loss, uint32_t rtt, int number_of_packets, int64_t cur_ts, uint32_t acked_bitrate);
 
 void						sender_estimation_set_bitrates(sender_estimation_t* estimation, uint32_t send_bitrate, uint32_t min_bitrate, uint32_t max_bitrate);
 void						sender_estimation_set_send_bitrate(sender_estimation_t* estimation, uint32_t send_bitrate);
