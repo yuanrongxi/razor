@@ -22,7 +22,7 @@ using namespace std;
 
 
 // CAboutDlg dialog used for App About
-#define SIM_PORT 16008
+#define SIM_PORT 16008 //6009//16008
 
 class CAboutDlg : public CDialogEx
 {
@@ -55,7 +55,7 @@ END_MESSAGE_MAP()
 
 // CechoDlg dialog
 
-
+//180.150.184.115, 192.168.150.30
 
 CechoDlg::CechoDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CechoDlg::IDD, pParent)
