@@ -16,6 +16,7 @@ void test_pace();
 void test_rate_stat();
 void test_rbe();
 void test_loss_stat();
+void test_windowed_filter();
 
 #endif
 

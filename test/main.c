@@ -24,7 +24,8 @@ int main(int argc, const char* argv[])
 	
 	/*test_rate_stat();*/
 	/*test_rbe();*/
-	test_loss_stat();
+	/*test_loss_stat();*/
+	test_windowed_filter();
 
 	return 0;
 }

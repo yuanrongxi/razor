@@ -66,6 +66,9 @@
     <ClCompile Include="loss_statistics_test.c">
       <Filter>unit</Filter>
     </ClCompile>
+    <ClCompile Include="windowed_filter_test.c">
+      <Filter>unit</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="test.h">
