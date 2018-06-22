@@ -19,6 +19,9 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="bbr">
+      <UniqueIdentifier>{430648d5-f6bb-4094-96e2-8db2d13c28be}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\common\cf_crc32.c">
@@ -117,6 +120,12 @@
     <ClCompile Include="..\cc\razor_log.c">
       <Filter>cc</Filter>
     </ClCompile>
+    <ClCompile Include="..\bbr\windowed_filter.c">
+      <Filter>bbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\bbr\bbr_rtt_stats.c">
+      <Filter>bbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\cf_crc32.h">
@@ -211,6 +220,12 @@
     </ClInclude>
     <ClInclude Include="..\cc\razor_callback.h">
       <Filter>cc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\bbr\windowed_filter.h">
+      <Filter>bbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\bbr\bbr_rtt_stats.h">
+      <Filter>bbr</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
