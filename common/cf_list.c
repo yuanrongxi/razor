@@ -85,6 +85,16 @@ void* list_front(base_list_t* l)
 		return l->head->pdata;
 }
 
+void* list_back(base_list_t* l)
+{
+	assert(l != NULL);
+
+	if (l->size <= 0 || l->tailer == NULL)
+		return NULL;
+	else
+		return l->tailer->pdata;
+}
+
 size_t list_size(base_list_t* l)
 {
 	assert(l != NULL);
