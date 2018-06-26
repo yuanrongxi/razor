@@ -17,6 +17,7 @@ void test_rate_stat();
 void test_rbe();
 void test_loss_stat();
 void test_windowed_filter();
+void test_bbr_transfer_tracker();
 
 #endif
 
