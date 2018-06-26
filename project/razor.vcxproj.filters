@@ -126,6 +126,9 @@
     <ClCompile Include="..\bbr\bbr_rtt_stats.c">
       <Filter>bbr</Filter>
     </ClCompile>
+    <ClCompile Include="..\bbr\bbr_transfer_tracker.c">
+      <Filter>bbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\cf_crc32.h">
@@ -225,6 +228,9 @@
       <Filter>bbr</Filter>
     </ClInclude>
     <ClInclude Include="..\bbr\bbr_rtt_stats.h">
+      <Filter>bbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\bbr\bbr_transfer_tracker.h">
       <Filter>bbr</Filter>
     </ClInclude>
   </ItemGroup>

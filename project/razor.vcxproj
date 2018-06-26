@@ -74,6 +74,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\bbr\bbr_rtt_stats.c" />
+    <ClCompile Include="..\bbr\bbr_transfer_tracker.c" />
     <ClCompile Include="..\bbr\windowed_filter.c" />
     <ClCompile Include="..\cc\razor_api.c" />
     <ClCompile Include="..\cc\razor_log.c" />
@@ -110,6 +111,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\bbr\bbr_rtt_stats.h" />
+    <ClInclude Include="..\bbr\bbr_transfer_tracker.h" />
     <ClInclude Include="..\bbr\windowed_filter.h" />
     <ClInclude Include="..\cc\razor_api.h" />
     <ClInclude Include="..\cc\razor_callback.h" />
