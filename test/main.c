@@ -26,8 +26,8 @@ int main(int argc, const char* argv[])
 	/*test_rbe();*/
 	/*test_loss_stat();*/
 	/*test_windowed_filter();*/
-	test_bbr_transfer_tracker();
-
+	/*test_bbr_transfer_tracker();*/
+	test_bandwidth_sampler();
 	return 0;
 }
 

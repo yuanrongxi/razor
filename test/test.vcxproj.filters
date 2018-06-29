@@ -72,6 +72,9 @@
     <ClCompile Include="bbr_transfer_tracker_test.c">
       <Filter>unit</Filter>
     </ClCompile>
+    <ClCompile Include="bbr_bandwidth_sampler_test.c">
+      <Filter>unit</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="test.h">
