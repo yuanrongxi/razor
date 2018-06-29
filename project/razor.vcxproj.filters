@@ -129,6 +129,15 @@
     <ClCompile Include="..\bbr\bbr_transfer_tracker.c">
       <Filter>bbr</Filter>
     </ClCompile>
+    <ClCompile Include="..\bbr\bbr_controller.c">
+      <Filter>bbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\bbr\bbr_loss_rate_filter.c">
+      <Filter>bbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\bbr\bbr_bandwidth_sample.c">
+      <Filter>bbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\cf_crc32.h">
@@ -231,6 +240,21 @@
       <Filter>bbr</Filter>
     </ClInclude>
     <ClInclude Include="..\bbr\bbr_transfer_tracker.h">
+      <Filter>bbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\bbr\bbr_controller.h">
+      <Filter>bbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\bbr\bbr_common.h">
+      <Filter>bbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\bbr\bbr_feedback_adpater.h">
+      <Filter>bbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\bbr\bbr_loss_rate_filter.h">
+      <Filter>bbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\bbr\bbr_bandwidth_sample.h">
       <Filter>bbr</Filter>
     </ClInclude>
   </ItemGroup>

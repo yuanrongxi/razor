@@ -73,6 +73,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\bbr\bbr_bandwidth_sample.c" />
+    <ClCompile Include="..\bbr\bbr_controller.c" />
+    <ClCompile Include="..\bbr\bbr_loss_rate_filter.c" />
     <ClCompile Include="..\bbr\bbr_rtt_stats.c" />
     <ClCompile Include="..\bbr\bbr_transfer_tracker.c" />
     <ClCompile Include="..\bbr\windowed_filter.c" />
@@ -110,6 +113,11 @@
     <ClCompile Include="..\pacing\pace_sender.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\bbr\bbr_bandwidth_sample.h" />
+    <ClInclude Include="..\bbr\bbr_common.h" />
+    <ClInclude Include="..\bbr\bbr_controller.h" />
+    <ClInclude Include="..\bbr\bbr_feedback_adpater.h" />
+    <ClInclude Include="..\bbr\bbr_loss_rate_filter.h" />
     <ClInclude Include="..\bbr\bbr_rtt_stats.h" />
     <ClInclude Include="..\bbr\bbr_transfer_tracker.h" />
     <ClInclude Include="..\bbr\windowed_filter.h" />
