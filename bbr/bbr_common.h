@@ -66,10 +66,17 @@ typedef struct
 typedef struct
 {
 	int64_t		send_time;
+	int64_t		recv_time;
 	size_t		size;
 	int64_t		seq;
 	size_t		data_in_flight;
 }bbr_packet_info_t;
+
+typedef struct
+{
+	int64_t		receive_time;
+	int32_t		bandwidth;
+}bbr_remote_bitrate_report_t;
 
 typedef struct
 {
@@ -118,6 +125,8 @@ typedef struct
 	int64_t			rtt;
 	int64_t			bwe_period;
 	float			loss_rate_ratio;
+
+	int32_t			target_rate;
 }bbr_target_transfer_rate_t;
 
 typedef struct

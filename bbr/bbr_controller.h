@@ -9,9 +9,10 @@
 #define __bbr_controller_h_
 
 #include "bbr_rtt_stats.h"
-#include "bbr_transfer_tracker.h"
+#include "bbr_bandwidth_sample.h"
 #include "windowed_filter.h"
 #include "bbr_feedback_adpater.h"
+#include "bbr_loss_rate_filter.h"
 #include "bbr_common.h"
 
 /*bbr状态*/
@@ -83,26 +84,21 @@ typedef struct
 typedef struct
 {
 	bbr_rtt_stat_t					rtt_stat;						/*rtt延迟平滑计算模块*/
+	bbr_loss_rate_filter_t			loss_rate;						/*丢包计算*/
 	bbr_target_rate_constraint_t	constraints;
 	
 	int								mode;							/*bbr模式状态*/
-	bbr_config_t					config;							/*bbr的参数配置*/
-
-	size_t							total_bytes_acked;
-	int64_t							last_acked_packet_sent_time;
-	int64_t							last_acked_packet_ack_time;
-
-	int								is_app_limited;
-	int64_t							end_of_app_limited_phase;
+	bbr_bandwidth_sampler_t*		sampler;						/*带宽计算模型，基于发送和ACK两个维度进行计算*/
 	int64_t							round_trip_count;
 
-	int64_t							last_send_timestamp;
+	int64_t							last_sent_packet;
 	int64_t							current_round_trip_end;
 
 	int32_t							default_bandwidth;
 	windowed_filter_t				max_bandwidth;
 
 	windowed_filter_t				max_ack_height;
+
 
 	int64_t							aggregation_epoch_start_time;
 	size_t							aggregation_epoch_bytes;
@@ -116,24 +112,24 @@ typedef struct
 	size_t							congestion_window;
 	size_t							initial_congestion_window;
 	size_t							max_congestion_window;
+	size_t							min_congestion_window;
 
 	int32_t							pacing_rate;
 	double							pacing_gain;
 	double							congestion_window_gain;
 	double							congestion_window_gain_constant;
-	double							rtt_variance_weight;
 
-	int								exit_startup_on_loss;
+	double							rtt_variance_weight;
 
 	int								cycle_current_offset;
 	int64_t							last_cycle_start;
 
 	int								is_at_full_bandwidth;
 
-	int								rounds_without_bandwidth_gain;
-
+	int64_t							rounds_without_bandwidth_gain;
 	int32_t							bandwidth_at_last_round;
 
+	int								exiting_quiescence;
 	int64_t							exit_probe_rtt_at;
 	int								probe_rtt_round_passed;
 
@@ -144,6 +140,8 @@ typedef struct
 	int64_t							end_recovery_at;
 
 	size_t							recovery_window;
+
+	bbr_config_t					config;
 
 	int								app_limited_since_last_probe_rtt;
 	int64_t							min_rtt_since_last_probe_rtt;
@@ -158,11 +156,13 @@ void								bbr_reset(bbr_controller_t* bbr);
 bbr_network_ctrl_update_t			bbr_on_network_availability(bbr_controller_t* bbr, bbr_network_availability_t* av);
 bbr_network_ctrl_update_t			bbr_on_newwork_router_change(bbr_controller_t* bbr);
 bbr_network_ctrl_update_t			bbr_on_heartbeat(bbr_controller_t* bbr, int64_t now_ts);
-bbr_network_ctrl_update_t			bbr_on_send_packet(bbr_controller_t* bbr, bbr_packet_info_t* packet);
+void								bbr_on_send_packet(bbr_controller_t* bbr, bbr_packet_info_t* packet);
 bbr_network_ctrl_update_t			bbr_on_target_rate_constraints(bbr_controller_t* bbr, bbr_target_rate_constraint_t* target);
 bbr_network_ctrl_update_t			bbr_on_feedback(bbr_controller_t* bbr, bbr_feedback_t* feedback);
-bbr_network_ctrl_update_t			bbr_on_loss_report(bbr_controller_t* bbr, bbr_loss_report_t* report);
-bbr_network_ctrl_update_t			bbr_on_rtt_update(bbr_controller_t* bbr, bbr_rtt_update_t* info);
+
+void								bbr_on_remote_bitrate_report(bbr_controller_t* bbr, bbr_remote_bitrate_report_t* report);
+void								bbr_on_loss_report(bbr_controller_t* bbr, bbr_loss_report_t* report);
+void								bbr_on_rtt_update(bbr_controller_t* bbr, bbr_rtt_update_t* info);
 
 
 
