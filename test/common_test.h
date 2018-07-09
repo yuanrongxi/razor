@@ -6,7 +6,9 @@
 #define EXPECT_NEAR(src, dst, delta) assert(((dst) <= (src) + (delta)) && ((dst) >= (src) - (delta)))
 #define EXPECT_EQ(src, dst) assert((src) == (dst))
 #define EXPECT_LT(src, dst) assert((src) < (dst))
-#define EXPECT_GE(src, dst) assert((src) > (dst))
+#define EXPECT_LE(src, dst) assert((src) <= (dst))
+#define EXPECT_GE(src, dst) assert((src) >= (dst))
+#define EXPECT_GT(src, dst) assert((src) > (dst))
 
 typedef uint64_t random_t;
 

@@ -19,6 +19,7 @@ void test_loss_stat();
 void test_windowed_filter();
 void test_bbr_transfer_tracker();
 void test_bandwidth_sampler();
+void test_bbr_proc();
 
 #endif
 
