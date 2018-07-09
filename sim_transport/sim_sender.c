@@ -294,15 +294,14 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 	}
 
 	/*¼ÆËãRTT*/
-	
 	now_ts = GET_SYS_MS();
 
 	key.u32 = ack->acked_packet_id;
 	iter = skiplist_search(sender->cache, key);
 	if (iter != NULL){
 		seg = (sim_segment_t*)iter->val.ptr;
-		/*if (now_ts > seg->timestamp + seg->send_ts + sender->first_ts)
-			sim_session_calculate_rtt(s, (uint16_t)(now_ts - seg->timestamp - seg->send_ts - sender->first_ts));*/
+		if (now_ts > seg->timestamp + seg->send_ts + sender->first_ts)
+			sim_session_calculate_rtt(s, (uint16_t)(now_ts - seg->timestamp - seg->send_ts - sender->first_ts));
 		skiplist_remove(sender->cache, key);
 	}
 
