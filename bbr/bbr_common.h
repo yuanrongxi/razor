@@ -22,8 +22,8 @@
 // Constants based on TCP defaults.
 #define kMaxSegmentSize kDefaultTCPMSS
 
-// The gain used for the slow start, equal to 2/ln(2).
-#define kHighGain 2.885f
+// The gain used for the slow start, equal to 4ln(2).
+#define kHighGain 2.77f
 // The gain used in STARTUP after loss has been detected.
 // 1.5 is enough to allow for 25% exogenous loss and still observe a 25% growth
 // in measured bandwidth.
@@ -104,12 +104,12 @@ typedef struct
 
 static inline size_t bbr_pacer_data_rate(bbr_pacer_config_t* conf)
 {
-	return conf->data_window / conf->time_window;
+	return (size_t)(conf->data_window / conf->time_window);
 }
 
 static inline size_t bbr_pacer_pad_rate(bbr_pacer_config_t* conf)
 {
-	return conf->pad_window / conf->time_window;
+	return (size_t)(conf->pad_window / conf->time_window);
 }
 
 typedef struct

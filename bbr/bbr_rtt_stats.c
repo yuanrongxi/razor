@@ -91,3 +91,13 @@ int64_t	bbr_mean_deviation(bbr_rtt_stat_t* s)
 {
 	return s->mean_deviation;
 }
+
+int64_t bbr_latest_rtt(bbr_rtt_stat_t* s)
+{
+	return s->latest_rtt;
+}
+
+int64_t bbr_min_rtt(bbr_rtt_stat_t* s)
+{
+	return s->min_rtt;
+}

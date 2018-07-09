@@ -49,7 +49,12 @@ typedef struct
 	/* RTT delta to determine if startup should be exited due to increased RTT.*/
 	int64_t exit_startup_rtt_threshold_ms;
 
+	size_t initial_congestion_window;
+	size_t min_congestion_window;
+	size_t max_congestion_window;
+
 	double probe_rtt_congestion_window_gain;
+	int	pacing_rate_as_target;
 
 	/* Configurable in QUIC BBR:*/
 	int exit_startup_on_loss;
@@ -149,14 +154,14 @@ typedef struct
 }bbr_controller_t;
 
 
-bbr_controller_t*					bbr_create();
+bbr_controller_t*					bbr_create(bbr_target_rate_constraint_t* co, int32_t starting_bandwidth);
 void								bbr_destroy(bbr_controller_t* bbr);
 void								bbr_reset(bbr_controller_t* bbr);
 
 bbr_network_ctrl_update_t			bbr_on_network_availability(bbr_controller_t* bbr, bbr_network_availability_t* av);
 bbr_network_ctrl_update_t			bbr_on_newwork_router_change(bbr_controller_t* bbr);
 bbr_network_ctrl_update_t			bbr_on_heartbeat(bbr_controller_t* bbr, int64_t now_ts);
-void								bbr_on_send_packet(bbr_controller_t* bbr, bbr_packet_info_t* packet);
+bbr_network_ctrl_update_t			bbr_on_send_packet(bbr_controller_t* bbr, bbr_packet_info_t* packet);
 bbr_network_ctrl_update_t			bbr_on_target_rate_constraints(bbr_controller_t* bbr, bbr_target_rate_constraint_t* target);
 bbr_network_ctrl_update_t			bbr_on_feedback(bbr_controller_t* bbr, bbr_feedback_t* feedback);
 
