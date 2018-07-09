@@ -138,6 +138,9 @@
     <ClCompile Include="..\bbr\bbr_bandwidth_sample.c">
       <Filter>bbr</Filter>
     </ClCompile>
+    <ClCompile Include="..\bbr\bbr_feedback_adpater.c">
+      <Filter>bbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\cf_crc32.h">

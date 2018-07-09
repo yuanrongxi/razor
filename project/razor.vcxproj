@@ -75,6 +75,7 @@
   <ItemGroup>
     <ClCompile Include="..\bbr\bbr_bandwidth_sample.c" />
     <ClCompile Include="..\bbr\bbr_controller.c" />
+    <ClCompile Include="..\bbr\bbr_feedback_adpater.c" />
     <ClCompile Include="..\bbr\bbr_loss_rate_filter.c" />
     <ClCompile Include="..\bbr\bbr_rtt_stats.c" />
     <ClCompile Include="..\bbr\bbr_transfer_tracker.c" />
