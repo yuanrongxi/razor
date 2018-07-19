@@ -22,7 +22,7 @@ typedef struct
 
 	uint32_t		ssrc;
 
-	int64_t			wnd_start_seq;
+	int64_t			wnd_start_seq;			
 	int64_t			max_arrival_seq;
 
 	skiplist_t*		arrival_times;

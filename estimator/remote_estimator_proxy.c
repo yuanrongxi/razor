@@ -128,7 +128,7 @@ static int proxy_bulid_feelback_packet(estimator_proxy_t* proxy, feedback_msg_t*
 
 int estimator_proxy_heartbeat(estimator_proxy_t* proxy, int64_t cur_ts, feedback_msg_t* msg)
 {
-	if (cur_ts >= proxy->hb_ts + proxy->send_interval_ms){
+	if (cur_ts >= proxy->hb_ts + proxy->send_interval_ms || proxy->wnd_start_seq + DEFAULT_PROXY_INTERVAL_TIME <= proxy->max_arrival_seq){
 		proxy->hb_ts = cur_ts;
 		return proxy_bulid_feelback_packet(proxy, msg);
 	}
@@ -136,7 +136,7 @@ int estimator_proxy_heartbeat(estimator_proxy_t* proxy, int64_t cur_ts, feedback
 }
 
 #define kMaxSendIntervalMs 250
-#define kMinSendIntervalMs 100
+#define kMinSendIntervalMs 50
 
 /*码率发生变化时重新评估发送间隔时间*/
 void estimator_proxy_bitrate_changed(estimator_proxy_t* proxy, uint32_t bitrate)
