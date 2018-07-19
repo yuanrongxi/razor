@@ -125,7 +125,7 @@ static void test_run_simulation(test_bbr_controller_t* ctrl, int64_t duration,
 		}
 
 		/*进行发包模拟*/
-		if (send_flag == 1){
+		if (send_flag == 1 || list_size(ctrl->outstanding) < 2){ /*必须有2个报文在通道中传输 TCPMSS*/
 			sent_packet = test_bbr_next(ctrl, ctrl->update, ctrl->curr_ts, packet_interval);
 			sent_packet.seq = ctrl->packet_number++;
 			sent_packet.data_in_flight = sent_packet.size;
@@ -201,6 +201,8 @@ static void test_run_simulation(test_bbr_controller_t* ctrl, int64_t duration,
 		if (ctrl->curr_ts > last_process_time + ctrl->interval_ts)
 			ctrl->update = bbr_on_heartbeat(ctrl->bbr, ctrl->curr_ts);
 	}
+
+	ctrl->update = bbr_on_heartbeat(ctrl->bbr, ctrl->curr_ts);
 }
 
 static void bbr_test_update_send_rate()
@@ -215,14 +217,20 @@ static void bbr_test_update_send_rate()
 	test_run_simulation(&test, 5000, 10, 300, 100);
 	rate = wnd_filter_best(&test.bbr->max_bandwidth);
 	printf("rate = %ukbps\n", rate);
+
 	EXPECT_GE(test.update.target_rate.target_rate, 300 * kMinDataRateFactor);
 	EXPECT_LE(test.update.target_rate.target_rate, 300 * kMaxDataRateFactor);
 
-	test_run_simulation(&test, 30000, 10, 400, 100);
+	printf("accumulated_buffer = %ums\n", test.accumulated_buffer);
+	test_run_simulation(&test, 30000, 10, 500, 100);
 	rate = wnd_filter_best(&test.bbr->max_bandwidth);
 	printf("rate = %ukbps\n", rate);
 	EXPECT_GE(test.update.target_rate.target_rate, 500 * kMinDataRateFactor);
 	EXPECT_LE(test.update.target_rate.target_rate, 500 * kMaxDataRateFactor);
+
+	test_run_simulation(&test, 30000, 10, 200, 100);
+	EXPECT_GE(test.update.target_rate.target_rate, 200 * kMinDataRateFactor);
+	EXPECT_LE(test.update.target_rate.target_rate, 200 * kMaxDataRateFactor);
 
 	printf("accumulated_buffer = %ums\n", test.accumulated_buffer);
 	test_run_simulation(&test, 30000, 10, 100, 200);
@@ -231,6 +239,16 @@ static void bbr_test_update_send_rate()
 
 	EXPECT_GE(test.update.target_rate.target_rate, 100 * kMinDataRateFactor);
 	EXPECT_LE(test.update.target_rate.target_rate, 100 * kMaxDataRateFactor);
+
+	printf("accumulated_buffer = %ums\n", test.accumulated_buffer);
+	test_run_simulation(&test, 30000, 10, 50, 400);
+	rate = wnd_filter_best(&test.bbr->max_bandwidth);
+	printf("rate = %ukbps\n", rate);
+
+	EXPECT_GE(test.update.target_rate.target_rate, 50 * kMinDataRateFactor);
+	EXPECT_LE(test.update.target_rate.target_rate, 50 * kMaxDataRateFactor);
+
+	printf("accumulated_buffer = %ums\n", test.accumulated_buffer);
 
 	test_bbr_controller_destroy(&test);
 }

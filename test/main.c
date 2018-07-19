@@ -15,7 +15,7 @@ int main(int argc, const char* argv[])
 
 	/*test_detector();*/
 	/*test_sender_bandwidth_estimator();*/
-	/*test_sender_history();*/
+	test_sender_history();
 	/*test_ack_bitrate_estimator();*/
 	/*test_delay_base_bwe();*/
 	/*test_interval_budget();*/
@@ -28,8 +28,8 @@ int main(int argc, const char* argv[])
 	/*test_windowed_filter();*/
 	/*test_bbr_transfer_tracker();*/
 	/*test_bandwidth_sampler();*/
-	test_bbr_proc();
-
+	/*test_bbr_proc();*/
+	/*test_bbr_receiver();*/
 	return 0;
 }
 
