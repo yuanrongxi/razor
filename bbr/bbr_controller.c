@@ -209,7 +209,7 @@ static bbr_network_ctrl_update_t bbr_create_rate_upate(bbr_controller_t* bbr, in
 	ret.target_rate.at_time = at_time;
 	ret.target_rate.bandwidth = bandwidth;
 	ret.target_rate.rtt = rtt;
-	ret.target_rate.loss_rate_ratio = 0;
+	ret.target_rate.loss_rate_ratio = bbr_loss_filter_get(&bbr->loss_rate);
 	ret.target_rate.bwe_period = rtt * kGainCycleLength;
 	ret.target_rate.target_rate = target_rate;
 
@@ -363,7 +363,7 @@ bbr_network_ctrl_update_t bbr_on_feedback(bbr_controller_t* bbr, bbr_feedback_t*
 {
 	int64_t	feedback_recv_time, last_acked_packet;
 	int loss_num = 0, acked_num = 0, i;
-	bbr_packet_info_t *last_sent_packet, loss_packets[MAX_FEELBACK_COUNT], acked_packets[MAX_FEELBACK_COUNT];
+	bbr_packet_info_t *last_sent_packet, loss_packets[MAX_BBR_FEELBACK_COUNT], acked_packets[MAX_BBR_FEELBACK_COUNT];
 	size_t total_data_acked_before, data_acked_size, data_lost_size;
 	int is_round_start = false, min_rtt_expired = false;
 
@@ -379,11 +379,11 @@ bbr_network_ctrl_update_t bbr_on_feedback(bbr_controller_t* bbr, bbr_feedback_t*
 	total_data_acked_before = sampler_total_data_acked(bbr->sampler);
 
 	/*对丢包的处理*/
-	loss_num = bbr_feedback_get_loss(feedback, loss_packets, MAX_FEELBACK_COUNT);
+	loss_num = bbr_feedback_get_loss(feedback, loss_packets, MAX_BBR_FEELBACK_COUNT);
 	bbr_discard_lost_packets(bbr, loss_packets, loss_num);
 
 	/*对acked的处理*/
-	acked_num = bbr_feedback_get_received(feedback, acked_packets, MAX_FEELBACK_COUNT);
+	acked_num = bbr_feedback_get_received(feedback, acked_packets, MAX_BBR_FEELBACK_COUNT);
 	/*对丢包速率进行评估*/
 	bbr_loss_filter_update(&bbr->loss_rate, feedback_recv_time, feedback->packets_num, loss_num);
 
@@ -516,8 +516,9 @@ static int bbr_update_bandwidth_and_min_rtt(bbr_controller_t* bbr, int64_t now_t
 		}
 
 		/*进行带宽统计和滤波*/
-		if (!sample.is_app_limited || sample.bandwidth > bbr_bandwidth_estimate(bbr))
+		if (!sample.is_app_limited || sample.bandwidth > bbr_bandwidth_estimate(bbr)){
 			wnd_filter_update(&bbr->max_bandwidth, sample.bandwidth, bbr->round_trip_count);
+		}
 	}
 
 	if (sample_rtt == -1)

@@ -2,6 +2,7 @@
 #define __bbr_common_h_
 
 #include "cf_platform.h"
+#include "cf_stream.h"
 
 // If greater than zero, mean RTT variation is multiplied by the specified
 // factor and added to the congestion window limit.
@@ -135,6 +136,28 @@ typedef struct
 	bbr_pacer_config_t			pacer_config;
 	bbr_target_transfer_rate_t  target_rate;
 }bbr_network_ctrl_update_t;
+
+#define MAX_BBR_FEELBACK_COUNT	256
+
+enum{
+	bbr_loss_info_msg = 0x01,
+	bbr_acked_msg = 0x02
+};
+
+typedef struct
+{
+	uint8_t					flag;
+	/*loss info msg*/
+	uint8_t					fraction_loss;
+	int						packet_num;
+	/*proxy_ts_msg*/
+	int64_t					base_seq;
+	uint8_t					samples_num;
+	int16_t					samples[MAX_BBR_FEELBACK_COUNT];
+}bbr_feedback_msg_t;
+
+void bbr_feedback_msg_encode(bin_stream_t* strm, bbr_feedback_msg_t* msg);
+void bbr_feedback_msg_decode(bin_stream_t* strm, bbr_feedback_msg_t* msg);
 
 #endif
 
