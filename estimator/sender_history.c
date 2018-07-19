@@ -40,7 +40,6 @@ void sender_history_destroy(sender_history_t* hist)
 
 void sender_history_add(sender_history_t* hist, packet_feedback_t* packet)
 {
-	int64_t now_ts = GET_SYS_MS();
 	packet_feedback_t* p;
 	skiplist_iter_t* it;
 	skiplist_item_t key, val;
@@ -49,8 +48,14 @@ void sender_history_add(sender_history_t* hist, packet_feedback_t* packet)
 	while (skiplist_size(hist->l) > 0){
 		it = skiplist_first(hist->l);
 		p = it->val.ptr;
-		if (p->create_ts + hist->limited_ms < now_ts)
+		if (p->create_ts + hist->limited_ms < packet->send_ts){
+			if (it->key.i64 > hist->last_ack_seq_num){
+				hist->outstanding_bytes = SU_MAX(hist->outstanding_bytes - p->payload_size, 0);
+				hist->last_ack_seq_num = it->key.i64;
+			}
+
 			skiplist_remove(hist->l, it->key);
+		}
 		else
 			break;
 	}
@@ -61,6 +66,11 @@ void sender_history_add(sender_history_t* hist, packet_feedback_t* packet)
 	key.i64 = wrap_uint16(&hist->wrapper, packet->sequence_number);
 	val.ptr = p;
 	skiplist_insert(hist->l, key, val);
+
+	hist->outstanding_bytes += packet->payload_size;
+
+	if (hist->last_ack_seq_num == 0)
+		hist->last_ack_seq_num = SU_MAX(hist->last_ack_seq_num, packet->sequence_number - 1);
 }
 
 int sender_history_get(sender_history_t* hist, uint16_t seq, packet_feedback_t* packet)
@@ -69,10 +79,21 @@ int sender_history_get(sender_history_t* hist, uint16_t seq, packet_feedback_t* 
 	skiplist_item_t key;
 	packet_feedback_t* p;
 
-	key.i64 = wrap_uint16(&hist->wrapper, seq);
+	int64_t i, seqnumber;
 
-	hist->last_ack_seq_num = SU_MAX(key.i64, hist->last_ack_seq_num);
+	seqnumber = wrap_uint16(&hist->wrapper, seq);
+	for (i = hist->last_ack_seq_num + 1; i <= seqnumber; i++){
+		key.i64 = i;
+		it = skiplist_search(hist->l, key);
+		if (it != NULL){
+			p = it->val.ptr;
+			hist->outstanding_bytes = SU_MAX(hist->outstanding_bytes - p->payload_size, 0);
+		}
+	}
 
+	hist->last_ack_seq_num = SU_MAX(seqnumber, hist->last_ack_seq_num);
+
+	key.i64 = seqnumber;
 	it = skiplist_search(hist->l, key);
 	if (it == NULL)
 		return -1;
@@ -87,16 +108,5 @@ int sender_history_get(sender_history_t* hist, uint16_t seq, packet_feedback_t* 
 
 size_t sender_history_outstanding_bytes(sender_history_t* hist)
 {
-	skiplist_iter_t* it;
-	packet_feedback_t* p;
-	size_t ret;
-
-	ret = 0;
-	SKIPLIST_FOREACH(hist->l, it){
-		p = it->val.ptr;
-		if (it->key.i64 > hist->last_ack_seq_num)
-			ret += p->payload_size;
-	}
-
-	return ret;
+	return hist->outstanding_bytes;
 }
