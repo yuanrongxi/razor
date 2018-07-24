@@ -52,7 +52,7 @@ static int bbr_receive_pack_acked(bbr_receiver_t* cc, int64_t now_ts, bbr_feedba
 	int pos;
 	int64_t i, new_base_seq = -1;
 
-	if (cc->base_seq + 2 > cc->max_seq || cc->feedback_ts + k_bbr_feedback_time > now_ts && cc->base_seq + 32 >= cc->max_seq)
+	if (cc->base_seq + 2 >= cc->max_seq || cc->feedback_ts + k_bbr_feedback_time > now_ts && cc->base_seq + 8 >= cc->max_seq)
 		return -1;
 
 	msg->samples_num = 0;
@@ -71,7 +71,7 @@ static int bbr_receive_pack_acked(bbr_receiver_t* cc, int64_t now_ts, bbr_feedba
 		}
 	}
 	/*进行到达时间序列编码*/
-	if (msg->samples_num > 2){
+	if (msg->samples_num >= 2){
 		cc->feedback_ts = now_ts;
 		cc->base_seq = new_base_seq;
 		

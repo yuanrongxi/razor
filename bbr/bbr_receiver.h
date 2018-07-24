@@ -8,6 +8,8 @@
 
 typedef struct
 {
+	razor_receiver_t			receiver;
+
 	cc_loss_statistics_t		loss_stat;
 
 	/*信息反馈函数*/

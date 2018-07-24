@@ -3,6 +3,7 @@
 
 #include "cf_platform.h"
 #include "bbr_common.h"
+#include "sender_history.h"
 
 typedef struct
 {
@@ -15,9 +16,23 @@ typedef struct
 	bbr_packet_info_t		packets[MAX_BBR_FEELBACK_COUNT];
 }bbr_feedback_t;
 
-int		bbr_feedback_get_loss(bbr_feedback_t* feeback, bbr_packet_info_t* loss_arr, int arr_size);
-int		bbr_feedback_get_received(bbr_feedback_t* feeback, bbr_packet_info_t* recvd_arr, int arr_size);
+int							bbr_feedback_get_loss(bbr_feedback_t* feeback, bbr_packet_info_t* loss_arr, int arr_size);
+int							bbr_feedback_get_received(bbr_feedback_t* feeback, bbr_packet_info_t* recvd_arr, int arr_size);
 
+typedef struct
+{
+	sender_history_t*		hist;
+	bbr_feedback_t			feedback;
+}bbr_fb_adapter_t;
+
+void						bbr_feedback_adapter_init(bbr_fb_adapter_t* adapter);
+void						bbr_feedback_adapter_destroy(bbr_fb_adapter_t* adapter);
+
+/*添加一个网络发送报文的记录*/
+void						bbr_feedback_add_packet(bbr_fb_adapter_t* adapter, uint16_t seq, size_t size, bbr_packet_info_t* info);
+void						bbr_feedback_on_feedback(bbr_fb_adapter_t* adapter, bbr_feedback_msg_t* msg);
+
+size_t						bbr_feedback_get_in_flight(bbr_fb_adapter_t* adapter);
 #endif
 
 

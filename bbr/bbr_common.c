@@ -22,6 +22,8 @@ void bbr_feedback_msg_encode(bin_stream_t* strm, bbr_feedback_msg_t* msg)
 void bbr_feedback_msg_decode(bin_stream_t* strm, bbr_feedback_msg_t* msg)
 {
 	int i;
+	
+	msg->samples_num = 0;
 
 	mach_uint8_read(strm, &msg->flag);
 

@@ -153,7 +153,7 @@ typedef struct
 	/*proxy_ts_msg*/
 	int64_t					base_seq;
 	uint8_t					samples_num;
-	int16_t					samples[MAX_BBR_FEELBACK_COUNT];
+	uint16_t				samples[MAX_BBR_FEELBACK_COUNT];
 }bbr_feedback_msg_t;
 
 void bbr_feedback_msg_encode(bin_stream_t* strm, bbr_feedback_msg_t* msg);
