@@ -46,6 +46,8 @@ sim_session_t* sim_session_create(uint16_t port, void* event, sim_notify_fn noti
 	session->start_bitrate = START_BITRATE;
 	session->commad_ts = GET_SYS_MS();
 
+	session->transport_type = gcc_transport;
+
 	session->notify_cb = notify_cb;
 	session->change_bitrate_cb = change_bitrate_cb;
 	session->state_cb = state_cb;
@@ -111,6 +113,7 @@ static void sim_session_reset(sim_session_t* s)
 	s->resend = 0;
 	s->commad_ts = s->stat_ts;
 	s->interrupt = net_normal;
+	s->transport_type = gcc_transport;
 	
 	if (s->sender != NULL){
 		sim_sender_destroy(s, s->sender);
@@ -131,6 +134,7 @@ static void sim_session_send_connect(sim_session_t* s, int64_t now_ts)
 	INIT_SIM_HEADER(header, SIM_CONNECT, s->uid);
 	body.cid = s->cid;
 	body.token_size = 0;
+	body.cc_type = (uint8_t)s->transport_type;
 	/*此处只是测试程序，不填写token*/
 
 	sim_encode_msg(&s->sstrm, &header, &body);
@@ -142,7 +146,7 @@ static void sim_session_send_connect(sim_session_t* s, int64_t now_ts)
 	s->resend++;
 }
 
-int sim_session_connect(sim_session_t* s, uint32_t local_uid, const char* peer_ip, uint16_t peer_port)
+int sim_session_connect(sim_session_t* s, uint32_t local_uid, const char* peer_ip, uint16_t peer_port, int transport_type)
 {
 	int ret = -1;
 	su_mutex_lock(s->mutex);
@@ -158,6 +162,7 @@ int sim_session_connect(sim_session_t* s, uint32_t local_uid, const char* peer_i
 	s->uid = local_uid;
 	ret = 0;
 	s->state = session_connecting;
+	s->transport_type = transport_type;
 	s->resend = 0;
 
 	sim_session_send_connect(s, GET_SYS_MS());
@@ -348,11 +353,11 @@ static void process_sim_connect(sim_session_t* s, sim_header_t* header, bin_stre
 	
 	/*初始化接收端*/
 	if (s->receiver == NULL){
-		s->receiver = sim_receiver_create(s);
+		s->receiver = sim_receiver_create(s, body.cc_type);
 		s->notify_cb(s->event, sim_start_play_notify, header->uid);
 	}
 	else
-		sim_receiver_reset(s, s->receiver);
+		sim_receiver_reset(s, s->receiver, body.cc_type);
 
 	sim_info("receiver actived!!!\n");
 	sim_receiver_active(s, s->receiver, header->uid);
@@ -386,10 +391,10 @@ static void process_sim_connect_ack(sim_session_t* s, sim_header_t* header, bin_
 		s->state = session_connected;
 		/*创建sender*/
 		if (s->sender == NULL){
-			s->sender = sim_sender_create(s);
+			s->sender = sim_sender_create(s, s->transport_type);
 		}
 		else
-			sim_sender_reset(s, s->sender);
+			sim_sender_reset(s, s->sender, s->transport_type);
 		sim_sender_active(s, s->sender);
 
 

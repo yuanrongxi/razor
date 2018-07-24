@@ -12,7 +12,7 @@
 #define MAX_SEND_COUNT		10
 
 /*处理来自razor的码率调节通告,这个函数需要剥离FEC和重传需要的码率*/
-static void sim_bitrate_change(void* trigger, uint32_t bitrate_kbps, uint8_t fraction_loss, uint32_t rtt)
+static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction_loss, uint32_t rtt)
 {
 	sim_session_t* s = (sim_session_t*)trigger;
 	sim_sender_t* sender = s->sender;
@@ -22,11 +22,11 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate_kbps, uint8_t fra
 	uint32_t packet_size_bit = (SIM_SEGMENT_HEADER_SIZE + SIM_VIDEO_SIZE) * 8;
 
 	/*计算这个码率下每秒能发送多少个报文*/
-	per_packets_second = (bitrate_kbps + packet_size_bit - 1) / packet_size_bit;
+	per_packets_second = (bitrate + packet_size_bit - 1) / packet_size_bit;
 	/*计算传输协议头需要占用的码率*/
 	overhead_bitrate = per_packets_second * SIM_SEGMENT_HEADER_SIZE * 8;
 	/*计算视频数据可利用的码率*/
-	payload_bitrate = bitrate_kbps - overhead_bitrate;
+	payload_bitrate = bitrate - overhead_bitrate;
 
 	/*计算丢包率，用平滑遗忘算法进行逼近，webRTC用的是单位时间内最大和时间段平滑*/
 	if (s->loss_fraction == 0)
@@ -38,20 +38,19 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate_kbps, uint8_t fra
 	/*todo:通过丢包率计算FEC比例，FEC机制在这进行计算！！！！*/
 
 	/*留出7%码率做nack和feedback*/
-	loss += 0.07;
 	if (loss > 0.5) /*重传的带宽不能大于半*/
 		loss = 0.5;
 
 	/*计算视频编码器的码率,单位kbps*/
 	video_bitrate_kbps = (uint32_t)((1.0 - loss) * payload_bitrate) / 1000;
 
-	sim_info("loss = %f, bitrate = %u, video_bitrate_kbps = %u\n", loss, bitrate_kbps, video_bitrate_kbps);
+	sim_info("loss = %f, bitrate = %u, video_bitrate_kbps = %u\n", loss, bitrate, video_bitrate_kbps);
 	/*通知上层进行码率调整*/
 	s->change_bitrate_cb(s->event, video_bitrate_kbps);
 
 	/*设置重发最大的码率*/
 	if (sender != NULL)
-		sim_limiter_set_max_bitrate(&sender->limiter, bitrate_kbps * 1000);
+		sim_limiter_set_max_bitrate(&sender->limiter, bitrate / 8);
 }
 
 static void sim_send_packet(void* handler, uint32_t packet_id, int retrans, size_t size)
@@ -97,14 +96,16 @@ void free_video_seg(skiplist_item_t key, skiplist_item_t val, void* args)
 		free(seg);
 }
 
-sim_sender_t* sim_sender_create(sim_session_t* s)
+sim_sender_t* sim_sender_create(sim_session_t* s, int transport_type)
 {
+	int cc_type;
 	sim_sender_t* sender = calloc(1, sizeof(sim_sender_t));
 	sender->first_ts = -1;
 
 	sender->cache = skiplist_create(idu32_compare, free_video_seg, s);
 	/*pacer queue的延迟不大于250ms*/
-	sender->cc = razor_sender_create(s, sim_bitrate_change, sender, sim_send_packet, 1000);
+	cc_type = (transport_type == bbr_transport ? bbr_congestion : gcc_congestion);
+	sender->cc = razor_sender_create(cc_type, s, sim_bitrate_change, sender, sim_send_packet, 1000);
 	
 	sim_limiter_init(&sender->limiter, 300);
 
@@ -133,8 +134,10 @@ void sim_sender_destroy(sim_session_t* s, sim_sender_t* sender)
 	free(sender);
 }
 
-void sim_sender_reset(sim_session_t* s, sim_sender_t* sender)
+void sim_sender_reset(sim_session_t* s, sim_sender_t* sender, int transport_type)
 {
+	int cc_type;
+
 	sender->actived = 0;
 	sender->base_packet_id = 0;
 	sender->packet_id_seed = 0;
@@ -150,7 +153,9 @@ void sim_sender_reset(sim_session_t* s, sim_sender_t* sender)
 		razor_sender_destroy(sender->cc);
 		sender->cc = NULL;
 	}
-	sender->cc = razor_sender_create(s, sim_bitrate_change, sender, sim_send_packet, 300);
+
+	cc_type = (transport_type == bbr_transport ? bbr_congestion : gcc_congestion);
+	sender->cc = razor_sender_create(gcc_congestion, s, sim_bitrate_change, sender, sim_send_packet, 300);
 }
 
 int sim_sender_active(sim_session_t* s, sim_sender_t* sender)

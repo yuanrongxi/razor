@@ -21,6 +21,8 @@ struct __sim_session
 	int				state;				/*状态*/
 	int				interrupt;			/*中断*/
 
+	int				transport_type;		/*拥塞控制的类型*/
+
 	volatile int	run;				/*run线程标示 */
 	su_mutex		mutex;				/*用于上层多线程操作的保护锁*/
 	su_thread		thr;				/*线程ID*/

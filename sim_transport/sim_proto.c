@@ -39,7 +39,7 @@ int sim_decode_header(bin_stream_t* strm, sim_header_t* header)
 
 void sim_encode_msg(bin_stream_t* strm, sim_header_t* header, void* body)
 {
-	uint32_t crc;
+	uint32_t crc = 0;
 
 	bin_stream_rewind(strm, 1);
 

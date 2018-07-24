@@ -71,7 +71,8 @@ struct __sim_receiver
 	/*和FIR有关的参数*/
 	uint32_t			fir_seq;			/*请求关键帧的消息seq*/
 	int					fir_state;			/*当前fir的状态，*/
-	
+
+	int					cc_type;
 
 	razor_receiver_t*	cc;
 	sim_session_t*		s;

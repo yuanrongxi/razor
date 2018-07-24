@@ -27,6 +27,11 @@ enum{
 	sim_fir_notify,
 };
 
+enum{
+	gcc_transport = 0,
+	bbr_transport = 1,
+};
+
 typedef void(*sim_notify_fn)(void* event, int type, uint32_t val);
 typedef int(*sim_log_fn)(int level, const char* file, int line, const char* fmt, va_list vl);
 typedef void(*sim_change_bitrate_fn)(void* event, uint32_t bw);
@@ -36,7 +41,8 @@ typedef void(*sim_state_fn)(void* event, const char* info);
 void		sim_init(uint16_t port, void* event, sim_log_fn log_cb, sim_notify_fn notify_cb, sim_change_bitrate_fn change_bitrate_cb, sim_state_fn state_cb);
 void		sim_destroy();
 
-int			sim_connect(uint32_t local_uid, const char* peer_ip, uint16_t peer_port);
+/*transport_type,传输的拥塞控制类型，0是GCC，1是BBR*/
+int			sim_connect(uint32_t local_uid, const char* peer_ip, uint16_t peer_port, int transport_type);
 int			sim_disconnect();
 
 /*发送一帧视频*/

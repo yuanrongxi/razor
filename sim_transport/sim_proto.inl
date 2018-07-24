@@ -11,6 +11,7 @@ static inline void sim_connect_encode(bin_stream_t* strm, sim_connect_t* body)
 {
 	mach_uint32_write(strm, body->cid);
 	mach_data_write(strm, body->token, body->token_size);
+	mach_int8_write(strm, body->cc_type);
 }
 
 static inline int sim_connect_decode(bin_stream_t* strm, sim_connect_t* body)
@@ -19,6 +20,7 @@ static inline int sim_connect_decode(bin_stream_t* strm, sim_connect_t* body)
 	body->token_size = mach_data_read(strm, body->token, SIM_TOKEN_SIZE);
 	if (body->token_size == READ_DATA_ERROR)
 		body->token_size = 0;
+	mach_int8_read(strm, &body->cc_type);
 
 	return 0;
 }

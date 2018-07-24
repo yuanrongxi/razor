@@ -58,6 +58,7 @@ typedef struct
 	uint32_t cid;						/*协商的呼叫ID，每次是一个随机值,和disconnect等消息保持一致*/
 	uint16_t token_size;				/*token是一个验证信息，可以用类似证书的方式来进行验证*/
 	uint8_t	 token[SIM_TOKEN_SIZE];
+	uint8_t	 cc_type;					/*拥塞控制类型*/
 }sim_connect_t;
 
 typedef struct

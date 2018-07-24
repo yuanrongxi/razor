@@ -124,6 +124,8 @@ static int evict_gop_frame(sim_session_t* s, sim_frame_cache_t* c)
 		c->frame_ts = c->frames[INDEX(i)].ts;
 		real_video_clean_frame(s, c, &c->frames[INDEX(i)]);
 	}
+	 
+	c->min_fid = key_frame_id - 1;
 
 	return 0;
 }
@@ -412,7 +414,7 @@ static void send_sim_feedback(void* handler, const uint8_t* payload, int payload
 	/*sim_debug("sim send SIM_FEEDBACK, feedback size = %u\n", payload_size);*/
 }
 
-sim_receiver_t* sim_receiver_create(sim_session_t* s)
+sim_receiver_t* sim_receiver_create(sim_session_t* s, int transport_type)
 {
 	sim_receiver_t* r = calloc(1, sizeof(sim_receiver_t));
 
@@ -423,7 +425,8 @@ sim_receiver_t* sim_receiver_create(sim_session_t* s)
 	r->fir_state = fir_normal;
 
 	/*创建一个接收端的拥塞控制对象*/
-	r->cc = razor_receiver_create(MIN_BITRATE, MAX_BITRATE, SIM_SEGMENT_HEADER_SIZE, r, send_sim_feedback);
+	r->cc_type = (transport_type == bbr_transport ? bbr_congestion : gcc_congestion);
+	r->cc = razor_receiver_create(r->cc_type, MIN_BITRATE, MAX_BITRATE, SIM_SEGMENT_HEADER_SIZE, r, send_sim_feedback);
 
 	return r;
 }
@@ -446,7 +449,7 @@ void sim_receiver_destroy(sim_session_t* s, sim_receiver_t* r)
 	free(r);
 }
 
-void sim_receiver_reset(sim_session_t* s, sim_receiver_t* r)
+void sim_receiver_reset(sim_session_t* s, sim_receiver_t* r, int transport_type)
 {
 	reset_real_video_cache(s, r->cache);
 	skiplist_clear(r->loss);
@@ -466,7 +469,9 @@ void sim_receiver_reset(sim_session_t* s, sim_receiver_t* r)
 		razor_receiver_destroy(r->cc);
 		r->cc = NULL;
 	}
-	r->cc = razor_receiver_create(MIN_BITRATE, MAX_BITRATE, SIM_SEGMENT_HEADER_SIZE, r, send_sim_feedback);
+
+	r->cc_type = (transport_type == bbr_transport ? bbr_congestion : gcc_congestion);
+	r->cc = razor_receiver_create(r->cc_type, MIN_BITRATE, MAX_BITRATE, SIM_SEGMENT_HEADER_SIZE, r, send_sim_feedback);
 }
 
 int sim_receiver_active(sim_session_t* s, sim_receiver_t* r, uint32_t uid)
