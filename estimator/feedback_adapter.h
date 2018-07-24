@@ -9,7 +9,6 @@
 #define __feedback_adapter_h_
 
 #include "sender_history.h"
-#include "cf_stream.h"
 
 #define FEEDBACK_RTT_WIN_SIZE 32
 typedef struct

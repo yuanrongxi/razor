@@ -5,9 +5,9 @@
 * See the file LICENSE for redistribution information.
 */
 
+#include <stdlib.h>
 #include "feedback_adapter.h"
 #include "razor_log.h"
-#include <stdlib.h>
 
 #define k_history_cache_ms		60000
 void feedback_adapter_init(feedback_adapter_t* adapter)
@@ -73,11 +73,11 @@ int feedback_on_feedback(feedback_adapter_t* adapter, feedback_msg_t* msg)
 
 	now_ts = GET_SYS_MS();
 	feedback_rtt = -1;
-
+	 
 	adapter->num = 0;
 	for (i = 0; i < msg->samples_num; i++){
 		/*根据反馈的SEQ获取对应的报文发送信息，计算反馈RTT,更新报文到达时刻*/
-		if (sender_history_get(adapter->hist, msg->samples[i].seq, &adapter->packets[adapter->num]) == 0){
+		if (sender_history_get(adapter->hist, msg->samples[i].seq, &adapter->packets[adapter->num], 1) == 0){
 			/*计算反馈RTT*/
 			if (adapter->packets[adapter->num].send_ts > 0){
 				feedback_rtt = SU_MAX(now_ts - adapter->packets[adapter->num].send_ts, feedback_rtt);

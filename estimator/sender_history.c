@@ -73,7 +73,7 @@ void sender_history_add(sender_history_t* hist, packet_feedback_t* packet)
 		hist->last_ack_seq_num = SU_MAX(hist->last_ack_seq_num, packet->sequence_number - 1);
 }
 
-int sender_history_get(sender_history_t* hist, uint16_t seq, packet_feedback_t* packet)
+int sender_history_get(sender_history_t* hist, uint16_t seq, packet_feedback_t* packet, int remove_flag)
 {
 	skiplist_iter_t* it;
 	skiplist_item_t key;
@@ -101,7 +101,8 @@ int sender_history_get(sender_history_t* hist, uint16_t seq, packet_feedback_t* 
 	p = it->val.ptr;
 	*packet = *p;
 
-	skiplist_remove(hist->l, key);
+	if (remove_flag == 1)
+		skiplist_remove(hist->l, key);
 
 	return 0;
 }
