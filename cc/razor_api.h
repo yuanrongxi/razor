@@ -24,14 +24,20 @@ extern "C" {
 /*定义回调函数和对象*/
 #include "razor_callback.h"
 
+enum
+{
+	gcc_congestion = 0,
+	bbr_congestion = 1,
+};
+
 /****************************************外部直接调用API************************************/
 void				razor_setup_log(razor_log_func log_cb);
 /*创建一个发送端的拥塞控制对象*/
-razor_sender_t*		razor_sender_create(void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms);
+razor_sender_t*		razor_sender_create(int type, void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms);
 /*销毁一个发送端的拥塞控制对象*/
 void				razor_sender_destroy(razor_sender_t* sender);
 
-razor_receiver_t*	razor_receiver_create(int min_bitrate, int max_bitrate, int packet_header_size, void* handler, send_feedback_func cb);
+razor_receiver_t*	razor_receiver_create(int type, int min_bitrate, int max_bitrate, int packet_header_size, void* handler, send_feedback_func cb);
 void				razor_receiver_destroy(razor_receiver_t* receiver);
 
 #ifdef __cplusplus

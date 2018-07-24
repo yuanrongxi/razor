@@ -54,6 +54,7 @@ typedef int64_t(*sender_get_first_ts)(razor_sender_t* sender);
 
 struct __razor_sender
 {
+	int								type;
 	sender_heartbeat_func			heartbeat;
 	sender_set_bitrates				set_bitrates;
 	sender_add_packet_func			add_packet;
@@ -89,6 +90,7 @@ typedef void(*receiver_set_max_bitrate_func)(razor_receiver_t*receiver, uint32_t
 
 struct __razor_receiver
 {
+	int								type;
 	receiver_heartbeat_func			heartbeat;				/*接收端拥塞对象心跳，建议每5毫秒一次*/
 	receiver_on_received_func		on_received;			/*接收报文事件*/
 	receiver_update_rtt_func		update_rtt;				/*更新rtt*/
