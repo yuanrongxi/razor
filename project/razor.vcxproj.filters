@@ -141,6 +141,18 @@
     <ClCompile Include="..\bbr\bbr_feedback_adpater.c">
       <Filter>bbr</Filter>
     </ClCompile>
+    <ClCompile Include="..\bbr\bbr_common.c">
+      <Filter>bbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\bbr\bbr_receiver.c">
+      <Filter>bbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\bbr\bbr_pacer.c">
+      <Filter>bbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\bbr\bbr_sender.c">
+      <Filter>bbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\cf_crc32.h">
@@ -258,6 +270,15 @@
       <Filter>bbr</Filter>
     </ClInclude>
     <ClInclude Include="..\bbr\bbr_bandwidth_sample.h">
+      <Filter>bbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\bbr\bbr_receiver.h">
+      <Filter>bbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\bbr\bbr_pacer.h">
+      <Filter>bbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\bbr\bbr_sender.h">
       <Filter>bbr</Filter>
     </ClInclude>
   </ItemGroup>

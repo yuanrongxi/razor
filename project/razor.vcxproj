@@ -47,7 +47,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\common;..\estimator;..\pacing;..\cc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\common;..\estimator;..\pacing;..\cc;..\bbr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -74,10 +74,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\bbr\bbr_bandwidth_sample.c" />
+    <ClCompile Include="..\bbr\bbr_common.c" />
     <ClCompile Include="..\bbr\bbr_controller.c" />
     <ClCompile Include="..\bbr\bbr_feedback_adpater.c" />
     <ClCompile Include="..\bbr\bbr_loss_rate_filter.c" />
+    <ClCompile Include="..\bbr\bbr_pacer.c" />
+    <ClCompile Include="..\bbr\bbr_receiver.c" />
     <ClCompile Include="..\bbr\bbr_rtt_stats.c" />
+    <ClCompile Include="..\bbr\bbr_sender.c" />
     <ClCompile Include="..\bbr\bbr_transfer_tracker.c" />
     <ClCompile Include="..\bbr\windowed_filter.c" />
     <ClCompile Include="..\cc\razor_api.c" />
@@ -119,7 +123,10 @@
     <ClInclude Include="..\bbr\bbr_controller.h" />
     <ClInclude Include="..\bbr\bbr_feedback_adpater.h" />
     <ClInclude Include="..\bbr\bbr_loss_rate_filter.h" />
+    <ClInclude Include="..\bbr\bbr_pacer.h" />
+    <ClInclude Include="..\bbr\bbr_receiver.h" />
     <ClInclude Include="..\bbr\bbr_rtt_stats.h" />
+    <ClInclude Include="..\bbr\bbr_sender.h" />
     <ClInclude Include="..\bbr\bbr_transfer_tracker.h" />
     <ClInclude Include="..\bbr\windowed_filter.h" />
     <ClInclude Include="..\cc\razor_api.h" />
