@@ -20,11 +20,11 @@ static void add_remove_one()
 	sender_history_add(hist, &k_packet);
 
 	init_packet_feedback(received_packet);
-	assert(sender_history_get(hist, seq_no, &received_packet) == 0);
-	EXPECT_EQ(k_packet.create_ts, received_packet.create_ts);
+	assert(sender_history_get(hist, seq_no, &received_packet, 1) == 0);
+	EXPECT_EQ(k_packet.create_ts, received_packet.create_ts, 1);
 
 	init_packet_feedback(received_packet2);
-	assert(sender_history_get(hist, seq_no, &received_packet2) != 0);
+	assert(sender_history_get(hist, seq_no, &received_packet2, 1) != 0);
 
 	sender_history_destroy(hist);
 }
@@ -47,7 +47,7 @@ static void populates_expected_fields()
 
 	init_packet_feedback(recvd_packet);
 	recvd_packet.sequence_number = kSeqNo;
-	assert(sender_history_get(hist, kSeqNo, &recvd_packet) == 0);
+	assert(sender_history_get(hist, kSeqNo, &recvd_packet,1) == 0);
 	recvd_packet.arrival_ts = kReceiveTime;
 
 	EXPECT_EQ(kReceiveTime, recvd_packet.arrival_ts);
@@ -82,7 +82,7 @@ static void test_outstanding_bytes()
 
 	init_packet_feedback(recvd_packet);
 	recvd_packet.sequence_number = kSeqNo + 4;
-	assert(sender_history_get(hist, kSeqNo + 4, &recvd_packet) == 0);
+	assert(sender_history_get(hist, kSeqNo + 4, &recvd_packet, 1) == 0);
 	recvd_packet.arrival_ts = kReceiveTime;
 
 	EXPECT_EQ(kPayloadSize * 5, sender_history_outstanding_bytes(hist));
