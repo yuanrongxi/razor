@@ -10,6 +10,8 @@
 #include "echo_h264_common.h"
 #include "utf8to.h"
 
+#include "sim_external.h"
+
 #include <vector>
 #include <string>
 
@@ -67,6 +69,7 @@ CechoDlg::CechoDlg(CWnd* pParent /*=NULL*/)
 	, m_strInfo(_T(""))
 	, m_strLocalRes(_T(""))
 	, m_strRemoteRes(_T(""))
+	, m_strCC(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_viewing = FALSE;
@@ -95,6 +98,8 @@ void CechoDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDINFO, m_strInfo);
 	DDX_Text(pDX, IDC_LOCAL_RES, m_strLocalRes);
 	DDX_Text(pDX, IDC_REMOTE_RES, m_strRemoteRes);
+	DDX_Control(pDX, IDC_CBX_CC, m_cbxCC);
+	DDX_CBString(pDX, IDC_CBX_CC, m_strCC);
 }
 
 BEGIN_MESSAGE_MAP(CechoDlg, CDialogEx)
@@ -167,7 +172,7 @@ BOOL CechoDlg::OnInitDialog()
 	InitVideoDevices();
 
 	m_frame = new SimFramework(GetSafeHwnd());
-	m_frame->init(SIM_PORT, MIN_VIDEO_BITARE, START_VIDEO_BITRATE, MAX_VIDEO_BITRAE);
+	m_frame->init(rand() % 1000 + 2000, MIN_VIDEO_BITARE, START_VIDEO_BITRATE, MAX_VIDEO_BITRAE);
 
 	SetTimer(1000, 1000, NULL);
 
@@ -306,6 +311,10 @@ void CechoDlg::InitVideoDevices()
 		m_cbxDevice.SetCurSel(cur_count - 1);
 	else
 		m_cbxDevice.SetCurSel(0);
+
+	m_cbxCC.AddString(_T("GCC"));
+	m_cbxCC.AddString(_T("BBR"));
+	m_cbxCC.SetCurSel(0);
 }
 
 
@@ -372,13 +381,18 @@ void CechoDlg::OnBnClickedBtnview()
 void CechoDlg::OnBnClickedBtnconnect()
 {
 	UpdateData(TRUE);
-
+	int transport_type = gcc_transport;
 	if (!m_connected){
 		TCHAR* wip;
 		wip = m_strIP.GetBuffer(m_strIP.GetLength());
 		std::string ip = helper::app2asci(wip);
 
-		if (m_frame->connect(m_iUser, ip.c_str(), m_iPort) == 0){
+		if (m_strCC == _T("BBR"))
+			transport_type = bbr_transport;
+		else if (m_strCC == _T("GCC"))
+			transport_type = gcc_transport;
+
+		if (m_frame->connect(transport_type, m_iUser, ip.c_str(), m_iPort) == 0){
 			m_btnView.EnableWindow(FALSE);
 			m_btnEcho.SetWindowText(_T("stop echo"));
 			m_connected = TRUE;
@@ -415,7 +429,7 @@ LRESULT CechoDlg::OnConnectSucc(WPARAM wparam, LPARAM lparam)
 
 	video_info_t info;
 	info.pix_format = RGB24;
-	info.rate = 24;
+	info.rate = 12;
 	info.width = PIC_WIDTH_640;
 	info.height = PIC_HEIGHT_480;
 	info.codec_width = PIC_WIDTH_640;

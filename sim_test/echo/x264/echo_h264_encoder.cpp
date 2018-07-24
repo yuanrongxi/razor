@@ -247,12 +247,14 @@ void H264Encoder::try_change_resolution()
 				curr_resolution_--;
 				close_encoder();
 				open_encoder();
+				set_bitrate(bitrate_kbps_);
 			}
 			else if (res.max_rate < bitrate_kbps_ && curr_resolution_ + 1 <= max_resolution_){
 				/*升高一层分辨率*/
 				curr_resolution_++;
 				close_encoder();
 				open_encoder();
+				set_bitrate(bitrate_kbps_);
 			}
 		}
 	}

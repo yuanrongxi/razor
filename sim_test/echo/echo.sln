@@ -4,12 +4,22 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "echo", "echo.vcxproj", "{41050CC5-329C-42A3-AB47-E80EBF4E0790}"
+	ProjectSection(ProjectDependencies) = postProject
+		{08200605-BF0E-4C36-AEF2-C06D7254E533} = {08200605-BF0E-4C36-AEF2-C06D7254E533}
+		{3FA0EFD2-F0D4-429A-BAF8-AB73EE59E40A} = {3FA0EFD2-F0D4-429A-BAF8-AB73EE59E40A}
+		{E8A3F6FA-AE1C-4C8E-A0B6-9C8480324EAA} = {E8A3F6FA-AE1C-4C8E-A0B6-9C8480324EAA}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "baseclasses", "baseclasses\baseclasses.vcxproj", "{E8A3F6FA-AE1C-4C8E-A0B6-9C8480324EAA}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "razor", "..\..\project\razor.vcxproj", "{08200605-BF0E-4C36-AEF2-C06D7254E533}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sim_transport", "..\..\sim_transport\sim_transport.vcxproj", "{3FA0EFD2-F0D4-429A-BAF8-AB73EE59E40A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5F2BF65E-1C75-4387-8166-4EEC6713BD17}"
+	ProjectSection(SolutionItems) = preProject
+		Performance5.psess = Performance5.psess
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -48,5 +58,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal

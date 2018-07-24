@@ -80,4 +80,6 @@ public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	CString m_strLocalRes;
 	CString m_strRemoteRes;
+	CComboBox m_cbxCC;
+	CString m_strCC;
 };
