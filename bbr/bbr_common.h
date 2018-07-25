@@ -137,7 +137,7 @@ typedef struct
 	bbr_target_transfer_rate_t  target_rate;
 }bbr_network_ctrl_update_t;
 
-#define MAX_BBR_FEELBACK_COUNT	256
+#define MAX_BBR_FEELBACK_COUNT	64
 
 enum{
 	bbr_loss_info_msg = 0x01,
@@ -151,9 +151,7 @@ typedef struct
 	uint8_t					fraction_loss;
 	int						packet_num;
 	/*proxy_ts_msg*/
-	int64_t					base_seq;
-	uint8_t					samples_num;
-	uint16_t				samples[MAX_BBR_FEELBACK_COUNT];
+	uint16_t				sample;
 }bbr_feedback_msg_t;
 
 void bbr_feedback_msg_encode(bin_stream_t* strm, bbr_feedback_msg_t* msg);

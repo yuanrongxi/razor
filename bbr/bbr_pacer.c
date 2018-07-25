@@ -50,7 +50,7 @@ void bbr_pacer_set_bitrate_limits(bbr_pacer_t* pace, uint32_t min_bitrate)
 
 void bbr_pacer_set_pacing_rate(bbr_pacer_t* pace, uint32_t pacing_bitrate_kbps)
 {
-	pace->pacing_bitrate_kpbs = pacing_bitrate_kbps *  pace->factor;
+	pace->pacing_bitrate_kpbs = pacing_bitrate_kbps;
 	razor_debug("set pacer bitrate, bitrate = %ukbps\n", pacing_bitrate_kbps);
 } 
 

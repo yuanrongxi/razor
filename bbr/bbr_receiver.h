@@ -20,11 +20,6 @@ typedef struct
 	int64_t						feedback_ts;		/*feedbak时间戳，UNIX绝对时间，毫秒为单位*/
 
 	int64_t						base_seq;			/*窗口反馈的起始ID*/
-	int64_t						min_seq;			/*窗口中保留的最小ID*/
-	int64_t						max_seq;			/*窗口中最大的ID*/
-
-	size_t						array_size;
-	int64_t*					array;				/*存储的是报文到达的时间，如果未收到这个报文，填-1*/
 
 	cf_unwrapper_t				unwrapper;			/*ID恢复器*/
 	bin_stream_t				strm;

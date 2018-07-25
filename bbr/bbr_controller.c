@@ -504,7 +504,7 @@ static int bbr_update_bandwidth_and_min_rtt(bbr_controller_t* bbr, int64_t now_t
 	bbr_bandwidth_sample_t sample;
 
 	for (i = 0; i < size; ++i){
-		sample = sampler_on_packet_acked(bbr->sampler, now_ts, packets[i].seq);
+		sample = sampler_on_packet_acked(bbr->sampler, packets[i].recv_time, packets[i].seq);
 		bbr->last_sample_is_app_limited = sample.is_app_limited;
 
 		/*¶ÔRTTµÄ¼ÆËã*/

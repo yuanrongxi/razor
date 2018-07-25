@@ -74,11 +74,9 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 	else if (fill > 1.0)
 		s->encoding_rate_ratio *= 0.95f;
 	else if (fill < 0.1)
-		s->encoding_rate_ratio = 1.0f;
-	else{
+		s->encoding_rate_ratio = 1.2f;
+	else
 		s->encoding_rate_ratio *= 1.05f;
-		s->encoding_rate_ratio = SU_MIN(1.0, s->encoding_rate_ratio);
-	}
 
 	target_rate_bps = s->info.target_rate.target_rate * 8 * s->encoding_rate_ratio * 1000;
 	target_rate_bps = SU_MIN(s->max_bitrate, SU_MAX(target_rate_bps, s->min_bitrate));
