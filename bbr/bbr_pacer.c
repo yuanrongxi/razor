@@ -4,7 +4,7 @@
 #define k_min_packet_limit_ms		5			/*发包最小间隔*/
 #define k_max_packet_limit_ms		200			/*每400毫秒必须发送一个报文，防止反馈失败*/
 #define k_max_interval_ms			30			/*发包最大时间差，长时间不发送报文一次发送很多数据出去造成网络风暴*/
-#define k_default_pace_factor		1.5			/*默认的pace factor因子*/	
+#define k_default_pace_factor		1.25		/*默认的pace factor因子*/	
 
 
 bbr_pacer_t* bbr_pacer_create(void* handler, pace_send_func send_cb, uint32_t que_ms)
@@ -50,7 +50,7 @@ void bbr_pacer_set_bitrate_limits(bbr_pacer_t* pace, uint32_t min_bitrate)
 
 void bbr_pacer_set_pacing_rate(bbr_pacer_t* pace, uint32_t pacing_bitrate_kbps)
 {
-	pace->pacing_bitrate_kpbs = pacing_bitrate_kbps;
+	pace->pacing_bitrate_kpbs = pacing_bitrate_kbps* pace->factor;
 	razor_debug("set pacer bitrate, bitrate = %ukbps\n", pacing_bitrate_kbps);
 } 
 

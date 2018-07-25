@@ -146,12 +146,19 @@ enum{
 
 typedef struct
 {
+	uint16_t				seq;
+	uint16_t				delta_ts;
+}bbr_sampler_t;
+
+typedef struct
+{
 	uint8_t					flag;
 	/*loss info msg*/
 	uint8_t					fraction_loss;
 	int						packet_num;
 	/*proxy_ts_msg*/
-	uint16_t				sample;
+	uint8_t					sampler_num;
+	bbr_sampler_t			samplers[MAX_BBR_FEELBACK_COUNT];
 }bbr_feedback_msg_t;
 
 void bbr_feedback_msg_encode(bin_stream_t* strm, bbr_feedback_msg_t* msg);

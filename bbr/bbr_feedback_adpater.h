@@ -21,8 +21,6 @@ int							bbr_feedback_get_received(bbr_feedback_t* feeback, bbr_packet_info_t* 
 
 typedef struct
 {
-	cf_unwrapper_t			wrapper;
-	skiplist_t*				cache;
 	sender_history_t*		hist;
 	bbr_feedback_t			feedback;
 }bbr_fb_adapter_t;

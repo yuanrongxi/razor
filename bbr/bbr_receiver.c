@@ -20,6 +20,8 @@ bbr_receiver_t* bbr_receive_create(void* handler, send_feedback_func cb)
 
 	bin_stream_init(&cc->strm);
 
+	cc->cache = skiplist_create(id64_compare, NULL, NULL);
+
 	return cc;
 }
 
@@ -30,12 +32,13 @@ void bbr_receive_destroy(bbr_receiver_t* cc)
 
 	bin_stream_destroy(&cc->strm);
 	loss_statistics_destroy(&cc->loss_stat);
+
+	if (cc->cache){
+		skiplist_destroy(cc->cache);
+		cc->cache = NULL;
+	}
+
 	free(cc);
-}
-
-void bbr_receive_check_acked(bbr_receiver_t* cc)
-{
-
 }
 
 #define BBR_BACK_WINDOW 500
@@ -43,7 +46,8 @@ void bbr_receive_on_received(bbr_receiver_t* cc, uint16_t seq, uint32_t timestam
 {
 	bbr_feedback_msg_t msg;
 	int64_t sequence, now_ts;
-
+	skiplist_iter_t* iter;
+	skiplist_item_t key, val;
 	/*统计丢包*/
 	loss_statistics_incoming(&cc->loss_stat, seq);
 
@@ -55,16 +59,38 @@ void bbr_receive_on_received(bbr_receiver_t* cc, uint16_t seq, uint32_t timestam
 
 	cc->base_seq = SU_MAX(cc->base_seq, sequence);
 
-	/*判断proxy estimator是否可以发送报告*/
-	msg.flag |= bbr_acked_msg;
-	msg.sample = seq;
+	key.i64 = sequence;
+	if (skiplist_search(cc->cache, key) == NULL){
+		val.i64 = now_ts;
+		skiplist_insert(cc->cache, key, val);
+	}
 
-	/*判断丢包消息*/
-	if (loss_statistics_calculate(&cc->loss_stat, now_ts, &msg.fraction_loss, &msg.packet_num) == 0)
-		msg.flag |= bbr_loss_info_msg;
+	if (skiplist_size(cc->cache) >= MAX_BBR_FEELBACK_COUNT || (cc->feedback_ts + k_bbr_feedback_time <= now_ts && skiplist_size(cc->cache) > 2)){
 
-	bbr_feedback_msg_encode(&cc->strm, &msg);
-	cc->send_cb(cc->handler, cc->strm.data, cc->strm.used);
+		/*判断proxy estimator是否可以发送报告*/
+		msg.flag |= bbr_acked_msg;
+		msg.sampler_num = 0;
+
+		SKIPLIST_FOREACH(cc->cache, iter){
+			msg.samplers[msg.sampler_num].seq = iter->key.i64 & 0xffff;
+			msg.samplers[msg.sampler_num].delta_ts = now_ts > iter->val.i64 ? (now_ts - iter->val.i64) : 0; 
+			msg.sampler_num++;
+		}
+
+		skiplist_clear(cc->cache);
+
+		/*判断丢包消息*/
+		if (loss_statistics_calculate(&cc->loss_stat, now_ts, &msg.fraction_loss, &msg.packet_num) == 0)
+			msg.flag |= bbr_loss_info_msg;
+
+		bbr_feedback_msg_encode(&cc->strm, &msg);
+		cc->send_cb(cc->handler, cc->strm.data, cc->strm.used);
+	}
+}
+
+void bbr_receive_check_acked(bbr_receiver_t* cc)
+{
+
 }
 
 void bbr_receive_update_rtt(bbr_receiver_t* cc, int32_t rtt)
