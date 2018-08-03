@@ -3,6 +3,7 @@
 
 #define k_min_pace_bitrate (10*1000)
 #define k_bbr_heartbeat_timer 1000
+
 bbr_sender_t* bbr_sender_create(void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms)
 {
 	bbr_sender_t* s = calloc(1, sizeof(bbr_sender_t));
@@ -23,6 +24,7 @@ bbr_sender_t* bbr_sender_create(void* trigger, bitrate_changed_func bitrate_cb, 
 	bbr_pacer_set_estimate_bitrate(s->pacer, k_min_pace_bitrate);
 
 	bin_stream_init(&s->strm);
+
 	return s;
 }
 
@@ -55,6 +57,7 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 	uint8_t loss;
 
 	uint32_t pacing_rate_kbps, target_rate_bps;
+	int acked_bitrate;
 	if (s->info.congestion_window <= 0)
 		return;
 
@@ -68,23 +71,31 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 	bbr_pacer_update_outstanding(s->pacer, outstanding);
 
 	target_rate_bps = (s->info.target_rate.target_rate * 8000);
+	acked_bitrate = bbr_feedback_get_birate(&s->feedback);
 
 	fill = 1.0 * outstanding / s->info.congestion_window;
 	/*如果拥塞窗口满了，进行带宽递减*/
 	if (fill > 1.5)
-		target_rate_bps = target_rate_bps * 3 / 4;
+		s->encoding_rate_ratio *= 0.9;
 	else if (fill > 1.0)
-		target_rate_bps = target_rate_bps * 15 / 16;
-	else if (fill < 0.2)
-		target_rate_bps = target_rate_bps * 1.25;
-	else
-		target_rate_bps = target_rate_bps;
+		s->encoding_rate_ratio *= 0.95;
+	else if (fill < 0.2){
+		s->encoding_rate_ratio = 1.0f;
+	}
+	else{
+		s->encoding_rate_ratio *= 1.05;
+		s->encoding_rate_ratio = SU_MIN(1.0f, s->encoding_rate_ratio);
+	}
 
+	target_rate_bps = target_rate_bps * s->encoding_rate_ratio;
+
+	if (s->info.target_rate.loss_rate_ratio > 0.1)
+		target_rate_bps = acked_bitrate;
 	target_rate_bps = SU_MIN(s->max_bitrate, SU_MAX(target_rate_bps, s->min_bitrate));
 	loss = (uint8_t)(s->info.target_rate.loss_rate_ratio * 255 + 0.5f);
 
-	razor_debug("target = %u kbps, pacing = %u kbps, loss = %u, congestion_window = %u, outstanding = %u\n\n", 
-		target_rate_bps / 1000, pacing_rate_kbps, loss, s->info.congestion_window, outstanding);
+	razor_debug("target = %u kbps, acked_birate = %dkbps, pacing = %u kbps, loss = %u, congestion_window = %u, outstanding = %u, ratio = %2f\n\n", 
+		target_rate_bps / 8000, acked_bitrate / 8000, pacing_rate_kbps, loss, s->info.congestion_window, outstanding, s->encoding_rate_ratio);
 
 	/*如果数据发生变化，进行触发一个通信层通知*/
 	if (target_rate_bps != s->last_bitrate_bps || loss != s->last_fraction_loss){

@@ -1,6 +1,8 @@
 #include "bbr_feedback_adpater.h"
 
 #define k_history_cache_ms		60000
+#define k_rate_window_size 1000
+#define k_rate_scale 8000
 
 int bbr_feedback_get_loss(bbr_feedback_t* feedback, bbr_packet_info_t* loss_arr, int arr_size)
 {
@@ -35,6 +37,8 @@ void bbr_feedback_adapter_init(bbr_fb_adapter_t* adapter)
 	adapter->feedback.prior_in_flight = 0;
 	adapter->feedback.feedback_time = GET_SYS_MS();
 	adapter->feedback.packets_num = 0;
+
+	rate_stat_init(&adapter->acked_bitrate, k_rate_window_size, k_rate_scale);
 }
 
 void bbr_feedback_adapter_destroy(bbr_fb_adapter_t* adapter)
@@ -43,6 +47,8 @@ void bbr_feedback_adapter_destroy(bbr_fb_adapter_t* adapter)
 		sender_history_destroy(adapter->hist);
 		adapter->hist = NULL;
 	}
+
+	rate_stat_destroy(&adapter->acked_bitrate);
 }
 
 void bbr_feedback_add_packet(bbr_fb_adapter_t* adapter, uint16_t seq, size_t size, bbr_packet_info_t* info)
@@ -75,6 +81,7 @@ void bbr_feedback_on_feedback(bbr_fb_adapter_t* adapter, bbr_feedback_msg_t* msg
 	now_ts = GET_SYS_MS();
 
 	adapter->feedback.packets_num = 0;
+	adapter->feedback.feedback_time = now_ts;
 	adapter->feedback.prior_in_flight = sender_history_outstanding_bytes(adapter->hist);
 	seq = msg->samplers[0].seq;
 	for (i = 0; i < msg->sampler_num; i++){
@@ -101,6 +108,8 @@ void bbr_feedback_on_feedback(bbr_fb_adapter_t* adapter, bbr_feedback_msg_t* msg
 			adapter->feedback.packets_num++;
 			if (adapter->feedback.packets_num >= MAX_BBR_FEELBACK_COUNT - 1)
 				adapter->feedback.packets_num = 0;
+
+			rate_stat_update(&adapter->acked_bitrate, p.payload_size, now_ts);
 		}
 
 		seq++;
@@ -112,6 +121,11 @@ void bbr_feedback_on_feedback(bbr_fb_adapter_t* adapter, bbr_feedback_msg_t* msg
 size_t bbr_feedback_get_in_flight(bbr_fb_adapter_t* adapter)
 {
 	return sender_history_outstanding_bytes(adapter->hist);
+}
+
+int32_t bbr_feedback_get_birate(bbr_fb_adapter_t* adapter)
+{
+	return rate_stat_rate(&adapter->acked_bitrate, GET_SYS_MS());
 }
 
 

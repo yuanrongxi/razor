@@ -208,7 +208,7 @@ static bbr_network_ctrl_update_t bbr_create_rate_upate(bbr_controller_t* bbr, in
 	/*返回target_rate信息*/
 	ret.target_rate.at_time = at_time;
 	ret.target_rate.bandwidth = bandwidth;
-	ret.target_rate.rtt = rtt;
+	ret.target_rate.rtt = SU_MAX(rtt, 8);
 	ret.target_rate.loss_rate_ratio = bbr_loss_filter_get(&bbr->loss_rate);
 	ret.target_rate.bwe_period = rtt * kGainCycleLength;
 	ret.target_rate.target_rate = target_rate;
@@ -374,7 +374,7 @@ bbr_network_ctrl_update_t bbr_on_feedback(bbr_controller_t* bbr, bbr_feedback_t*
 
 	/*统计RTT*/
 	last_sent_packet = &feedback->packets[feedback->packets_num - 1];
-	bbr_rtt_update(&bbr->rtt_stat, feedback_recv_time - last_sent_packet->send_time, 0, feedback_recv_time);
+	bbr_rtt_update(&bbr->rtt_stat, last_sent_packet->recv_time - last_sent_packet->send_time, 0, feedback_recv_time);
 
 	total_data_acked_before = sampler_total_data_acked(bbr->sampler);
 
@@ -518,7 +518,7 @@ static int bbr_update_bandwidth_and_min_rtt(bbr_controller_t* bbr, int64_t now_t
 		/*进行带宽统计和滤波*/
 		if (!sample.is_app_limited || sample.bandwidth > bbr_bandwidth_estimate(bbr)){
 			wnd_filter_update(&bbr->max_bandwidth, sample.bandwidth, bbr->round_trip_count);
-			razor_debug("sample.bandwidth = %u\n", sample.bandwidth);
+			razor_debug("packet_size = %d, sample.bandwidth = %u\n", packets[i].size, sample.bandwidth);
 		}
 	}
 

@@ -29,6 +29,7 @@ typedef struct
 /*定义一个通过记录sent和acked报文轨迹来统计带宽的跟踪器*/
 typedef struct
 {
+	int32_t				rate_bps;
 	size_t				total_data_sent;
 	size_t				total_data_acked;
 	size_t				total_data_sent_at_last_acked_packet;

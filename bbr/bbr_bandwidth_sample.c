@@ -1,4 +1,5 @@
 #include "bbr_bandwidth_sample.h"
+#include "razor_log.h"
 
 #define kMaxTrackedPackets  10000
 #define kDefaultPoints		1024
@@ -48,6 +49,7 @@ void sampler_reset(bbr_bandwidth_sampler_t* sampler)
 	sampler->last_acked_packet_sent_time = -1;
 	sampler->last_acked_packet_ack_time = -1;
 	sampler->last_sent_packet = 0;
+	sampler->rate_bps = -1;
 
 	sampler->is_app_limited = 0;
 	sampler->end_of_app_limited_phase = 0;
@@ -198,15 +200,23 @@ static bbr_bandwidth_sample_t sampler_on_packet_acked_inner(bbr_bandwidth_sample
 
 	if (ack_time > point->last_acked_packet_ack_time){
 		ack_rate = (sampler->total_data_acked - point->total_data_acked_at_the_last_acked_packet) / ((int)(ack_time - point->last_acked_packet_ack_time));
-		
+		if (sampler->rate_bps == -1)
+			sampler->rate_bps = ack_rate;
+		else
+			sampler->rate_bps = (ack_rate + sampler->rate_bps * 7) / 8;
+
 		ret.bandwidth = SU_MIN(ack_rate, send_rate);
 		ret.rtt = ack_time - point->send_time;
 		ret.is_app_limited = point->is_app_limited;
 	}
 	else if (ack_time == point->last_acked_packet_ack_time){
 		ack_rate = (sampler->total_data_acked - point->total_data_acked_at_the_last_acked_packet);
+		if (sampler->rate_bps == -1)
+			sampler->rate_bps = ack_rate;
+		else
+			sampler->rate_bps = (ack_rate + sampler->rate_bps * 7) / 8;
 
-		ret.bandwidth = SU_MIN(ack_rate, send_rate);
+		ret.bandwidth = SU_MIN(sampler->rate_bps, send_rate);
 		ret.rtt = ack_time - point->send_time;
 		ret.is_app_limited = point->is_app_limited;
 	}

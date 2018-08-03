@@ -132,7 +132,7 @@ void bbr_pacer_try_transmit(bbr_pacer_t* pace, int64_t now_ts)
 				pace->send_cb(pace->handler, ev->seq, ev->retrans, ev->size);
 
 			pace->outstanding_bytes += ev->size;
-			pacer_queue_sent(&pace->que, ev->seq);
+			pacer_queue_sent(&pace->que, ev);
 		}
 
 		pace->last_update_ts = now_ts;
@@ -157,7 +157,7 @@ void bbr_pacer_try_transmit(bbr_pacer_t* pace, int64_t now_ts)
 		while (pacer_queue_empty(&pace->que) != 0){
 			ev = pacer_queue_front(&pace->que);
 			if (bbr_pacer_send(pace, ev) == 0)
-				pacer_queue_sent(&pace->que, ev->seq);
+				pacer_queue_sent(&pace->que, ev);
 			else
 				break;
 		}
