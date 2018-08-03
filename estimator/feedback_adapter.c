@@ -47,7 +47,7 @@ void feedback_add_packet(feedback_adapter_t* adapter, uint16_t seq, size_t size)
 static int feedback_packet_comp(const void* arg1, const void* arg2)
 {
 	packet_feedback_t *p1, *p2;
-	p1 = (packet_feedback_t*)arg1;
+	p1 = (packet_feedback_t*)arg1; 
 	p2 = (packet_feedback_t*)arg2;
 
 	if (p1->arrival_ts < p2->arrival_ts)
