@@ -518,7 +518,7 @@ static int bbr_update_bandwidth_and_min_rtt(bbr_controller_t* bbr, int64_t now_t
 		/*进行带宽统计和滤波*/
 		if (!sample.is_app_limited || sample.bandwidth > bbr_bandwidth_estimate(bbr)){
 			wnd_filter_update(&bbr->max_bandwidth, sample.bandwidth, bbr->round_trip_count);
-			razor_debug("packet_size = %d, sample.bandwidth = %u\n", packets[i].size, sample.bandwidth);
+			/*razor_debug("packet_size = %d, sample.bandwidth = %u\n", packets[i].size, sample.bandwidth);*/
 		}
 	}
 
