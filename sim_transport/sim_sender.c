@@ -283,6 +283,8 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 
 	now_ts = GET_SYS_MS();
 
+	sim_limiter_update(&sender->limiter, 0, now_ts);
+
 	for (i = 0; i < ack->nack_num; ++i){
 		key.u32 = ack->base_packet_id + ack->nack[i];
 		iter = skiplist_search(sender->cache, key);

@@ -10,8 +10,8 @@
 
 #define CACHE_SIZE 1024
 #define INDEX(i)	((i) % CACHE_SIZE)
-#define MAX_EVICT_DELAY_MS 5000
-#define MIN_EVICT_DELAY_MS 3000
+#define MAX_EVICT_DELAY_MS 8000
+#define MIN_EVICT_DELAY_MS 6000
 
 /************************************************播放缓冲区的定义**********************************************************/
 static sim_frame_cache_t* open_real_video_cache(sim_session_t* s)
@@ -311,7 +311,7 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 	real_video_cache_sync_timestamp(s, c);
 
 	/*计算能播放的帧时间*/
-	if (c->play_frame_ts + SU_MIN(MAX_EVICT_DELAY_MS, SU_MAX(MIN_EVICT_DELAY_MS, 4 * c->wait_timer)) < c->max_ts){
+	if (c->play_frame_ts + SU_MAX(MAX_EVICT_DELAY_MS, SU_MIN(MIN_EVICT_DELAY_MS, 4 * c->wait_timer)) < c->max_ts){
 		evict_gop_frame(s, c);
 	}
 
@@ -573,6 +573,9 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 	/*如果是心跳触发*/
 	if ((hb == 0 && r->ack_ts + ACK_REAL_TIME < cur_ts) || (r->ack_ts + ACK_HB_TIME < cur_ts)){
 
+		/*进行丢帧判断，如果发现有丢帧，进行evict frame*/
+		sim_receiver_check_lost_frame(s, r, cur_ts);
+
 		ack.acked_packet_id = seq;
 		min_seq = real_video_cache_get_min_seq(s, r->cache);
 		if (min_seq > r->base_seq){
@@ -580,9 +583,6 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 				skiplist_remove(r->loss, key);
 			r->base_seq = min_seq;
 		}
-
-		/*进行丢帧判断，如果发现有丢帧，进行evict frame*/
-		sim_receiver_check_lost_frame(s, r, cur_ts);
 
 		ack.base_packet_id = r->base_seq;
 		ack.nack_num = 0;

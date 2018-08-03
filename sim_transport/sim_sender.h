@@ -8,9 +8,13 @@
 /*一个nack请求包的带宽限制器*/
 typedef struct
 {
-	rate_stat_t		rate;
+	uint32_t*		buckets;
+	uint32_t		index;
+	int64_t			oldest_ts;
+
 	int				wnd_size;			/*统计的时间窗*/
-	uint32_t		max_rate_bps;		/*最大可以承受的码率*/
+	uint32_t		wnd_bytes;
+	uint32_t		threshold;			/*最大可以发送的字节数*/
 }sim_sender_limiter_t;
 
 struct __sim_sender
