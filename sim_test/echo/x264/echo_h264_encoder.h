@@ -54,6 +54,8 @@ private:
 
 	void try_change_resolution();
 
+	int find_resolution(uint32_t birate_kpbs);
+
 private:
 	unsigned int	src_width_;				// Input Width
 	unsigned int	src_height_;			// Input Height

@@ -23,12 +23,12 @@ typedef struct
 
 static encoder_resolution_t resolution_infos[RESOLUTIONS_NUMBER] = {
 	{ VIDEO_120P, PIC_WIDTH_160, PIC_HEIGHT_120, 64, 32 },
-	{ VIDEO_240P, PIC_WIDTH_320, PIC_HEIGHT_240, 200, 64 },
-	{ VIDEO_360P, PIC_WIDTH_480, PIC_HEIGHT_360, 480, 120 },
-	{ VIDEO_480P, PIC_WIDTH_640, PIC_HEIGHT_480, 1000, 320},
-	{ VIDEO_640P, PIC_WIDTH_960, PIC_HEIGHT_640, 1600, 640 },
-	{ VIDEO_720P, PIC_WIDTH_1280, PIC_HEIGHT_720, 2400, 1200 },
-	{ VIDEO_1080P, PIC_WIDTH_1920, PIC_HEIGHT_1080, 4000, 1600 },
+	{ VIDEO_240P, PIC_WIDTH_320, PIC_HEIGHT_240, 180, 64 },
+	{ VIDEO_360P, PIC_WIDTH_480, PIC_HEIGHT_360, 480, 180 },
+	{ VIDEO_480P, PIC_WIDTH_640, PIC_HEIGHT_480, 1000, 480},
+	{ VIDEO_640P, PIC_WIDTH_960, PIC_HEIGHT_640, 1600, 1000 },
+	{ VIDEO_720P, PIC_WIDTH_1280, PIC_HEIGHT_720, 2400, 1600 },
+	{ VIDEO_1080P, PIC_WIDTH_1920, PIC_HEIGHT_1080, 4000, 2400 },
 };
 
 H264Encoder::H264Encoder()
@@ -196,9 +196,9 @@ void H264Encoder::config_param()
 	en_param_.i_log_level = X264_LOG_NONE;
 	en_param_.rc.i_rc_method = X264_RC_CRF;
 
-	en_param_.rc.i_qp_min = 5;
+	/*en_param_.rc.i_qp_min = 5;
 	en_param_.rc.i_qp_max = 40;
-	en_param_.rc.i_qp_constant = 24;
+	en_param_.rc.i_qp_constant = 24;*/
 	en_param_.rc.i_bitrate = res.min_rate;
 	en_param_.rc.i_vbv_max_bitrate = (res.min_rate + res.max_rate) / 2;
 	en_param_.i_bframe = 0;
@@ -235,6 +235,17 @@ void H264Encoder::config_param()
 	en_param_.analyse.inter = X264_ANALYSE_I8x8 | X264_ANALYSE_I4x4;
 }
 
+int H264Encoder::find_resolution(uint32_t birate_kpbs)
+{
+	int ret;
+	for (ret = VIDEO_640P; ret >= VIDEO_120P; --ret){
+		if (resolution_infos[ret].max_rate > birate_kpbs && resolution_infos[ret].min_rate < birate_kpbs)
+			break;
+	}
+
+	return ret;
+}
+
 void H264Encoder::try_change_resolution()
 {
 	/*判断下一帧处在gop的位置, 如果处于后半段，我们可以尝试改变分辨率*/
@@ -244,14 +255,14 @@ void H264Encoder::try_change_resolution()
 			const encoder_resolution_t& res = resolution_infos[curr_resolution_];
 			if (res.min_rate > bitrate_kbps_ && curr_resolution_ > VIDEO_120P){
 				/*降低一层分辨率*/
-				curr_resolution_--;
+				curr_resolution_ = find_resolution(bitrate_kbps_);
 				close_encoder();
 				open_encoder();
 				set_bitrate(bitrate_kbps_);
 			}
 			else if (res.max_rate < bitrate_kbps_ && curr_resolution_ + 1 <= max_resolution_){
 				/*升高一层分辨率*/
-				curr_resolution_++;
+				curr_resolution_ = find_resolution(bitrate_kbps_);
 				close_encoder();
 				open_encoder();
 				set_bitrate(bitrate_kbps_);
