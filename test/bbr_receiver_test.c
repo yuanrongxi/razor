@@ -27,11 +27,6 @@ static void send_bbr_feedback(void* handler, const uint8_t* payload, int payload
 
 	bbr_feedback_msg_decode(&strm, &msg);
 
-	printf("loss = %u, packet num = %d, base seq = %lld, ids = [", msg.fraction_loss * 100 / 256, msg.packet_num, msg.base_seq);
-	for (i = 0; i < msg.samples_num; ++i){
-		printf("%lld ", wrap_uint16(&t->unwrapper, msg.samples[i]));
-	}
-	printf("]\n");
 	bin_stream_destroy(&strm);
 }
 

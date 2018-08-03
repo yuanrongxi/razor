@@ -121,12 +121,52 @@ void test_pacer_queue_front()
 	pacer_queue_destroy(&que);
 }
 
+static void test_while()
+{
+	pacer_queue_t que;
+	packet_event_t packet, *p;
+	int i, num, pos;
+	int64_t now_ts, oldest_ts;
+
+	int array[k_packet_num] = { 0 };
+
+	oldest_ts = now_ts = GET_SYS_MS();
+	pacer_queue_init(&que, k_queue_ms);
+	i = 0;
+	while (1){
+		num = i + k_packet_num;
+		for (; i < num; i++){
+			packet.retrans = 0;
+			packet.que_ts = now_ts;
+			packet.sent = 0;
+			packet.seq = i;
+			packet.size = k_packet_size;
+
+			pacer_queue_push(&que, &packet);
+
+			now_ts += 100;
+		}
+
+		pos = rand() % k_packet_num;
+		for (i = 0; i < k_packet_num; i++){
+			pacer_queue_sent(&que, pos);
+			pos++;
+			if (pos >= k_packet_num)
+				pos = 0;
+		}
+	}
+
+	assert(pacer_queue_empty(&que) == 0);
+	pacer_queue_destroy(&que);
+}
+
 void test_pacer_queue()
 {
-	test_pacer_queue_push();
-	test_pacer_queue_sent();
+	//test_pacer_queue_push();
+	//test_pacer_queue_sent();
 
-	test_pacer_queue_front();
+	//test_pacer_queue_front();
+	test_while();
 }
 
 
