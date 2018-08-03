@@ -81,15 +81,13 @@ packet_event_t*	pacer_queue_front(pacer_queue_t* que)
 
 	/*取一个未发送的packet*/
 	iter = skiplist_first(que->cache);
-	do{
-		if (iter != NULL){
-			ret = iter->val.ptr;
-			if (ret->sent == 0)
-				break;
-			else
-				iter = iter->next[0];
-		}
-	} while (iter != NULL);
+	while(iter != NULL){
+		ret = iter->val.ptr;
+		if (ret->sent == 0)
+			break;
+		else
+			iter = iter->next[0];
+	}
 
 	return ret;
 }
@@ -124,29 +122,17 @@ void pacer_queue_final(pacer_queue_t* que)
 }
 
 /*删除第一个单元*/
-void pacer_queue_sent(pacer_queue_t* que, uint32_t seq)
+void pacer_queue_sent(pacer_queue_t* que, packet_event_t* ev)
 {
-	packet_event_t* packet;
-	skiplist_iter_t* iter;
-	skiplist_item_t key;
+	ev->sent = 1;				/*标记为已经发送状态*/
 
-	if (skiplist_size(que->cache) == 0)
-		return;
+	if (que->total_size >= ev->size)
+		que->total_size -= ev->size;
+	else
+		que->total_size = 0;
 
-	key.u32 = seq;
-	iter = skiplist_search(que->cache, key);
-	if (iter != NULL){
-		packet = iter->val.ptr;
-		packet->sent = 1;				/*标记为已经发送状态*/
-
-		if (que->total_size >= packet->size)
-			que->total_size -= packet->size;
-		else
-			que->total_size = 0;
-
-		/*删除最老且已经发送的包*/
-		pacer_queue_final(que);
-	}
+	/*删除最老且已经发送的包*/
+	pacer_queue_final(que);
 }
 
 int	pacer_queue_empty(pacer_queue_t* que)

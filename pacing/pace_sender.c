@@ -148,7 +148,7 @@ void pace_try_transmit(pace_sender_t* pace, int64_t now_ts)
 				pace->first_sent_ts = now_ts;
 			
 			sent_bytes += ev->size;
-			pacer_queue_sent(&pace->que, ev->seq);
+			pacer_queue_sent(&pace->que, ev);
 		}
 		else
 			break;
