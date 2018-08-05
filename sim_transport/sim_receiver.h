@@ -56,6 +56,7 @@ struct __sim_receiver
 	uint32_t			base_uid;
 	uint32_t			base_seq;
 	uint32_t			max_seq;
+	uint32_t			max_ts;
 
 	skiplist_t*			loss;
 	int					loss_count;				/*单位时间内出现丢包的次数*/

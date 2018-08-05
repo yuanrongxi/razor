@@ -650,6 +650,8 @@ static void sim_session_state_timer(sim_session_t* s, int64_t now_ts, sim_sessio
 	if (s->commad_ts + tick_delay < now_ts){
 		if (s->resend * tick_delay < 10000){
 			fn(s, now_ts);
+			if (s->resend == 2)
+				s->rtt += 500;
 		}
 		else{
 			if (s->receiver != NULL){

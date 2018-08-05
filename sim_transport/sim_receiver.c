@@ -311,7 +311,7 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 	real_video_cache_sync_timestamp(s, c);
 
 	/*计算能播放的帧时间*/
-	if (c->play_frame_ts + SU_MAX(MAX_EVICT_DELAY_MS, SU_MIN(MIN_EVICT_DELAY_MS, 4 * c->wait_timer)) < c->max_ts){
+	if (c->play_frame_ts + SU_MAX(MIN_EVICT_DELAY_MS, SU_MIN(MAX_EVICT_DELAY_MS, 4 * c->wait_timer)) < c->max_ts){
 		evict_gop_frame(s, c);
 	}
 
@@ -458,6 +458,7 @@ void sim_receiver_reset(sim_session_t* s, sim_receiver_t* r, int transport_type)
 	r->base_seq = 0;
 	r->actived = 0;
 	r->max_seq = 0;
+	r->max_ts = 0;
 	r->ack_ts = GET_SYS_MS();
 	r->active_ts = r->ack_ts;
 	r->loss_count = 0;
@@ -488,7 +489,19 @@ int sim_receiver_active(sim_session_t* s, sim_receiver_t* r, uint32_t uid)
 	return 0;
 }
 
-static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32_t seq)
+static void sim_receiver_send_fir(sim_session_t* s, sim_receiver_t* r)
+{
+	sim_fir_t fir;
+	sim_header_t header;
+
+	INIT_SIM_HEADER(header, SIM_FIR, s->uid);
+	fir.fir_seq = (r->fir_state == fir_flightting) ? r->fir_seq : (++r->fir_seq);
+
+	sim_encode_msg(&s->sstrm, &header, &fir);
+	sim_session_network_send(s, &s->sstrm);
+}
+
+static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32_t seq, uint32_t ts)
 {
 	uint32_t i;
 	skiplist_item_t key, val;
@@ -496,19 +509,28 @@ static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32
 	int64_t now_ts;
 
 	now_ts = GET_SYS_MS();
-	key.u32 = seq;
-	skiplist_remove(r->loss, key);
+	if (r->max_ts + 3000 < ts){
+		skiplist_clear(r->loss);
+		sim_receiver_send_fir(s, r);
+	}
+	else if (skiplist_size(r->loss) > 100){
+		skiplist_clear(r->loss);
+		sim_receiver_send_fir(s, r);
+	}
+	else{
+		key.u32 = seq;
+		skiplist_remove(r->loss, key);
+		for (i = r->max_seq + 1; i < seq; ++i){
+			key.u32 = i;
+			iter = skiplist_search(r->loss, key);
+			if (iter == NULL){
+				sim_loss_t* l = calloc(1, sizeof(sim_loss_t));
+				l->ts = now_ts - s->rtt_var;						/*设置下一个请求重传的时刻*/
+				l->count = 0;
+				val.ptr = l;
 
-	for (i = r->max_seq + 1; i < seq; ++i){
-		key.u32 = i;
-		iter = skiplist_search(r->loss, key);
-		if (iter == NULL){
-			sim_loss_t* l = calloc(1, sizeof(sim_loss_t));
-			l->ts = now_ts - s->rtt_var;						/*设置下一个请求重传的时刻*/
-			l->count = 0;
-			val.ptr = l;
-
-			skiplist_insert(r->loss, key, val);
+				skiplist_insert(r->loss, key, val);
+			}
 		}
 	}
 }
@@ -521,18 +543,6 @@ static inline void sim_receiver_send_ack(sim_session_t* s, sim_segment_ack_t* ac
 	sim_encode_msg(&s->sstrm, &header, ack);
 	sim_session_network_send(s, &s->sstrm);
 	/*sim_debug("send SEG_ACK, base = %u, ack_id = %u\n", ack->base_packet_id, ack->acked_packet_id);*/
-}
-
-static void sim_receiver_send_fir(sim_session_t* s, sim_receiver_t* r)
-{
-	sim_fir_t fir;
-	sim_header_t header;
-
-	INIT_SIM_HEADER(header, SIM_FIR, s->uid);
-	fir.fir_seq = (r->fir_state == fir_flightting) ? r->fir_seq : (++r->fir_seq);
-
-	sim_encode_msg(&s->sstrm, &header, &fir);
-	sim_session_network_send(s, &s->sstrm);
 }
 
 static void sim_receiver_check_lost_frame(sim_session_t* s, sim_receiver_t* r, uint64_t now_ts)
@@ -593,7 +603,7 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 				continue;
 
 			space_factor = (SU_MIN(1.3, 1 + (l->count * 0.1))) * (s->rtt + s->rtt_var); /*用于简单的拥塞限流，防止GET洪水*/
-			if (l->ts + space_factor <= cur_ts && l->count < 10 && ack.nack_num < NACK_NUM){
+			if (l->ts + space_factor <= cur_ts && ack.nack_num < NACK_NUM){
 				ack.nack[ack.nack_num++] = iter->key.u32 - r->base_seq;
 				l->ts = cur_ts;
 
@@ -638,9 +648,10 @@ int sim_receiver_put(sim_session_t* s, sim_receiver_t* r, sim_segment_t* seg)
 	if (r->max_seq == 0 && seg->packet_id > seg->index){
 		r->max_seq = seg->packet_id - seg->index - 1;
 		r->base_seq = seg->packet_id - seg->index - 1;
+		r->max_ts = seg->timestamp;
 	}
 
-	sim_receiver_update_loss(s, r, seq);
+	sim_receiver_update_loss(s, r, seq, seg->timestamp);
 	if (real_video_cache_put(s, r->cache, seg) != 0)
 		return -1;
 
@@ -651,6 +662,7 @@ int sim_receiver_put(sim_session_t* s, sim_receiver_t* r, sim_segment_t* seg)
 		r->base_seq = seq;
 
 	r->max_seq = SU_MAX(r->max_seq, seq);
+	r->max_ts = SU_MAX(r->max_ts, seg->timestamp);
 
 	video_real_ack(s, r, 0, seg->packet_id);
 
