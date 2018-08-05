@@ -90,7 +90,7 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 	target_rate_bps = target_rate_bps * s->encoding_rate_ratio;
 
 	if (s->info.target_rate.loss_rate_ratio > 0.1)
-		target_rate_bps = acked_bitrate;
+		target_rate_bps = SU_MIN(acked_bitrate, target_rate_bps);
 	target_rate_bps = SU_MIN(s->max_bitrate, SU_MAX(target_rate_bps, s->min_bitrate));
 	loss = (uint8_t)(s->info.target_rate.loss_rate_ratio * 255 + 0.5f);
 
