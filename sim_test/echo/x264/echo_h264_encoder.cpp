@@ -238,7 +238,7 @@ void H264Encoder::config_param()
 int H264Encoder::find_resolution(uint32_t birate_kpbs)
 {
 	int ret;
-	for (ret = VIDEO_640P; ret >= VIDEO_120P; --ret){
+	for (ret = VIDEO_640P; ret > VIDEO_120P; --ret){
 		if (resolution_infos[ret].max_rate > birate_kpbs && resolution_infos[ret].min_rate < birate_kpbs)
 			break;
 	}
