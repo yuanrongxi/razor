@@ -1,3 +1,9 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
 #include "bbr_loss_rate_filter.h"
 
 #define kLimitNumPackets	20

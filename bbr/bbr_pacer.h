@@ -1,3 +1,9 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
 #ifndef __bbr_pacer_h_
 #define __bbr_pacer_h_
 

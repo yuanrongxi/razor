@@ -1,3 +1,9 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
 #ifndef __bbr_bandwidth_sample_h_
 #define __bbr_bandwidth_sample_h_
 
