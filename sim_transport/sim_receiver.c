@@ -503,7 +503,7 @@ static void sim_receiver_send_fir(sim_session_t* s, sim_receiver_t* r)
 
 static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32_t seq, uint32_t ts)
 {
-	uint32_t i;
+	uint32_t i, space;
 	skiplist_item_t key, val;
 	skiplist_iter_t* iter;
 	int64_t now_ts;
@@ -513,11 +513,16 @@ static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32
 		skiplist_clear(r->loss);
 		sim_receiver_send_fir(s, r);
 	}
-	else if (skiplist_size(r->loss) > 100){
+	else if (skiplist_size(r->loss) > 300){
 		skiplist_clear(r->loss);
 		sim_receiver_send_fir(s, r);
 	}
 	else{
+		if (s->rtt/2 < s->rtt_var)
+			space = 0;
+		else
+			space = SU_MIN(100, SU_MAX(30, s->rtt / 2));
+
 		key.u32 = seq;
 		skiplist_remove(r->loss, key);
 		for (i = r->max_seq + 1; i < seq; ++i){
@@ -525,7 +530,7 @@ static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32
 			iter = skiplist_search(r->loss, key);
 			if (iter == NULL){
 				sim_loss_t* l = calloc(1, sizeof(sim_loss_t));
-				l->ts = now_ts - s->rtt_var;						/*设置下一个请求重传的时刻*/
+				l->ts = now_ts - space;						/*设置下一个请求重传的时刻*/
 				l->count = 0;
 				val.ptr = l;
 
