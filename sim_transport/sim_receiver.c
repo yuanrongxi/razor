@@ -561,7 +561,7 @@ static void sim_receiver_check_lost_frame(sim_session_t* s, sim_receiver_t* r, u
 	/*进行丢帧判断*/
 	iter = skiplist_first(r->loss);
 	loss = (sim_loss_t*)iter->val.ptr;
-	if (loss->count >= 10 || real_video_check_fir(s, r->cache) == 0){ /*确定报文丢失*/
+	if (loss->count >= 15 || real_video_check_fir(s, r->cache) == 0){ /*确定报文丢失*/
 		if (evict_gop_frame(s, r->cache) != 0){
 			sim_receiver_send_fir(s, r);
 			r->fir_state = fir_flightting;
