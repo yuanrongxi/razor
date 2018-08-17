@@ -10,7 +10,8 @@ struct __sim_session
 	su_socket		s;
 	su_addr			peer;				
 
-	uint32_t		cid;
+	uint32_t		scid;				/*sender call id*/
+	uint32_t		rcid;				/*receiver call id*/
 	uint32_t		uid;				/*本端用户ID*/
 
 	uint32_t		rtt;				/*rtt值*/

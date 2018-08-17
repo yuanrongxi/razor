@@ -32,7 +32,8 @@ typedef void(*session_command_fn)(sim_session_t* s, uint64_t ts);
 sim_session_t* sim_session_create(uint16_t port, void* event, sim_notify_fn notify_cb, sim_change_bitrate_fn change_bitrate_cb, sim_state_fn state_cb)
 {
 	sim_session_t* session = calloc(1, sizeof(sim_session_t));
-	session->cid = rand();
+	session->scid = rand();
+	session->rcid = 0;
 	session->uid = 0;
 	session->rtt = 100;
 	session->rtt_var = 5;
@@ -101,7 +102,8 @@ static void sim_session_reset(sim_session_t* s)
 	s->rtt = 100;
 	s->rtt_var = 5;
 	s->loss_fraction = 0;
-	s->cid = rand();
+	s->scid = rand();
+	s->rcid = 0;
 	s->rbandwidth = 0;
 	s->sbandwidth = 0;
 	s->rcount = 0;
@@ -132,7 +134,7 @@ static void sim_session_send_connect(sim_session_t* s, int64_t now_ts)
 	sim_connect_t body;
 
 	INIT_SIM_HEADER(header, SIM_CONNECT, s->uid);
-	body.cid = s->cid;
+	body.cid = s->scid;
 	body.token_size = 0;
 	body.cc_type = (uint8_t)s->transport_type;
 	/*此处只是测试程序，不填写token*/
@@ -164,6 +166,7 @@ int sim_session_connect(sim_session_t* s, uint32_t local_uid, const char* peer_i
 	s->state = session_connecting;
 	s->transport_type = transport_type;
 	s->resend = 0;
+	s->scid = rand();
 
 	sim_session_send_connect(s, GET_SYS_MS());
 
@@ -178,7 +181,7 @@ static void sim_session_send_disconnect(sim_session_t* s, int64_t now_ts)
 	sim_disconnect_t body;
 
 	INIT_SIM_HEADER(header, SIM_DISCONNECT, s->uid);
-	body.cid = s->cid;
+	body.cid = s->scid;
 
 	sim_encode_msg(&s->sstrm, &header, &body);
 	sim_session_network_send(s, &s->sstrm);
@@ -359,6 +362,8 @@ static void process_sim_connect(sim_session_t* s, sim_header_t* header, bin_stre
 	else
 		sim_receiver_reset(s, s->receiver, body.cc_type);
 
+	s->rcid = body.cid;
+
 	sim_info("receiver actived!!!\n");
 	sim_receiver_active(s, s->receiver, header->uid);
 
@@ -433,8 +438,7 @@ static void process_sim_disconnect(sim_session_t* s, sim_header_t* header, bin_s
 
 	msg_log(addr, "send SIM_CONNECT_ACK to %s\n", ip);
 
-	/*关闭接收端*/
-	if (s->receiver != NULL){
+	if (s->rcid == body.cid && s->receiver != NULL){
 		s->notify_cb(s->event, sim_stop_play_notify, s->receiver->base_uid);
 		sim_receiver_destroy(s, s->receiver);
 		s->receiver = NULL;
