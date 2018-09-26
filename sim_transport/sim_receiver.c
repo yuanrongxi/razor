@@ -144,8 +144,8 @@ static int real_video_cache_put(sim_session_t* s, sim_frame_cache_t* c, sim_segm
 
 	if (seg->fid > c->max_fid){
 		if (c->max_fid > 0)
-			real_video_evict_frame(s, c, seg->fid);
-		else if (c->min_fid == 0){
+			real_video_evict_frame(s, c, seg->fid); /*进行过期槽位清除*/
+		else if (c->min_fid == 0 && c->max_fid == 0){
 			c->min_fid = seg->fid - 1;
 			c->play_frame_ts = seg->timestamp;
 		}
