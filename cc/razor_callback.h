@@ -20,7 +20,7 @@ packet_id是报文的id号
 retrans是重发标志
 size是报文的长度
 调用这个函数会通过seq在发送队列中找到对应的packet，并进行packet发送*/
-typedef void(*pace_send_func)(void* handler, uint32_t packet_id, int retrans, size_t size);
+typedef void(*pace_send_func)(void* handler, uint32_t packet_id, int retrans, size_t size, int padding);
 
 /*日志输出回调函数*/
 typedef int(*razor_log_func)(int level, const char* file, int line, const char* fmt, va_list vl);
@@ -55,6 +55,7 @@ typedef int64_t(*sender_get_first_ts)(razor_sender_t* sender);
 struct __razor_sender
 {
 	int								type;
+	int								padding;
 	sender_heartbeat_func			heartbeat;
 	sender_set_bitrates				set_bitrates;
 	sender_add_packet_func			add_packet;

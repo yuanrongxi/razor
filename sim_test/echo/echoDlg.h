@@ -82,4 +82,6 @@ public:
 	CString m_strRemoteRes;
 	CComboBox m_cbxCC;
 	CString m_strCC;
+	BOOL m_bPadding;
+	afx_msg void OnBnClickedChkpad();
 };

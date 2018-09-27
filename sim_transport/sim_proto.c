@@ -79,6 +79,10 @@ void sim_encode_msg(bin_stream_t* strm, sim_header_t* header, void* body)
 		sim_fir_encode(strm, body);
 		break;
 
+	case SIM_PAD:
+		sim_pad_encode(strm, body);
+		break;
+
 	default:
 		;
 	}
@@ -126,6 +130,10 @@ int sim_decode_msg(bin_stream_t* strm, sim_header_t* header, void* body)
 		ret = sim_fir_decode(strm, body);
 		break;
 
+	case SIM_PAD:
+		ret = sim_pad_decode(strm, body);
+		break;
+
 	default:
 		;
 	}
@@ -165,6 +173,9 @@ const char* sim_get_msg_name(uint8_t msg_id)
 
 	case SIM_FIR:
 		return "SIM_FIR";
+
+	case SIM_PAD:
+		return "SIM_PAD";
 
 	default:
 		return "unknown message";

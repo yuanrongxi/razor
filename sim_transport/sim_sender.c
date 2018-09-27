@@ -53,7 +53,7 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction
 		sim_limiter_set_max_bitrate(&sender->limiter, bitrate / 8);
 }
 
-static void sim_send_packet(void* handler, uint32_t packet_id, int retrans, size_t size)
+static void sim_send_packet(void* handler, uint32_t packet_id, int retrans, size_t size, int padding)
 {
 	sim_header_t header;
 	sim_segment_t* seg;
@@ -63,30 +63,46 @@ static void sim_send_packet(void* handler, uint32_t packet_id, int retrans, size
 
 	sim_sender_t* sender = (sim_sender_t*)handler;
 	sim_session_t* s = sender->s;
-
-	key.u32 = packet_id;
-	it = skiplist_search(sender->cache, key);
-	if (it == NULL){
-		sim_debug("send packet to network failed, packet id = %u\n", packet_id);
-		return;
-	}
+	sim_pad_t pad;
 
 	now_ts = GET_SYS_MS();
 
-	seg = it->val.ptr;
-	/*每发送一次，就进行传输序号+1*/
-	seg->transport_seq = sender->transport_seq_seed++;
-	/*send_ts是相对当前帧产生的时间之差，用于接收端计算发送时间间隔*/
-	seg->send_ts = (uint16_t)(now_ts - sender->first_ts - seg->timestamp);
-	/*将发送记录送入拥塞对象中进行bwe对象做延迟估算*/
-	sender->cc->on_send(sender->cc, seg->transport_seq, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
+	if (padding == 1){
+		pad.transport_seq = sender->transport_seq_seed++;
+		pad.send_ts = (uint16_t)(now_ts - sender->first_ts);
+		pad.data_size = SU_MIN(size, SIM_VIDEO_SIZE);
 
-	INIT_SIM_HEADER(header, SIM_SEG, s->uid);
-	sim_encode_msg(&s->sstrm, &header, seg);
+		/*将发送记录送入拥塞对象中进行bwe对象做延迟估算*/
+		sender->cc->on_send(sender->cc, pad.transport_seq, pad.data_size + SIM_SEGMENT_HEADER_SIZE);
 
-	sim_session_network_send(s, &s->sstrm);
+		INIT_SIM_HEADER(header, SIM_PAD, s->uid);
+		sim_encode_msg(&s->sstrm, &header, &pad);
 
-	/*sim_debug("send packet id = %u, transport_seq = %u\n", packet_id, sender->transport_seq_seed - 1);*/
+		sim_session_network_send(s, &s->sstrm);
+	}
+	else{
+		key.u32 = packet_id;
+		it = skiplist_search(sender->cache, key);
+		if (it == NULL){
+			sim_debug("send packet to network failed, packet id = %u\n", packet_id);
+			return;
+		}
+
+		seg = it->val.ptr;
+		/*每发送一次，就进行传输序号+1*/
+		seg->transport_seq = sender->transport_seq_seed++;
+		/*send_ts是相对当前帧产生的时间之差，用于接收端计算发送时间间隔*/
+		seg->send_ts = (uint16_t)(now_ts - sender->first_ts - seg->timestamp);
+		/*将发送记录送入拥塞对象中进行bwe对象做延迟估算*/
+		sender->cc->on_send(sender->cc, seg->transport_seq, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
+
+		INIT_SIM_HEADER(header, SIM_SEG, s->uid);
+		sim_encode_msg(&s->sstrm, &header, seg);
+
+		sim_session_network_send(s, &s->sstrm);
+
+		/*sim_debug("send packet id = %u, transport_seq = %u\n", packet_id, sender->transport_seq_seed - 1);*/
+	}
 }
 
 void free_video_seg(skiplist_item_t key, skiplist_item_t val, void* args)
@@ -96,7 +112,7 @@ void free_video_seg(skiplist_item_t key, skiplist_item_t val, void* args)
 		free(seg);
 }
 
-sim_sender_t* sim_sender_create(sim_session_t* s, int transport_type)
+sim_sender_t* sim_sender_create(sim_session_t* s, int transport_type, int padding)
 {
 	int cc_type;
 	sim_sender_t* sender = calloc(1, sizeof(sim_sender_t));
@@ -105,7 +121,7 @@ sim_sender_t* sim_sender_create(sim_session_t* s, int transport_type)
 	sender->cache = skiplist_create(idu32_compare, free_video_seg, s);
 	/*pacer queue的延迟不大于250ms*/
 	cc_type = (transport_type == bbr_transport ? bbr_congestion : gcc_congestion);
-	sender->cc = razor_sender_create(cc_type, s, sim_bitrate_change, sender, sim_send_packet, 1000);
+	sender->cc = razor_sender_create(cc_type, padding, s, sim_bitrate_change, sender, sim_send_packet, 1000);
 	
 	sim_limiter_init(&sender->limiter, 300);
 
@@ -134,7 +150,7 @@ void sim_sender_destroy(sim_session_t* s, sim_sender_t* sender)
 	free(sender);
 }
 
-void sim_sender_reset(sim_session_t* s, sim_sender_t* sender, int transport_type)
+void sim_sender_reset(sim_session_t* s, sim_sender_t* sender, int transport_type, int padding)
 {
 	int cc_type;
 
@@ -155,7 +171,7 @@ void sim_sender_reset(sim_session_t* s, sim_sender_t* sender, int transport_type
 	}
 
 	cc_type = (transport_type == bbr_transport ? bbr_congestion : gcc_congestion);
-	sender->cc = razor_sender_create(gcc_congestion, s, sim_bitrate_change, sender, sim_send_packet, 300);
+	sender->cc = razor_sender_create(cc_type, padding, s, sim_bitrate_change, sender, sim_send_packet, 300);
 }
 
 int sim_sender_active(sim_session_t* s, sim_sender_t* sender)

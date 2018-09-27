@@ -33,7 +33,7 @@ enum
 /****************************************外部直接调用API************************************/
 void				razor_setup_log(razor_log_func log_cb);
 /*创建一个发送端的拥塞控制对象*/
-razor_sender_t*		razor_sender_create(int type, void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms);
+razor_sender_t*		razor_sender_create(int type, int padding, void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms);
 /*销毁一个发送端的拥塞控制对象*/
 void				razor_sender_destroy(razor_sender_t* sender);
 

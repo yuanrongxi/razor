@@ -23,6 +23,7 @@ struct __sim_session
 	int				interrupt;			/*中断*/
 
 	int				transport_type;		/*拥塞控制的类型*/
+	int				padding;			/*cc是否采用填充模式*/
 
 	volatile int	run;				/*run线程标示 */
 	su_mutex		mutex;				/*用于上层多线程操作的保护锁*/

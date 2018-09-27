@@ -70,6 +70,7 @@ CechoDlg::CechoDlg(CWnd* pParent /*=NULL*/)
 	, m_strLocalRes(_T(""))
 	, m_strRemoteRes(_T(""))
 	, m_strCC(_T(""))
+	, m_bPadding(TRUE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_viewing = FALSE;
@@ -100,6 +101,7 @@ void CechoDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_REMOTE_RES, m_strRemoteRes);
 	DDX_Control(pDX, IDC_CBX_CC, m_cbxCC);
 	DDX_CBString(pDX, IDC_CBX_CC, m_strCC);
+	DDX_Check(pDX, IDC_CHKPAD, m_bPadding);
 }
 
 BEGIN_MESSAGE_MAP(CechoDlg, CDialogEx)
@@ -125,6 +127,7 @@ BEGIN_MESSAGE_MAP(CechoDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTNVIEW, &CechoDlg::OnBnClickedBtnview)
 	ON_BN_CLICKED(IDC_BTNCONNECT, &CechoDlg::OnBnClickedBtnconnect)
 	ON_WM_TIMER()
+	ON_BN_CLICKED(IDC_CHKPAD, &CechoDlg::OnBnClickedChkpad)
 END_MESSAGE_MAP()
 
 
@@ -392,7 +395,7 @@ void CechoDlg::OnBnClickedBtnconnect()
 		else if (m_strCC == _T("GCC"))
 			transport_type = gcc_transport;
 
-		if (m_frame->connect(transport_type, m_iUser, ip.c_str(), m_iPort) == 0){
+		if (m_frame->connect(transport_type, (m_bPadding ? 1 : 0), m_iUser, ip.c_str(), m_iPort) == 0){
 			m_btnView.EnableWindow(FALSE);
 			m_btnEcho.SetWindowText(_T("stop echo"));
 			m_connected = TRUE;
@@ -633,4 +636,10 @@ void CechoDlg::OnTimer(UINT_PTR nIDEvent)
 	}
 
 	CDialogEx::OnTimer(nIDEvent);
+}
+
+
+void CechoDlg::OnBnClickedChkpad()
+{
+	// TODO: Add your control notification handler code here
 }

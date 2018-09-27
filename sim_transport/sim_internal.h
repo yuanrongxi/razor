@@ -42,9 +42,9 @@ int						sim_limiter_try(sim_sender_limiter_t* limiter, size_t size, int64_t now
 void					sim_limiter_update(sim_sender_limiter_t* limiter, size_t size, int64_t now_ts);
 
 /****************************************************************************************************/
-sim_sender_t*			sim_sender_create(sim_session_t* s, int transport_type);
+sim_sender_t*			sim_sender_create(sim_session_t* s, int transport_type, int padding);
 void					sim_sender_destroy(sim_session_t* s, sim_sender_t* sender);
-void					sim_sender_reset(sim_session_t* s, sim_sender_t* sender, int transport_type);
+void					sim_sender_reset(sim_session_t* s, sim_sender_t* sender, int transport_type, int padding);
 int						sim_sender_active(sim_session_t* s, sim_sender_t* sender);
 
 int						sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t payload_type, uint8_t ftype, const uint8_t* data, size_t size);
@@ -60,6 +60,7 @@ void					sim_receiver_destroy(sim_session_t* s, sim_receiver_t* r);
 void					sim_receiver_reset(sim_session_t* s, sim_receiver_t* r, int transport_type);
 int						sim_receiver_active(sim_session_t* s, sim_receiver_t* r, uint32_t uid);
 int						sim_receiver_put(sim_session_t* s, sim_receiver_t* r, sim_segment_t* seg);
+int						sim_receiver_padding(sim_session_t* s, sim_receiver_t* r, uint16_t transport_seq, uint32_t send_ts, size_t data_size);
 int						sim_receiver_get(sim_session_t* s, sim_receiver_t* r, uint8_t* data, size_t* sizep, uint8_t* payload_type);
 void					sim_receiver_timer(sim_session_t* s, sim_receiver_t* r, int64_t now_ts);
 void					sim_receiver_update_rtt(sim_session_t* s, sim_receiver_t* r);
@@ -70,7 +71,7 @@ sim_session_t*			sim_session_create(uint16_t port, void* event, sim_notify_fn no
 void					sim_session_destroy(sim_session_t* s);
 
 /*连接一个接收端*/
-int						sim_session_connect(sim_session_t* s, uint32_t local_uid, const char* peer_ip, uint16_t peer_port, int transport_type);
+int						sim_session_connect(sim_session_t* s, uint32_t local_uid, const char* peer_ip, uint16_t peer_port, int transport_type, int padding);
 /*断开一个接收端*/
 int						sim_session_disconnect(sim_session_t* s);
 /*发送视频数据*/

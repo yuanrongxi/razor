@@ -10,7 +10,7 @@
 #define k_min_pace_bitrate (10*1000)
 #define k_bbr_heartbeat_timer 1000
 
-bbr_sender_t* bbr_sender_create(void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms)
+bbr_sender_t* bbr_sender_create(void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms, int padding)
 {
 	bbr_sender_t* s = calloc(1, sizeof(bbr_sender_t));
 	s->bbr = NULL;
@@ -24,7 +24,7 @@ bbr_sender_t* bbr_sender_create(void* trigger, bitrate_changed_func bitrate_cb, 
 
 	bbr_feedback_adapter_init(&s->feedback);
 
-	s->pacer = bbr_pacer_create(handler, send_cb, queue_ms);
+	s->pacer = bbr_pacer_create(handler, send_cb, queue_ms, padding);
 	
 	bbr_pacer_set_bitrate_limits(s->pacer, k_min_pace_bitrate);
 	bbr_pacer_set_estimate_bitrate(s->pacer, k_min_pace_bitrate);
@@ -69,7 +69,6 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 
 	/*设置pace参数*/
 	pacing_rate_kbps = bbr_pacer_data_rate(&s->info.pacer_config);
-	bbr_pacer_set_pacing_rate(s->pacer, pacing_rate_kbps * 8);
 
 	/*计算反馈带宽*/
 	outstanding = bbr_feedback_get_in_flight(&s->feedback);
@@ -81,19 +80,19 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 
 	fill = 1.0 * outstanding / s->info.congestion_window;
 	/*如果拥塞窗口满了，进行带宽递减*/
-	if (fill > 1.5)
-		s->encoding_rate_ratio *= 0.9;
-	else if (fill > 1.0)
-		s->encoding_rate_ratio *= 0.95;
-	else if (fill < 0.2){
-		s->encoding_rate_ratio = 1.0f;
+	if (fill > 1.5){
+		s->encoding_rate_ratio *= 0.95f;
+		s->encoding_rate_ratio = SU_MAX(s->encoding_rate_ratio, 0.75);
 	}
-	else{
+	else if (fill <= 1.0){
 		s->encoding_rate_ratio *= 1.05;
 		s->encoding_rate_ratio = SU_MIN(1.0f, s->encoding_rate_ratio);
 	}
+	else
+		s->encoding_rate_ratio = 1.0f;
 
 	target_rate_bps = target_rate_bps * s->encoding_rate_ratio;
+	bbr_pacer_set_pacing_rate(s->pacer, target_rate_bps / 1000);
 
 	if (s->info.target_rate.loss_rate_ratio > 0.1)
 		target_rate_bps = SU_MIN(acked_bitrate, target_rate_bps);

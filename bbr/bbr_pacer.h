@@ -20,10 +20,12 @@ typedef struct
 	uint32_t			pacing_bitrate_kpbs;
 
 	int64_t				last_update_ts;
+	int					padding;
 
 	pacer_queue_t		que;						/*排队队列*/
 
 	interval_budget_t	media_budget;				/*正式的媒体报文的发送速度控制器*/
+	interval_budget_t	padding_budget;				/*填充的发送速度控制器*/
 	size_t				congestion_window_size;		/*拥塞窗口大小*/
 	size_t				outstanding_bytes;			/*正在路上发送的数据*/
 	float				factor;						/*pacing rate放大因子*/
@@ -32,7 +34,7 @@ typedef struct
 	pace_send_func		send_cb;
 }bbr_pacer_t;
 
-bbr_pacer_t*				bbr_pacer_create(void* handler, pace_send_func send_cb, uint32_t que_ms);
+bbr_pacer_t*				bbr_pacer_create(void* handler, pace_send_func send_cb, uint32_t que_ms, int padding);
 void						bbr_pacer_destroy(bbr_pacer_t* pace);
 
 void						bbr_pacer_set_estimate_bitrate(bbr_pacer_t* pace, uint32_t bitrate_pbs);

@@ -44,7 +44,7 @@ public:
 	void init(uint16_t port, uint32_t conf_min_bitrate, uint32_t conf_start_bitrate, uint32_t conf_max_bitrate);
 	void destroy();
 
-	int connect(int transport_type, uint32_t user_id, const char* receiver_ip, uint16_t receiver_port);
+	int connect(int transport_type, int padding, uint32_t user_id, const char* receiver_ip, uint16_t receiver_port);
 	void disconnect();
 
 	void start_recorder(CFVideoRecorder* rec);

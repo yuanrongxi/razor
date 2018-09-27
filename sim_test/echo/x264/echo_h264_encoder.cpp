@@ -154,9 +154,9 @@ void H264Encoder::set_bitrate(uint32_t bitrate_kbps)
 	else if (bitrate_kbps < resolution_infos[curr_resolution_].min_rate)
 		bitrate_kbps = resolution_infos[curr_resolution_].min_rate;
 
+	en_param_.rc.i_vbv_max_bitrate = bitrate_kbps;
+	en_param_.rc.i_bitrate = bitrate_kbps - bitrate_kbps / 4;
 	if (bitrate_kbps != en_param_.rc.i_vbv_max_bitrate){
-		en_param_.rc.i_vbv_max_bitrate = bitrate_kbps;
-		en_param_.rc.i_bitrate = bitrate_kbps - bitrate_kbps / 4;
 		if (en_param_.rc.i_bitrate < resolution_infos[curr_resolution_].min_rate)
 			bitrate_kbps = resolution_infos[curr_resolution_].min_rate;
 
@@ -196,9 +196,9 @@ void H264Encoder::config_param()
 	en_param_.i_log_level = X264_LOG_NONE;
 	en_param_.rc.i_rc_method = X264_RC_CRF;
 
-	/*en_param_.rc.i_qp_min = 5;
+	en_param_.rc.i_qp_min = 1;
 	en_param_.rc.i_qp_max = 40;
-	en_param_.rc.i_qp_constant = 24;*/
+	en_param_.rc.i_qp_constant = 15;
 	en_param_.rc.i_bitrate = res.min_rate;
 	en_param_.rc.i_vbv_max_bitrate = (res.min_rate + res.max_rate) / 2;
 	en_param_.i_bframe = 0;

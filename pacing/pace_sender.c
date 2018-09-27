@@ -106,7 +106,7 @@ static int pace_send(pace_sender_t* pace, packet_event_t* ev)
 
 	/*调用外部接口进行数据发送*/
 	if (pace->send_cb != NULL)
-		pace->send_cb(pace->handler, ev->seq, ev->retrans, ev->size);
+		pace->send_cb(pace->handler, ev->seq, ev->retrans, ev->size, 0);
 
 	use_budget(&pace->media_budget, ev->size);
 

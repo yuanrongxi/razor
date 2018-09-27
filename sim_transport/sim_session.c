@@ -48,6 +48,7 @@ sim_session_t* sim_session_create(uint16_t port, void* event, sim_notify_fn noti
 	session->commad_ts = GET_SYS_MS();
 
 	session->transport_type = gcc_transport;
+	session->padding = 1;
 
 	session->notify_cb = notify_cb;
 	session->change_bitrate_cb = change_bitrate_cb;
@@ -116,6 +117,7 @@ static void sim_session_reset(sim_session_t* s)
 	s->commad_ts = s->stat_ts;
 	s->interrupt = net_normal;
 	s->transport_type = gcc_transport;
+	s->padding = 1;
 	
 	if (s->sender != NULL){
 		sim_sender_destroy(s, s->sender);
@@ -148,7 +150,7 @@ static void sim_session_send_connect(sim_session_t* s, int64_t now_ts)
 	s->resend++;
 }
 
-int sim_session_connect(sim_session_t* s, uint32_t local_uid, const char* peer_ip, uint16_t peer_port, int transport_type)
+int sim_session_connect(sim_session_t* s, uint32_t local_uid, const char* peer_ip, uint16_t peer_port, int transport_type, int padding)
 {
 	int ret = -1;
 	su_mutex_lock(s->mutex);
@@ -165,6 +167,7 @@ int sim_session_connect(sim_session_t* s, uint32_t local_uid, const char* peer_i
 	ret = 0;
 	s->state = session_connecting;
 	s->transport_type = transport_type;
+	s->padding = padding;
 	s->resend = 0;
 	s->scid = rand();
 
@@ -396,10 +399,10 @@ static void process_sim_connect_ack(sim_session_t* s, sim_header_t* header, bin_
 		s->state = session_connected;
 		/*´´½¨sender*/
 		if (s->sender == NULL){
-			s->sender = sim_sender_create(s, s->transport_type);
+			s->sender = sim_sender_create(s, s->transport_type, s->padding);
 		}
 		else
-			sim_sender_reset(s, s->sender, s->transport_type);
+			sim_sender_reset(s, s->sender, s->transport_type, s->padding);
 		sim_sender_active(s, s->sender);
 
 
@@ -532,6 +535,15 @@ static void process_sim_fir(sim_session_t* s, sim_header_t* header, bin_stream_t
 	}
 }
 
+static void process_sim_pad(sim_session_t* s, sim_header_t* header, bin_stream_t* strm, su_addr* addr)
+{
+	sim_pad_t pad;
+	if (sim_decode_msg(strm, header, &pad) != 0)
+		return;
+
+	sim_receiver_padding(s, s->receiver, pad.transport_seq, pad.send_ts, pad.data_size);
+}
+
 static void sim_session_process(sim_session_t* s, bin_stream_t* strm, su_addr* addr)
 {
 	sim_header_t header;
@@ -589,6 +601,11 @@ static void sim_session_process(sim_session_t* s, bin_stream_t* strm, su_addr* a
 
 	case SIM_FIR:
 		process_sim_fir(s, &header, strm, addr);
+		break;
+
+	case SIM_PAD:
+		process_sim_pad(s, &header, strm, addr);
+		break;
 	}
 }
 

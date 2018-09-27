@@ -211,6 +211,26 @@ static inline int sim_fir_decode(bin_stream_t* strm, sim_fir_t* body)
 	return 0;
 }
 
+static inline void sim_pad_encode(bin_stream_t* strm, sim_pad_t* body)
+{
+	mach_uint32_write(strm, body->send_ts);
+	mach_uint16_write(strm, body->transport_seq);
+
+	mach_data_write(strm, body->data, body->data_size);
+}
+
+static inline int sim_pad_decode(bin_stream_t* strm, sim_pad_t* body)
+{
+	mach_uint32_read(strm, &body->send_ts);
+	mach_uint16_read(strm, &body->transport_seq);
+
+	body->data_size = mach_data_read(strm, body->data, PADDING_DATA_SIZE);
+	if (body->data_size == READ_DATA_ERROR)
+		body->data_size = 0;
+
+	return 0;
+}
+
 
 
 

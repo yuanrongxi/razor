@@ -39,7 +39,7 @@ typedef struct
 
 }bbr_sender_t;
 
-bbr_sender_t*					bbr_sender_create(void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms);
+bbr_sender_t*					bbr_sender_create(void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms, int padding);
 void							bbr_sender_destroy(bbr_sender_t* s);
 
 void							bbr_sender_heartbeat(bbr_sender_t* s, int64_t now_ts);

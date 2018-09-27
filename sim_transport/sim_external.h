@@ -42,7 +42,7 @@ void		sim_init(uint16_t port, void* event, sim_log_fn log_cb, sim_notify_fn noti
 void		sim_destroy();
 
 /*transport_type,传输的拥塞控制类型，0是GCC，1是BBR*/
-int			sim_connect(uint32_t local_uid, const char* peer_ip, uint16_t peer_port, int transport_type);
+int			sim_connect(uint32_t local_uid, const char* peer_ip, uint16_t peer_port, int transport_type, int padding);
 int			sim_disconnect();
 
 /*发送一帧视频*/

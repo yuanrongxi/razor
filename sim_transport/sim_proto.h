@@ -30,6 +30,7 @@ enum
 	SIM_SEG_ACK,
 	SIM_FEEDBACK,
 	SIM_FIR,				/*请求关键帧重传*/
+	SIM_PAD,				/*padding报文*/
 
 	MAX_MSG_ID
 };
@@ -122,6 +123,16 @@ typedef struct
 {
 	uint32_t	fir_seq;							/*fir的序号，每次接收端触发条件时递增*/
 }sim_fir_t;
+
+#define PADDING_DATA_SIZE  500
+typedef struct
+{
+	uint32_t	send_ts;				/*发送时刻相对帧产生时刻的时间戳*/
+	uint16_t	transport_seq;			/*传输通道序号，这个是传输通道每发送一个报文，它就自增长1，而且重发报文也会增长*/
+
+	uint16_t	data_size;
+	uint8_t		data[PADDING_DATA_SIZE];
+}sim_pad_t;
 
 void							sim_encode_msg(bin_stream_t* strm, sim_header_t* header, void* body);
 int								sim_decode_header(bin_stream_t* strm, sim_header_t* header);

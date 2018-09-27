@@ -120,7 +120,7 @@ static int64_t razor_bbr_sender_get_first_ts(razor_sender_t* sender)
 		return -1;
 }
 
-razor_sender_t* razor_sender_create(int type, void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms)
+razor_sender_t* razor_sender_create(int type, int padding, void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms)
 {
 	sender_cc_t* cc;
 	bbr_sender_t* bbr;
@@ -135,11 +135,12 @@ razor_sender_t* razor_sender_create(int type, void* trigger, bitrate_changed_fun
 		cc->sender.on_feedback = razor_sender_on_feedback;
 		cc->sender.get_first_timestamp = razor_sender_get_first_ts;
 		cc->sender.type = type;
+		cc->sender.padding = padding;
 
 		return (razor_sender_t*)cc;
 	}
 	else if (type == bbr_congestion){
-		bbr = bbr_sender_create(trigger, bitrate_cb, handler, send_cb, queue_ms);
+		bbr = bbr_sender_create(trigger, bitrate_cb, handler, send_cb, queue_ms, padding);
 		bbr->sender.heartbeat = razor_bbr_sender_heartbeat;
 		bbr->sender.add_packet = razor_bbr_sender_add_packet;
 		bbr->sender.on_send = razor_bbr_sender_on_send;
@@ -149,6 +150,7 @@ razor_sender_t* razor_sender_create(int type, void* trigger, bitrate_changed_fun
 		bbr->sender.on_feedback = razor_bbr_sender_on_feedback;
 		bbr->sender.get_first_timestamp = razor_bbr_sender_get_first_ts;
 		bbr->sender.type = type;
+		bbr->sender.padding = padding;
 
 		return (razor_sender_t*)bbr;
 	}
