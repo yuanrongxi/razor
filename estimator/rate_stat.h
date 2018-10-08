@@ -10,6 +10,10 @@
 
 #include "cf_platform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
 	int			sum;
@@ -42,6 +46,8 @@ int					rate_stat_rate(rate_stat_t* rate, int64_t now_ts);
 
 #endif
 
-
+#ifdef __cplusplus
+}
+#endif 
 
 
