@@ -28,6 +28,7 @@ extern "C"
 };
 
 #include "echo_h264_common.h"
+#include "rate_stat.h"
 
 /*h264编码器，支持自动缩放编码,支持动态修改码率，动态修改分辨率。为了更好的和razor进行配合传输，编码器被设置成inter-refresh模式*/
 class H264Encoder
@@ -76,6 +77,8 @@ private:
 	x264_picture_t	en_picture_;
 	x264_t *		en_h_;
 	x264_param_t	en_param_;
+
+	rate_stat_t		rate_stat_;
 };
 
 #endif

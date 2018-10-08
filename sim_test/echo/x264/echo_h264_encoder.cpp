@@ -92,6 +92,7 @@ bool H264Encoder::init(int frame_rate, int src_width, int src_height, int dst_wi
 
 	inited_ = true;
 
+	rate_stat_init(&rate_stat_, 1000, 8000);
 	return true;
 }
 
@@ -105,6 +106,8 @@ void H264Encoder::destroy()
 
 	max_resolution_ = VIDEO_240P;
 	curr_resolution_ = VIDEO_240P;
+
+	rate_stat_destroy(&rate_stat_);
 }
 
 bool H264Encoder::open_encoder()
@@ -255,6 +258,10 @@ void H264Encoder::try_change_resolution()
 			const encoder_resolution_t& res = resolution_infos[curr_resolution_];
 			if (res.min_rate > bitrate_kbps_ && curr_resolution_ > VIDEO_120P){
 				/*降低一层分辨率*/
+				uint32_t rate_stat_kps = rate_stat_rate(&rate_stat_, GET_SYS_MS()) / 8000;
+				if (rate_stat_kps < res.min_rate) /*产生数据的带宽小于最小限制带宽，不做改动*/
+					return;
+
 				curr_resolution_ = find_resolution(bitrate_kbps_);
 				close_encoder();
 				open_encoder();
@@ -312,6 +319,8 @@ bool H264Encoder::encode(uint8_t *in, int in_size, enum PixelFormat src_pix_fmt,
 			*frame_type = 0x0002;
 		else 
 			*frame_type = pic_out_.i_type;
+
+		rate_stat_update(&rate_stat_, ret, GET_SYS_MS());
 		return true;
 	}
 
