@@ -62,8 +62,13 @@ void bbr_pacer_set_pacing_rate(bbr_pacer_t* pace, uint32_t pacing_bitrate_kbps)
 {
 	pace->pacing_bitrate_kpbs = pacing_bitrate_kbps* pace->factor;
 	razor_debug("set pacer bitrate, bitrate = %ukbps\n", pacing_bitrate_kbps);
-	set_target_rate_kbps(&pace->padding_budget, pace->pacing_bitrate_kpbs);
+	//set_target_rate_kbps(&pace->padding_budget, pace->pacing_bitrate_kpbs);
 } 
+
+void bbr_pacer_set_padding_rate(bbr_pacer_t* pace, uint32_t padding_bitrate)
+{
+	set_target_rate_kbps(&pace->padding_budget, padding_bitrate);
+}
 
 void bbr_pacer_update_outstanding(bbr_pacer_t* pace, size_t outstanding_bytes)
 {

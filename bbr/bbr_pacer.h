@@ -40,6 +40,7 @@ void						bbr_pacer_destroy(bbr_pacer_t* pace);
 void						bbr_pacer_set_estimate_bitrate(bbr_pacer_t* pace, uint32_t bitrate_pbs);
 void						bbr_pacer_set_bitrate_limits(bbr_pacer_t* pace, uint32_t min_bitrate);
 void						bbr_pacer_set_pacing_rate(bbr_pacer_t* pace, uint32_t pacing_bitrate);
+void						bbr_pacer_set_padding_rate(bbr_pacer_t* pace, uint32_t padding_bitrate);
 void						bbr_pacer_update_outstanding(bbr_pacer_t* pace, size_t outstanding_bytes);
 void						bbr_pacer_update_congestion_window(bbr_pacer_t* pace, size_t congestion_window_size);
 void						bbr_pacer_set_factor(bbr_pacer_t* pace, float factor);

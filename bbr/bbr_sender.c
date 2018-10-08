@@ -62,14 +62,14 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 	double fill;
 	uint8_t loss;
 
-	uint32_t pacing_rate_kbps, target_rate_bps;
+	uint32_t pacing_rate_kbps, target_rate_bps, pading_rate_kbps;
 	int acked_bitrate;
 	if (s->info.congestion_window <= 0)
 		return;
 
 	/*设置pace参数*/
 	pacing_rate_kbps = bbr_pacer_data_rate(&s->info.pacer_config);
-
+	pading_rate_kbps = bbr_pacer_pad_rate(&s->info.pacer_config);
 	/*计算反馈带宽*/
 	outstanding = bbr_feedback_get_in_flight(&s->feedback);
 
@@ -98,6 +98,11 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 		target_rate_bps = SU_MIN(acked_bitrate, target_rate_bps);
 	target_rate_bps = SU_MIN(s->max_bitrate, SU_MAX(target_rate_bps, s->min_bitrate));
 	loss = (uint8_t)(s->info.target_rate.loss_rate_ratio * 255 + 0.5f);
+
+	if (pading_rate_kbps > 0)
+		bbr_pacer_set_padding_rate(s->pacer, pading_rate_kbps);
+	else
+		bbr_pacer_set_padding_rate(s->pacer, target_rate_bps / 1000);
 
 	razor_debug("target = %u kbps, acked_birate = %dkbps, pacing = %u kbps, loss = %u, congestion_window = %u, outstanding = %u, ratio = %2f\n\n", 
 		target_rate_bps / 8000, acked_bitrate / 8000, pacing_rate_kbps, loss, s->info.congestion_window, outstanding, s->encoding_rate_ratio);
