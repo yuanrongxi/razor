@@ -12,6 +12,8 @@
 #pragma comment(lib, "avutil.lib")
 #pragma comment(lib, "swscale.lib")
 
+#define KEY_FRAME_SEC 4
+
 typedef struct
 {
 	int			resolution;				/*分辨率*/
@@ -92,7 +94,7 @@ bool H264Encoder::init(int frame_rate, int src_width, int src_height, int dst_wi
 
 	inited_ = true;
 
-	rate_stat_init(&rate_stat_, 1000, 8000);
+	rate_stat_init(&rate_stat_, KEY_FRAME_SEC * 1000 * 2, 8000);
 	return true;
 }
 
@@ -184,7 +186,6 @@ int H264Encoder::get_codec_height() const
 	return resolution_infos[curr_resolution_].codec_height;
 }
 
-#define KEY_FRAME_SEC 4
 void H264Encoder::config_param()
 {
 	const encoder_resolution_t& res = resolution_infos[curr_resolution_];
@@ -258,8 +259,8 @@ void H264Encoder::try_change_resolution()
 			const encoder_resolution_t& res = resolution_infos[curr_resolution_];
 			if (res.min_rate > bitrate_kbps_ && curr_resolution_ > VIDEO_120P){
 				/*降低一层分辨率*/
-				uint32_t rate_stat_kps = rate_stat_rate(&rate_stat_, GET_SYS_MS()) / 8000;
-				if (rate_stat_kps < res.min_rate) /*产生数据的带宽小于最小限制带宽，不做改动*/
+				uint32_t rate_stat_kps = rate_stat_rate(&rate_stat_, GET_SYS_MS()) / 1000;
+				if (rate_stat_kps < res.min_rate * 7 / 8) /*产生数据的带宽小于最小限制带宽，不做改动*/
 					return;
 
 				curr_resolution_ = find_resolution(bitrate_kbps_);
