@@ -92,7 +92,7 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 		s->encoding_rate_ratio = 1.0f;
 
 	target_rate_bps = target_rate_bps * s->encoding_rate_ratio;
-	bbr_pacer_set_pacing_rate(s->pacer, target_rate_bps / 1000);
+	bbr_pacer_set_pacing_rate(s->pacer, pacing_rate_kbps * 8);
 
 	if (s->info.target_rate.loss_rate_ratio > 0.1)
 		target_rate_bps = SU_MIN(acked_bitrate, target_rate_bps);

@@ -182,7 +182,7 @@ void bbr_pacer_try_transmit(bbr_pacer_t* pace, int64_t now_ts)
 		}
 
 		/*检查是否可以padding*/
-		while (pace->padding == 1 && budget_remaining(&pace->padding_budget) > PADDING_SIZE){
+		while (pace->padding == 1 && budget_remaining(&pace->padding_budget) > PADDING_SIZE / 4){
 			if (bbr_pacer_congestion(pace) == -1)
 				break;
 			
