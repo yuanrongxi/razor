@@ -200,9 +200,9 @@ void H264Encoder::config_param()
 	en_param_.i_log_level = X264_LOG_NONE;
 	en_param_.rc.i_rc_method = X264_RC_CRF;
 
-	en_param_.rc.i_qp_min = 1;
+	en_param_.rc.i_qp_min = 0;
 	en_param_.rc.i_qp_max = 40;
-	en_param_.rc.i_qp_constant = 15;
+	en_param_.rc.i_qp_constant = 8;
 	en_param_.rc.i_bitrate = res.min_rate;
 	en_param_.rc.i_vbv_max_bitrate = (res.min_rate + res.max_rate) / 2;
 	en_param_.i_bframe = 0;
