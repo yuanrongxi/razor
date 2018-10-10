@@ -47,7 +47,7 @@ enum Resolution
 
 /*480P的码率范围和起始码率*/
 #define MAX_VIDEO_BITRAE (1000 * 1000)
-#define MIN_VIDEO_BITARE (16 * 1000)
+#define MIN_VIDEO_BITARE (8 * 1000)
 #define START_VIDEO_BITRATE (800 * 1000) 
 
 /*480P的码率范围和起始码率*/
