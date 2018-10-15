@@ -212,7 +212,7 @@ static bbr_bandwidth_sample_t sampler_on_packet_acked_inner(bbr_bandwidth_sample
 		ret.is_app_limited = point->is_app_limited;
 	}
 	else if (ack_time == point->last_acked_packet_ack_time){
-		ack_rate = (sampler->total_data_acked - point->total_data_acked_at_the_last_acked_packet);
+		ack_rate = (sampler->total_data_acked - point->total_data_acked_at_the_last_acked_packet) / 5;
 
 		ret.bandwidth = SU_MIN(ack_rate, send_rate);
 		ret.rtt = ack_time - point->send_time;
