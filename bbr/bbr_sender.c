@@ -84,9 +84,8 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 		s->encoding_rate_ratio *= 0.95f;
 		s->encoding_rate_ratio = SU_MAX(s->encoding_rate_ratio, 0.75);
 	}
-	else if (fill <= 1.0){
-		s->encoding_rate_ratio *= 1.05;
-		s->encoding_rate_ratio = SU_MIN(1.0f, s->encoding_rate_ratio);
+	else if (fill < 1.0){
+		s->encoding_rate_ratio = 1.05;
 	}
 	else
 		s->encoding_rate_ratio = 1.0f;

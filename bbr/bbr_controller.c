@@ -215,7 +215,7 @@ static bbr_network_ctrl_update_t bbr_create_rate_upate(bbr_controller_t* bbr, in
 
 	/*·µ»ØpacerÐÅÏ¢*/
 	ret.pacer_config.at_time = at_time;
-	ret.pacer_config.time_window = rtt / 4;
+	ret.pacer_config.time_window = rtt > 20 ? (rtt / 4) : 5;
 	ret.pacer_config.data_window = (size_t)(ret.pacer_config.time_window * pacing_rate);
 	if (bbr_is_probing_for_more_bandwidth(bbr) == 1)
 		ret.pacer_config.pad_window = ret.pacer_config.data_window;
