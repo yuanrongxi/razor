@@ -204,7 +204,7 @@ void H264Encoder::config_param()
 	en_param_.rc.i_qp_max = 40;
 	en_param_.rc.i_qp_constant = 8;
 	en_param_.rc.i_bitrate = res.min_rate;
-	en_param_.rc.i_vbv_max_bitrate = (res.min_rate + res.max_rate) / 2;
+	en_param_.rc.i_vbv_max_bitrate = res.max_rate;
 	en_param_.i_bframe = 0;
 
 	 
@@ -279,11 +279,11 @@ void H264Encoder::try_change_resolution()
 
 bool H264Encoder::encode(uint8_t *in, int in_size, enum PixelFormat src_pix_fmt, uint8_t *out, int *out_size, int *frame_type, bool request_keyframe)
 {
+	bool ret = false;
 	if (!inited_)
-		return false;
+		return ret;
 
-	int ret;
-	static AVPicture pic = { 0 };
+	int rc;
 
 	try_change_resolution();
 
@@ -292,7 +292,7 @@ bool H264Encoder::encode(uint8_t *in, int in_size, enum PixelFormat src_pix_fmt,
 	//RGB -> YUV
 	if (src_pix_fmt == PIX_FMT_RGB24 || src_pix_fmt == PIX_FMT_BGR24){
 		int src_stride = src_width_ * 3;
-		ret = sws_scale(sws_context_, &in, &src_stride, 0, src_height_,
+		rc = sws_scale(sws_context_, &in, &src_stride, 0, src_height_,
 			en_picture_.img.plane, en_picture_.img.i_stride);
 	}
 
@@ -302,16 +302,13 @@ bool H264Encoder::encode(uint8_t *in, int in_size, enum PixelFormat src_pix_fmt,
 	int i_nal = 0;
 
 	/*指定编码输出关键帧*/
-	if (request_keyframe)
-		en_picture_.i_type = X264_TYPE_IDR;
-	else
-		en_picture_.i_type = X264_TYPE_AUTO;
+	en_picture_.i_type = request_keyframe ? X264_TYPE_IDR : X264_TYPE_AUTO;
 
 	//X.264 编码
-	ret = x264_encoder_encode(en_h_, &nal, &i_nal, &en_picture_, &pic_out_);
-	if (ret > 0){
-		*out_size = ret;
-		memcpy(out, nal[0].p_payload, ret);
+	rc = x264_encoder_encode(en_h_, &nal, &i_nal, &en_picture_, &pic_out_);
+	if (rc > 0){
+		*out_size = rc;
+		memcpy(out, nal[0].p_payload, rc);
 
 		/*如果是intra_refresh方式，将每一帧都设置成关键帧来适应sim transport的缓冲buffer*/
 		if (en_param_.b_intra_refresh == 1)
@@ -319,9 +316,9 @@ bool H264Encoder::encode(uint8_t *in, int in_size, enum PixelFormat src_pix_fmt,
 		else 
 			*frame_type = pic_out_.i_type;
 
-		rate_stat_update(&rate_stat_, ret, GET_SYS_MS());
-		return true;
+		rate_stat_update(&rate_stat_, rc, GET_SYS_MS());
+		ret = true;
 	}
 
-	return false;
+	return ret;
 }
