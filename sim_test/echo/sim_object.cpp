@@ -12,6 +12,16 @@
 #include <time.h>
 #include <assert.h>
 
+int frame_log(int level, const char* file, int line, const char *fmt, ...)
+{
+	va_list vl;
+	va_start(vl, fmt);
+	log_win_write(level, file, line, fmt, vl);
+	va_end(vl);
+
+	return 0;
+}
+
 static void notify_callback(void * event, int type, uint32_t val)
 {
 	SimFramework* frame = (SimFramework*)event;
