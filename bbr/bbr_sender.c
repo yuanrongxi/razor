@@ -62,7 +62,7 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 	double fill;
 	uint8_t loss;
 
-	uint32_t pacing_rate_kbps, target_rate_bps, pading_rate_kbps;
+	uint32_t pacing_rate_kbps, target_rate_bps, pading_rate_kbps, instant_rate_kbps;
 	int acked_bitrate;
 	if (s->info.congestion_window <= 0)
 		return;
@@ -77,34 +77,35 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 
 	target_rate_bps = (s->info.target_rate.target_rate * 8000);
 	acked_bitrate = bbr_feedback_get_birate(&s->feedback);
+	instant_rate_kbps = s->info.congestion_window / s->info.target_rate.rtt;
 
 	fill = 1.0 * outstanding / s->info.congestion_window;
 	/*如果拥塞窗口满了，进行带宽递减*/
-	if (fill > 1.5){
-		s->encoding_rate_ratio *= 0.95f;
-		s->encoding_rate_ratio = SU_MAX(s->encoding_rate_ratio, 0.75);
+	if (fill > 1.0){
+		s->encoding_rate_ratio *= 0.875f;
+		s->encoding_rate_ratio = SU_MAX(s->encoding_rate_ratio, 0.3);
 	}
-	else if (fill < 1.0){
-		s->encoding_rate_ratio = 1.05;
+	else if (fill < 0.5){
+		s->encoding_rate_ratio = 1.05f;
 	}
-	else
-		s->encoding_rate_ratio = 1.0f;
-
+	else{
+		s->encoding_rate_ratio *= 1.1;
+		s->encoding_rate_ratio = SU_MIN(s->encoding_rate_ratio, 1.05);
+	}
+		
 	target_rate_bps = target_rate_bps * s->encoding_rate_ratio;
-	bbr_pacer_set_pacing_rate(s->pacer, pacing_rate_kbps * 8);
+	bbr_pacer_set_pacing_rate(s->pacer, pacing_rate_kbps * 8 * s->encoding_rate_ratio);
 
 	if (s->info.target_rate.loss_rate_ratio > 0.1)
 		target_rate_bps = SU_MIN(acked_bitrate, target_rate_bps);
 	target_rate_bps = SU_MIN(s->max_bitrate, SU_MAX(target_rate_bps, s->min_bitrate));
 	loss = (uint8_t)(s->info.target_rate.loss_rate_ratio * 255 + 0.5f);
 
-	if (pading_rate_kbps > 0)
-		bbr_pacer_set_padding_rate(s->pacer, pading_rate_kbps);
-	else
-		bbr_pacer_set_padding_rate(s->pacer, target_rate_bps / 1000);
+	bbr_pacer_set_padding_rate(s->pacer, target_rate_bps / 1000);
 
-	razor_debug("target = %u kbps, acked_birate = %dkbps, pacing = %u kbps, loss = %u, congestion_window = %u, outstanding = %u, ratio = %2f\n\n", 
-		target_rate_bps / 8000, acked_bitrate / 8000, pacing_rate_kbps, loss, s->info.congestion_window, outstanding, s->encoding_rate_ratio);
+	razor_debug("target = %u kbps, acked_birate = %dkbps, pacing = %u kbps, instant = %u kbps, loss = %u, congestion_window = %u, outstanding = %u, ratio = %2f, rtt = %lld\n\n", 
+		target_rate_bps / 8000, acked_bitrate / 8000, pacing_rate_kbps, instant_rate_kbps, loss, 
+		s->info.congestion_window, outstanding, s->encoding_rate_ratio, s->info.target_rate.rtt);
 
 	/*如果数据发生变化，进行触发一个通信层通知*/
 	if (target_rate_bps != s->last_bitrate_bps || loss != s->last_fraction_loss){
@@ -149,7 +150,7 @@ void bbr_sender_send_packet(bbr_sender_t* s, uint16_t seq, size_t size)
 void bbr_sender_on_feedback(bbr_sender_t* s, uint8_t* feedback, int feedback_size)
 {
 	bbr_feedback_msg_t msg;
-	
+
 	if (feedback_size <= 0)
 		return;
 

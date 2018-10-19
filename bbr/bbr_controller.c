@@ -58,7 +58,7 @@ static inline void bbr_set_default_config(bbr_config_t* config)
 	config->min_congestion_window = kDefaultMinCongestionWindowPackets * kDefaultTCPMSS;
 
 	config->probe_rtt_congestion_window_gain = 0.75;
-	config->pacing_rate_as_target = false;
+	config->pacing_rate_as_target = true;
 
 	config->exit_startup_on_loss = true;
 	config->num_startup_rtts = 3;
@@ -180,15 +180,16 @@ static bbr_network_ctrl_update_t bbr_create_rate_upate(bbr_controller_t* bbr, in
 	if (bandwidth <= 0)
 		bandwidth = bbr->default_bandwidth;
 
-	rtt = bbr_get_min_rtt(bbr);
+	wnd_filter_print(&bbr->max_bandwidth);
+	rtt = /*bbr_get_min_rtt(bbr);*/bbr_smoothed_rtt(&bbr->rtt_stat);
 
 	/*确定pacing rate和target rate*/
 	pacing_rate = bbr_pacing_rate(bbr);
 	target_rate = bbr->config.pacing_rate_as_target ? pacing_rate : bandwidth;
 	if (bbr->mode == PROBE_RTT)
-		target_rate = (int32_t)(bandwidth * bbr->config.encoder_rate_gain_in_probe_rtt);
+		target_rate = (int32_t)(target_rate * bbr->config.encoder_rate_gain_in_probe_rtt);
 	else
-		target_rate = (int32_t)(bandwidth * bbr->config.encoder_rate_gain);
+		target_rate = (int32_t)(target_rate * bbr->config.encoder_rate_gain);
 
 	target_rate = SU_MIN(pacing_rate, target_rate);
 	if (bbr->constraints.at_time > 0){
@@ -732,13 +733,14 @@ static void bbr_calculate_pacing_rate(bbr_controller_t* bbr)
 		bbr->pacing_rate = (int32_t)(bbr->pacing_gain * wnd_filter_third_best(&bbr->max_bandwidth));
 
 	if (bbr->is_at_full_bandwidth){
-		bbr->pacing_rate = target_rate;
+		bbr->pacing_rate = (int32_t)(bbr->min_congestion_window / (bbr_smoothed_rtt(&bbr->rtt_stat)));
+		bbr->pacing_rate = SU_MAX(bbr->pacing_rate, target_rate);
 		return;
 	}
 
 	/*开始阶段，用初始化的拥塞窗口计算可以用的码率*/
 	if (bbr->pacing_rate == 0 && bbr_min_rtt(&bbr->rtt_stat) > 0){
-		bbr->pacing_rate = (int32_t)(bbr->initial_congestion_window / (bbr_min_rtt(&bbr->rtt_stat)*1000));
+		bbr->pacing_rate = (int32_t)(bbr->initial_congestion_window / (bbr_min_rtt(&bbr->rtt_stat)));
 		return;
 	}
 

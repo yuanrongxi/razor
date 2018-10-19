@@ -55,13 +55,12 @@ void bbr_pacer_set_bitrate_limits(bbr_pacer_t* pace, uint32_t min_bitrate)
 {
 	pace->min_sender_bitrate_kpbs = min_bitrate / 1000;
 	pace->pacing_bitrate_kpbs = SU_MAX(pace->estimated_bitrate / 1000, pace->min_sender_bitrate_kpbs) * pace->factor;
-	razor_info("set pacer min bitrate, bitrate = %ubps\n", min_bitrate);
+	/*razor_info("set pacer min bitrate, bitrate = %ubps\n", min_bitrate);*/
 }
 
 void bbr_pacer_set_pacing_rate(bbr_pacer_t* pace, uint32_t pacing_bitrate_kbps)
 {
 	pace->pacing_bitrate_kpbs = pacing_bitrate_kbps* pace->factor;
-	razor_debug("set pacer bitrate, bitrate = %ukbps\n", pacing_bitrate_kbps);
 	//set_target_rate_kbps(&pace->padding_budget, pace->pacing_bitrate_kpbs);
 } 
 

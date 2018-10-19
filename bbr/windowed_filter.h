@@ -38,6 +38,8 @@ int64_t				wnd_filter_best(windowed_filter_t* filter);
 int64_t				wnd_filter_second_best(windowed_filter_t* filter);
 int64_t				wnd_filter_third_best(windowed_filter_t* filter);
 
+void				wnd_filter_print(windowed_filter_t* filter);
+
 #endif
 
 

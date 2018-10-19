@@ -201,10 +201,10 @@ static bbr_bandwidth_sample_t sampler_on_packet_acked_inner(bbr_bandwidth_sample
 	/*¼ÆËãsend_rate*/
 	send_rate = 0x7fffffff;
 	if (point->send_time > point->last_acked_packet_sent_time){
-		//send_rate = (point->total_data_sent - point->total_data_sent_at_last_acked_packet) / ((int)(point->send_time - point->last_acked_packet_sent_time));
+		send_rate = (point->total_data_sent - point->total_data_sent_at_last_acked_packet) / ((int)(point->send_time - point->last_acked_packet_sent_time));
 	}
 
-	if (ack_time > point->last_acked_packet_ack_time + 5){
+	if (ack_time > point->last_acked_packet_ack_time + 2){
 		ack_rate = (sampler->total_data_acked - point->total_data_acked_at_the_last_acked_packet) / ((int)(ack_time - point->last_acked_packet_ack_time));
 
 		ret.bandwidth = SU_MIN(ack_rate, send_rate);
@@ -212,7 +212,7 @@ static bbr_bandwidth_sample_t sampler_on_packet_acked_inner(bbr_bandwidth_sample
 		ret.is_app_limited = point->is_app_limited;
 	}
 	else if (ack_time == point->last_acked_packet_ack_time){
-		ack_rate = (sampler->total_data_acked - point->total_data_acked_at_the_last_acked_packet) / 5;
+		ack_rate = (sampler->total_data_acked - point->total_data_acked_at_the_last_acked_packet) / 2;
 
 		ret.bandwidth = SU_MIN(ack_rate, send_rate);
 		ret.rtt = ack_time - point->send_time;
