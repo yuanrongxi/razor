@@ -26,12 +26,14 @@ typedef struct
 static encoder_resolution_t resolution_infos[RESOLUTIONS_NUMBER] = {
 	{ VIDEO_120P, PIC_WIDTH_160, PIC_HEIGHT_120, 64, 32 },
 	{ VIDEO_240P, PIC_WIDTH_320, PIC_HEIGHT_240, 180, 64 },
-	{ VIDEO_360P, PIC_WIDTH_480, PIC_HEIGHT_360, 480, 180 },
-	{ VIDEO_480P, PIC_WIDTH_640, PIC_HEIGHT_480, 1000, 480},
+	{ VIDEO_360P, PIC_WIDTH_480, PIC_HEIGHT_360, 320, 180 },
+	{ VIDEO_480P, PIC_WIDTH_640, PIC_HEIGHT_480, 1000, 320},
 	{ VIDEO_640P, PIC_WIDTH_960, PIC_HEIGHT_640, 1600, 1000 },
 	{ VIDEO_720P, PIC_WIDTH_1280, PIC_HEIGHT_720, 2400, 1600 },
 	{ VIDEO_1080P, PIC_WIDTH_1920, PIC_HEIGHT_1080, 4000, 2400 },
 };
+
+extern int frame_log(int level, const char* file, int line, const char *fmt, ...);
 
 H264Encoder::H264Encoder()
 {
@@ -45,6 +47,7 @@ H264Encoder::H264Encoder()
 	curr_resolution_ = VIDEO_240P;
 
 	inited_ = false;
+	frame_index_ = 0;
 
 	en_h_ = NULL;
 
@@ -94,7 +97,7 @@ bool H264Encoder::init(int frame_rate, int src_width, int src_height, int dst_wi
 
 	inited_ = true;
 
-	rate_stat_init(&rate_stat_, KEY_FRAME_SEC * 1000 * 2, 8000);
+	rate_stat_init(&rate_stat_, KEY_FRAME_SEC * 1000, 8000);
 	return true;
 }
 
@@ -135,6 +138,8 @@ bool H264Encoder::open_encoder()
 		PIX_FMT_BGR24, resolution_infos[curr_resolution_].codec_width, resolution_infos[curr_resolution_].codec_height,
 		PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 
+	frame_index_ = 0;
+
 	return true;
 }
 
@@ -148,6 +153,8 @@ void H264Encoder::close_encoder()
 		sws_freeContext(sws_context_);
 		sws_context_ = NULL;
 	}
+
+	frame_index_ = 0;
 }
 
 void H264Encoder::set_bitrate(uint32_t bitrate_kbps)
@@ -242,10 +249,12 @@ void H264Encoder::config_param()
 int H264Encoder::find_resolution(uint32_t birate_kpbs)
 {
 	int ret;
-	for (ret = VIDEO_640P; ret > VIDEO_120P; --ret){
-		if (resolution_infos[ret].max_rate > birate_kpbs && resolution_infos[ret].min_rate < birate_kpbs)
+	for (ret = VIDEO_480P; ret > VIDEO_120P; --ret){
+		if (resolution_infos[ret].max_rate >= birate_kpbs && resolution_infos[ret].min_rate <= birate_kpbs)
 			break;
 	}
+
+	frame_log(0, __FILE__, __LINE__, "resolution = %u, birate_kpbs = %u\n", ret, birate_kpbs);
 
 	return ret;
 }
@@ -253,27 +262,29 @@ int H264Encoder::find_resolution(uint32_t birate_kpbs)
 void H264Encoder::try_change_resolution()
 {
 	/*判断下一帧处在gop的位置, 如果处于后半段，我们可以尝试改变分辨率*/
-	if (en_param_.i_frame_total > frame_rate_ * KEY_FRAME_SEC * 2){
-		uint32_t frame_index = (en_param_.i_frame_total + 1) % (frame_rate_ * KEY_FRAME_SEC);
-		const encoder_resolution_t& res = resolution_infos[curr_resolution_];
-		if (res.min_rate > bitrate_kbps_ && curr_resolution_ > VIDEO_120P){
-			/*降低一层分辨率*/
-			uint32_t rate_stat_kps = rate_stat_rate(&rate_stat_, GET_SYS_MS()) / 1000;
-			if (rate_stat_kps < res.min_rate * 7 / 8) /*产生数据的带宽小于最小限制带宽，不做改动*/
-				return;
+	uint32_t frame_index = (frame_index_ + 1) % (frame_rate_ * KEY_FRAME_SEC);
+	const encoder_resolution_t& res = resolution_infos[curr_resolution_];
+	if (res.min_rate > bitrate_kbps_ && curr_resolution_ > VIDEO_120P){
+		/*降低一层分辨率*/
+		int32_t rate_stat_kps = rate_stat_rate(&rate_stat_, GET_SYS_MS()) / 1000;
+		if (rate_stat_kps < res.min_rate * 7 / 8) /*产生数据的带宽小于最小限制带宽，不做改动*/
+			return;
 
-			curr_resolution_ = find_resolution(bitrate_kbps_);
-			close_encoder();
-			open_encoder();
-			set_bitrate(bitrate_kbps_);
-		}
-		else if (frame_index >= (KEY_FRAME_SEC * frame_rate_ / 2) && res.max_rate < bitrate_kbps_ && curr_resolution_ + 1 <= max_resolution_){
-			/*升高一层分辨率*/
-			curr_resolution_ = find_resolution(bitrate_kbps_);
-			close_encoder();
-			open_encoder();
-			set_bitrate(bitrate_kbps_);
-		}
+		curr_resolution_ = find_resolution(bitrate_kbps_);
+		close_encoder();
+		open_encoder();
+		set_bitrate(bitrate_kbps_);
+
+		rate_stat_reset(&rate_stat_);
+	}
+	else if (frame_index >= (KEY_FRAME_SEC * frame_rate_ / 2) && res.max_rate < bitrate_kbps_ && curr_resolution_ + 1 <= max_resolution_){
+		/*升高一层分辨率*/
+		curr_resolution_ = find_resolution(bitrate_kbps_);
+		close_encoder();
+		open_encoder();
+		set_bitrate(bitrate_kbps_);
+
+		rate_stat_reset(&rate_stat_);
 	}
 }
 
@@ -288,6 +299,7 @@ bool H264Encoder::encode(uint8_t *in, int in_size, enum PixelFormat src_pix_fmt,
 	try_change_resolution();
 
 	en_param_.i_frame_total++;
+	frame_index_++;
 
 	//RGB -> YUV
 	if (src_pix_fmt == PIX_FMT_RGB24 || src_pix_fmt == PIX_FMT_BGR24){

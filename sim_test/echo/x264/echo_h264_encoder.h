@@ -66,6 +66,7 @@ private:
 
 	int				max_resolution_;		// 初始编码分辨率,用户指定的最大分辨率
 	int				curr_resolution_;		// 当前编码器所处的分辨率
+	int				frame_index_;
 
 	bool			inited_;
 
