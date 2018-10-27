@@ -11,6 +11,7 @@
 #pragma comment(lib, "avcodec.lib")
 #pragma comment(lib, "avutil.lib")
 #pragma comment(lib, "swscale.lib")
+#pragma comment(lib, "libx264.dll.a")
 
 #define KEY_FRAME_SEC 4
 
