@@ -46,7 +46,7 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction
 
 	sim_info("loss = %f, bitrate = %u, video_bitrate_kbps = %u\n", loss, bitrate, video_bitrate_kbps);
 	/*通知上层进行码率调整*/
-	s->change_bitrate_cb(s->event, video_bitrate_kbps);
+	s->change_bitrate_cb(s->event, video_bitrate_kbps, loss > 0 ? 1 : 0);
 
 	/*设置重发最大的码率*/
 	if (sender != NULL)

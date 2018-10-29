@@ -34,7 +34,7 @@ enum{
 
 typedef void(*sim_notify_fn)(void* event, int type, uint32_t val);
 typedef int(*sim_log_fn)(int level, const char* file, int line, const char* fmt, va_list vl);
-typedef void(*sim_change_bitrate_fn)(void* event, uint32_t bw);
+typedef void(*sim_change_bitrate_fn)(void* event, uint32_t bw, int lost);
 typedef void(*sim_state_fn)(void* event, const char* info);
 
 /*uid是本地用户ID， port是本地端口用于连接对方, event是用于上层接收回调事件通知的对象*/
