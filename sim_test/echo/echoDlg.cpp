@@ -7,7 +7,7 @@
 #include "echoDlg.h"
 #include "afxdialogex.h"
 
-#include "echo_h264_common.h"
+#include "codec_common.h"
 #include "utf8to.h"
 
 #include "sim_external.h"
@@ -71,6 +71,7 @@ CechoDlg::CechoDlg(CWnd* pParent /*=NULL*/)
 	, m_strRemoteRes(_T(""))
 	, m_strCC(_T(""))
 	, m_bPadding(TRUE)
+	, m_strResolution(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_viewing = FALSE;
@@ -93,7 +94,6 @@ void CechoDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIP, m_strIP);
 	DDX_Text(pDX, IDC_EDPORT, m_iPort);
 	DDV_MinMaxInt(pDX, m_iPort, 0, 65535);
-	DDX_Text(pDX, IDC_EDUSER, m_iUser);
 	DDX_Text(pDX, IDC_STATE, m_strState);
 	DDX_Control(pDX, IDC_BTNCONNECT, m_btnEcho);
 	DDX_Text(pDX, IDC_EDINFO, m_strInfo);
@@ -102,6 +102,8 @@ void CechoDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CBX_CC, m_cbxCC);
 	DDX_CBString(pDX, IDC_CBX_CC, m_strCC);
 	DDX_Check(pDX, IDC_CHKPAD, m_bPadding);
+	DDX_Control(pDX, IDC_CBXRES, m_cbxResolution);
+	DDX_CBString(pDX, IDC_CBXRES, m_strResolution);
 }
 
 BEGIN_MESSAGE_MAP(CechoDlg, CDialogEx)
@@ -168,6 +170,8 @@ BOOL CechoDlg::OnInitDialog()
 	srand((uint32_t)time(NULL));
 
 	::CoInitialize(NULL);
+
+	m_iUser = rand() % 10000 + 1000;
 
 	m_srcVideo.SetWindowPos(NULL, 0, 0, PIC_WIDTH_480, PIC_HEIGHT_360, SWP_NOMOVE);
 	m_dstVideo.SetWindowPos(NULL, 0, 0, PIC_WIDTH_480, PIC_HEIGHT_360, SWP_NOMOVE);
@@ -318,9 +322,45 @@ void CechoDlg::InitVideoDevices()
 	m_cbxCC.AddString(_T("GCC"));
 	m_cbxCC.AddString(_T("BBR"));
 	m_cbxCC.SetCurSel(0);
+
+	m_cbxResolution.AddString(_T("120P"));
+	m_cbxResolution.AddString(_T("240P"));
+	m_cbxResolution.AddString(_T("360P"));
+	m_cbxResolution.AddString(_T("480P"));
+	m_cbxResolution.AddString(_T("640P"));
+	m_cbxResolution.AddString(_T("720P"));
+	m_cbxResolution.AddString(_T("1080P"));
+
+	m_cbxResolution.SetCurSel(3);
 }
 
+int CechoDlg::GetVideoResolution()
+{
+	int ret = VIDEO_480P;
+	if (m_strResolution == _T("120P")){
+		ret = VIDEO_120P;
+	}
+	else if (m_strResolution == _T("240P")){
+		ret = VIDEO_240P;
+	}
+	else if (m_strResolution == _T("360P")){
+		ret = VIDEO_360P;
+	}
+	else if (m_strResolution == _T("480P")){
+		ret = VIDEO_480P;
+	}
+	else if (m_strResolution == _T("640P")){
+		ret = VIDEO_640P;
+	}
+	else if (m_strResolution == _T("720P")){
+		ret = VIDEO_720P;
+	}
+	else if (m_strResolution == _T("1080P")){
+		ret = VIDEO_1080P;
+	}
 
+	return ret;
+}
 
 void CechoDlg::OnBnClickedBtnview()
 {
@@ -334,13 +374,15 @@ void CechoDlg::OnBnClickedBtnview()
 		device = m_strDev.GetBuffer(m_strDev.GetLength());
 		m_viRecorder = new CFVideoRecorder(device);
 
+		int i = GetVideoResolution();
+
 		video_info_t info;
 		info.pix_format = RGB24;
 		info.rate = 24;
-		info.width = PIC_WIDTH_640;
-		info.height = PIC_HEIGHT_480;
-		info.codec_width = PIC_WIDTH_640;
-		info.codec_height = PIC_HEIGHT_480;
+		info.width = resolution_infos[i].codec_width;
+		info.height = resolution_infos[i].codec_height;
+		info.codec_width = resolution_infos[i].codec_width;
+		info.codec_height = resolution_infos[i].codec_height;
 		m_viRecorder->set_video_info(info);
 
 		RECT display_rect;
@@ -395,6 +437,9 @@ void CechoDlg::OnBnClickedBtnconnect()
 		else if (m_strCC == _T("GCC"))
 			transport_type = gcc_transport;
 
+		int i = GetVideoResolution();
+		m_frame->set_bitrate(MIN_VIDEO_BITARE, resolution_infos[i].start_rate * 1000, resolution_infos[i].max_rate * 1000);
+
 		if (m_frame->connect(transport_type, (m_bPadding ? 1 : 0), m_iUser, ip.c_str(), m_iPort) == 0){
 			m_btnView.EnableWindow(FALSE);
 			m_btnEcho.SetWindowText(_T("stop echo"));
@@ -430,13 +475,15 @@ LRESULT CechoDlg::OnConnectSucc(WPARAM wparam, LPARAM lparam)
 	device = m_strDev.GetBuffer(m_strDev.GetLength());
 	m_viRecorder = new CFVideoRecorder(device);
 
+	int i = GetVideoResolution();
+
 	video_info_t info;
 	info.pix_format = RGB24;
 	info.rate = 12;
-	info.width = PIC_WIDTH_640;
-	info.height = PIC_HEIGHT_480;
-	info.codec_width = PIC_WIDTH_640;
-	info.codec_height = PIC_HEIGHT_480;
+	info.width = resolution_infos[i].codec_width;
+	info.height = resolution_infos[i].codec_height;
+	info.codec_width = resolution_infos[i].codec_width;
+	info.codec_height = resolution_infos[i].codec_height;
 	m_viRecorder->set_video_info(info);
 
 	RECT display_rect;
@@ -559,9 +606,9 @@ LRESULT CechoDlg::OnChangeBitrate(WPARAM wparam, LPARAM lparam)
 	//进行发送端带宽调整
 	if (m_viRecorder != NULL){
 		uint32_t bitrate = (uint32_t)wparam;
-		bitrate = max(bitrate, MIN_VIDEO_BITARE / 1000);
-		bitrate = min(bitrate, MAX_VIDEO_BITRAE / 1000);
-		m_viRecorder->on_change_bitrate(bitrate);
+		int lost = (int)lparam;
+		bitrate = SU_MAX(bitrate, MIN_VIDEO_BITARE / 1000);
+		m_viRecorder->on_change_bitrate(bitrate, lost);
 	}
 	return 0L;
 }

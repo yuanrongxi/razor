@@ -29,11 +29,11 @@ static void notify_callback(void * event, int type, uint32_t val)
 		frame->on_notify(type, val);
 }
 
-static void notify_change_bitrate(void * event, uint32_t bitrate_kbps)
+static void notify_change_bitrate(void * event, uint32_t bitrate_kbps, int lost)
 {
 	SimFramework* frame = (SimFramework*)event;
 	if (frame != NULL)
-		frame->on_change_bitrate(bitrate_kbps);
+		frame->on_change_bitrate(bitrate_kbps, lost);
 }
 
 static void notify_state(void * event, const char* info)
@@ -91,6 +91,12 @@ void SimFramework::destroy()
 	close_win_log();
 
 	sim_destroy();
+}
+
+void SimFramework::set_bitrate(uint32_t conf_min_bitrate, uint32_t conf_start_bitrate, uint32_t conf_max_bitrate)
+{
+	if (state_ != eframe_idle)
+		sim_set_bitrates(conf_min_bitrate, conf_start_bitrate, conf_max_bitrate);
 }
 
 int SimFramework::connect(int transport_type, int padding, uint32_t user_id, const char* receiver_ip, uint16_t receiver_port)
@@ -208,10 +214,10 @@ void SimFramework::on_notify(int type, uint32_t val)
 	}
 }
 
-void SimFramework::on_change_bitrate(uint32_t bitrate_kbps)
+void SimFramework::on_change_bitrate(uint32_t bitrate_kbps, int lost)
 {
 	if (hwnd_ != NULL)
-		::PostMessage(hwnd_, WM_CHANGE_BITRATE, (WPARAM)bitrate_kbps, NULL);
+		::PostMessage(hwnd_, WM_CHANGE_BITRATE, (WPARAM)bitrate_kbps, (LPARAM)lost);
 }
 
 void SimFramework::on_state(const char* info)

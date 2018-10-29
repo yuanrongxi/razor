@@ -62,7 +62,7 @@ public:
 
 	int				read(void* data, uint32_t size, int& key_frame, uint8_t& payload_type);
 
-	void			on_change_bitrate(uint32_t bitrate_kbps);
+	void			on_change_bitrate(uint32_t bitrate_kbps, int lost);
 
 	void			enable_encode();
 	void			disable_encode();

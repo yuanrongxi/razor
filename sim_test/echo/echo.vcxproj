@@ -54,13 +54,13 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>./dshow;./dx;./baseclasses;./x264/include;./x264;../win_log;../../sim_transport;../../estimator;../../common;./ffmpeg/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./dshow;./dx;./baseclasses;./codec/x265;./codec/x265/include;./codec/x264;./codec/x264/include;./codec;../win_log;../../sim_transport;../../estimator;../../common;./ffmpeg/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>Wldap32.lib;WS2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>./x264/lib;./ffmpeg/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>./codec/x264/lib;./ffmpeg/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -106,6 +106,9 @@
   <ItemGroup>
     <ClInclude Include="..\win_log\audio_log.h" />
     <ClInclude Include="..\win_log\gettimeofday.h" />
+    <ClInclude Include="codec\codec_common.h" />
+    <ClInclude Include="codec\x264\echo_h264_decoder.h" />
+    <ClInclude Include="codec\x264\echo_h264_encoder.h" />
     <ClInclude Include="dib.h" />
     <ClInclude Include="dshow\DShowCameraPlay.h" />
     <ClInclude Include="dshow\DShowGrabberCB.h" />
@@ -125,15 +128,21 @@
     <ClInclude Include="video_device.h" />
     <ClInclude Include="video_view.h" />
     <ClInclude Include="win32_thread.h" />
-    <ClInclude Include="x264\echo_h264_common.h" />
-    <ClInclude Include="x264\echo_h264_decoder.h" />
-    <ClInclude Include="x264\echo_h264_encoder.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\win_log\audio_log.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\win_log\gettimeofday.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="codec\codec_common.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="codec\x264\echo_h264_decoder.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="codec\x264\echo_h264_encoder.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="dib.cpp">
@@ -173,12 +182,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="win32_thread.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="x264\echo_h264_decoder.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="x264\echo_h264_encoder.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>

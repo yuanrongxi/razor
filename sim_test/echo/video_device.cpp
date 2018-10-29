@@ -133,7 +133,7 @@ bool CFVideoRecorder::open()
 
 	/*³õÊ¼»¯±àÂëÆ÷*/
 	encoder_ = new H264Encoder();
-	if (!encoder_->init(info_.rate, info_.codec_width, info_.codec_height, info_.width, info_.height))
+	if (!encoder_->init(info_.rate, info_.width, info_.height, info_.codec_width, info_.codec_height))
 		return false;
 
 	char tmp[64] = { 0 };
@@ -277,12 +277,12 @@ int CFVideoRecorder::read(void* data, uint32_t data_size, int& key_frame, uint8_
 	return data_size;
 }
 
-void CFVideoRecorder::on_change_bitrate(uint32_t bitrate_kbps)
+void CFVideoRecorder::on_change_bitrate(uint32_t bitrate_kbps, int lost)
 {
 	AutoSpLock auto_lock(lock_);
 
 	if (encoder_ != NULL){
-		encoder_->set_bitrate(bitrate_kbps);
+		encoder_->set_bitrate(bitrate_kbps, lost);
 	}
 }
 

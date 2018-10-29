@@ -37,7 +37,7 @@ public:
 
 public:
 	void on_notify(int type, uint32_t val);
-	void on_change_bitrate(uint32_t bitrate_kbps);
+	void on_change_bitrate(uint32_t bitrate_kbps, int lost);
 	void on_state(const char* info);
 
 public:
@@ -46,6 +46,8 @@ public:
 
 	int connect(int transport_type, int padding, uint32_t user_id, const char* receiver_ip, uint16_t receiver_port);
 	void disconnect();
+
+	void set_bitrate(uint32_t conf_min_bitrate, uint32_t conf_start_bitrate, uint32_t conf_max_bitrate);
 
 	void start_recorder(CFVideoRecorder* rec);
 	void stop_recorder();

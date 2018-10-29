@@ -56,6 +56,8 @@ protected:
 	void InitVideoDevices();
 	void CloseAll();
 
+	int	GetVideoResolution();
+
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
@@ -84,4 +86,6 @@ public:
 	CString m_strCC;
 	BOOL m_bPadding;
 	afx_msg void OnBnClickedChkpad();
+	CComboBox m_cbxResolution;
+	CString m_strResolution;
 };

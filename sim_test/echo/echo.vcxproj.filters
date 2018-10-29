@@ -16,9 +16,6 @@
     <Filter Include="dshow">
       <UniqueIdentifier>{d28c1ddb-a25f-4f57-9e07-70c03efb6773}</UniqueIdentifier>
     </Filter>
-    <Filter Include="h264">
-      <UniqueIdentifier>{506fd5dd-1e67-473f-8b70-70b495730ad4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="device">
       <UniqueIdentifier>{2b4c0e00-4437-4f55-8609-c53e5dfccb9f}</UniqueIdentifier>
     </Filter>
@@ -27,6 +24,15 @@
     </Filter>
     <Filter Include="sim_framework">
       <UniqueIdentifier>{acac4858-6917-4894-814d-40d369598764}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="codec">
+      <UniqueIdentifier>{506fd5dd-1e67-473f-8b70-70b495730ad4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="codec\h264">
+      <UniqueIdentifier>{00f76e49-4d6d-4c35-89ba-0a5dcd9d60ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="codec\h265">
+      <UniqueIdentifier>{a8eae039-fa73-4203-b5b6-e0da0e780732}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -59,15 +65,6 @@
     </ClInclude>
     <ClInclude Include="dshow\DShowUtils.h">
       <Filter>dshow</Filter>
-    </ClInclude>
-    <ClInclude Include="x264\echo_h264_common.h">
-      <Filter>h264</Filter>
-    </ClInclude>
-    <ClInclude Include="x264\echo_h264_encoder.h">
-      <Filter>h264</Filter>
-    </ClInclude>
-    <ClInclude Include="x264\echo_h264_decoder.h">
-      <Filter>h264</Filter>
     </ClInclude>
     <ClInclude Include="win32_thread.h">
       <Filter>Header Files</Filter>
@@ -105,6 +102,15 @@
     <ClInclude Include="play_thread.h">
       <Filter>sim_framework</Filter>
     </ClInclude>
+    <ClInclude Include="codec\codec_common.h">
+      <Filter>codec</Filter>
+    </ClInclude>
+    <ClInclude Include="codec\x264\echo_h264_decoder.h">
+      <Filter>codec\h264</Filter>
+    </ClInclude>
+    <ClInclude Include="codec\x264\echo_h264_encoder.h">
+      <Filter>codec\h264</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="echo.cpp">
@@ -127,12 +133,6 @@
     </ClCompile>
     <ClCompile Include="dshow\DShowUtils.cpp">
       <Filter>dshow</Filter>
-    </ClCompile>
-    <ClCompile Include="x264\echo_h264_encoder.cpp">
-      <Filter>h264</Filter>
-    </ClCompile>
-    <ClCompile Include="x264\echo_h264_decoder.cpp">
-      <Filter>h264</Filter>
     </ClCompile>
     <ClCompile Include="win32_thread.cpp">
       <Filter>Source Files</Filter>
@@ -160,6 +160,15 @@
     </ClCompile>
     <ClCompile Include="play_thread.cpp">
       <Filter>sim_framework</Filter>
+    </ClCompile>
+    <ClCompile Include="codec\x264\echo_h264_decoder.cpp">
+      <Filter>codec\h264</Filter>
+    </ClCompile>
+    <ClCompile Include="codec\x264\echo_h264_encoder.cpp">
+      <Filter>codec\h264</Filter>
+    </ClCompile>
+    <ClCompile Include="codec\codec_common.cpp">
+      <Filter>codec</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
