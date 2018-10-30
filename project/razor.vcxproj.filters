@@ -99,12 +99,6 @@
     <ClCompile Include="..\estimator\rate_stat.c">
       <Filter>estimator</Filter>
     </ClCompile>
-    <ClCompile Include="..\estimator\feedback_adapter.h">
-      <Filter>estimator</Filter>
-    </ClCompile>
-    <ClCompile Include="..\estimator\feedback_adapter.c">
-      <Filter>estimator</Filter>
-    </ClCompile>
     <ClCompile Include="..\estimator\remote_bitrate_estimator.c">
       <Filter>estimator</Filter>
     </ClCompile>
@@ -149,6 +143,12 @@
     </ClCompile>
     <ClCompile Include="..\bbr\bbr_sender.c">
       <Filter>bbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\estimator\cc_feedback_adapter.h">
+      <Filter>estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\estimator\cc_feedback_adapter.c">
+      <Filter>estimator</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
