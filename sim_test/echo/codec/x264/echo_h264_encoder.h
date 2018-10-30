@@ -8,24 +8,7 @@
 #ifndef __h264_encoder_h__
 #define __h264_encoder_h__
 
-#ifdef _MSC_VER	/* MSVC */
-#pragma warning(disable: 4996)
-#define snprintf	_snprintf
-#define vsnprintf	_vsnprintf
-#define strcasecmp	stricmp
-#define strncasecmp strnicmp
-#endif
-
 #include <stdint.h>
-
-extern "C"
-{
-#include "x264.h"
-#include "libavcodec/avcodec.h"
-#include "libavutil/avutil.h"
-#include "libswscale/swscale.h"
-#include "libavutil/pixfmt.h"
-};
 
 #include "codec_common.h"
 

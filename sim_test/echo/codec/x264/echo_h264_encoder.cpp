@@ -20,7 +20,7 @@ H264Encoder::H264Encoder()
 	max_resolution_ = VIDEO_480P;
 	curr_resolution_ = VIDEO_480P;
 
-	bitrate_kbps_ = 800000;
+	bitrate_kbps_ = 800;
 
 	inited_ = false;
 	frame_index_ = 0;
@@ -40,6 +40,8 @@ H264Encoder::~H264Encoder()
 
 bool H264Encoder::open_encoder()
 {
+	payload_type_ = codec_h264;
+
 	x264_param_default(&en_param_);
 	if (x264_param_default_preset(&en_param_, "faster", "zerolatency") != 0)//medium,veryslow
 		return false;
