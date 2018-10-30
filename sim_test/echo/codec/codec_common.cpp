@@ -6,10 +6,11 @@
 */
 
 #include "codec_common.h"
+#include <assert.h>
 
-encoder_resolution_t resolution_infos[RESOLUTIONS_NUMBER] = {
+const encoder_resolution_t h264_resolution_infos[RESOLUTIONS_NUMBER] = {
 	{ VIDEO_120P, PIC_WIDTH_160, PIC_HEIGHT_120, 48, 32, 48 },
-	{ VIDEO_240P, PIC_WIDTH_320, PIC_HEIGHT_240, 140, 64, 120 },
+	{ VIDEO_240P, PIC_WIDTH_320, PIC_HEIGHT_240, 140, 80, 120 },
 	{ VIDEO_360P, PIC_WIDTH_480, PIC_HEIGHT_360, 280, 180, 240 },
 	{ VIDEO_480P, PIC_WIDTH_640, PIC_HEIGHT_480, 880, 360, 800 },
 	{ VIDEO_640P, PIC_WIDTH_960, PIC_HEIGHT_640, 1480, 1000, 1200 },
@@ -17,13 +18,48 @@ encoder_resolution_t resolution_infos[RESOLUTIONS_NUMBER] = {
 	{ VIDEO_1080P, PIC_WIDTH_1920, PIC_HEIGHT_1080, 4000, 2400, 2800 },
 };
 
+const encoder_resolution_t h265_resolution_infos[RESOLUTIONS_NUMBER] = {
+	{ VIDEO_120P, PIC_WIDTH_160, PIC_HEIGHT_120, 40, 24, 32 },
+	{ VIDEO_240P, PIC_WIDTH_320, PIC_HEIGHT_240, 120, 72, 96 },
+	{ VIDEO_360P, PIC_WIDTH_480, PIC_HEIGHT_360, 240, 144, 200 },
+	{ VIDEO_480P, PIC_WIDTH_640, PIC_HEIGHT_480, 720, 280, 640 },
+	{ VIDEO_640P, PIC_WIDTH_960, PIC_HEIGHT_640, 1000, 800, 900 },
+	{ VIDEO_720P, PIC_WIDTH_1280, PIC_HEIGHT_720, 1800, 1440, 1600 },
+	{ VIDEO_1080P, PIC_WIDTH_1920, PIC_HEIGHT_1080, 3200, 2000, 2200 },
+};
+
+encoder_resolution_t resolution_infos[RESOLUTIONS_NUMBER];
+
 /*load ffmpeg lib*/
 #pragma comment(lib, "avcodec.lib")
 #pragma comment(lib, "avutil.lib")
 #pragma comment(lib, "swscale.lib")
 #pragma comment(lib, "libx264.dll.a")
+#ifdef _DEBUG
+#pragma comment(lib, "x265-staticd.lib")
+#else
+#pragma comment(lib, "x265-static.lib")
+#endif
 
 extern int frame_log(int level, const char* file, int line, const char *fmt, ...);
+
+void setup_codec(int codec_id)
+{
+	switch (codec_id){
+		case codec_h264:
+			for (int i = 0; i < RESOLUTIONS_NUMBER; ++i)
+				resolution_infos[i] = h264_resolution_infos[i];
+			break;
+
+		case codec_h265:
+			for (int i = 0; i < RESOLUTIONS_NUMBER; ++i)
+				resolution_infos[i] = h265_resolution_infos[i];
+			break;
+
+		default:
+			assert(0);
+	}
+}
 
 /***********************************************************************************************************/
 VideoEncoder::VideoEncoder()
@@ -112,6 +148,11 @@ int VideoEncoder::get_codec_width() const
 int VideoEncoder::get_codec_height() const
 {
 	return resolution_infos[curr_resolution_].codec_height;
+}
+
+int VideoEncoder::get_payload_type() const
+{
+	return payload_type_;
 }
 
 int VideoEncoder::find_resolution(uint32_t birate_kpbs)

@@ -21,6 +21,7 @@
 extern "C"
 {
 #include "x264.h"
+#include "x265.h"
 #include "libavcodec/avcodec.h"
 #include "libavutil/avutil.h"
 #include "libswscale/swscale.h"
@@ -84,7 +85,6 @@ typedef struct
 }encoder_resolution_t;
 
 extern encoder_resolution_t resolution_infos[RESOLUTIONS_NUMBER];
-
 //codec payload type,这里并没有用ffmpeg的codec ID,主要是考虑ffmpeg的codec ID是32位整数表示，在网络协议传输过程不需要这么长的描述
 enum
 {
@@ -97,6 +97,8 @@ enum
 	codec_vp8,
 	codec_vp9
 };
+
+void setup_codec(int codec_id);
 
 class VideoEncoder
 {
@@ -112,6 +114,8 @@ public:
 	int get_codec_width() const;
 	int get_codec_height() const;
 
+	int get_payload_type() const;
+
 	virtual bool encode(uint8_t *in, int in_size, enum PixelFormat pix_fmt, uint8_t *out, int *out_size, int *frame_type, bool request_keyframe = false) = 0;
 	virtual int32_t get_bitrate() const = 0;
 
@@ -126,6 +130,7 @@ protected:
 protected:
 	bool			inited_;
 
+	int				payload_type_;
 	unsigned int	src_width_;				// Input Width
 	unsigned int	src_height_;			// Input Height
 
