@@ -40,7 +40,7 @@ sender_cc_t* sender_cc_create(void* trigger, bitrate_changed_func bitrate_cb, vo
 	cc->bwe = delay_bwe_create();
 	cc->pacer = pace_create(handler, send_cb, cc->accepted_queue_ms);
 
-	feedback_adapter_init(&cc->adapter);
+	cc_feedback_adapter_init(&cc->adapter);
 
 	delay_bwe_set_min_bitrate(cc->bwe, k_min_bitrate_bps);
 	pace_set_bitrate_limits(cc->pacer, k_min_bitrate_bps);
@@ -80,7 +80,7 @@ void sender_cc_destroy(sender_cc_t* cc)
 		cc->pacer = NULL;
 	}
 
-	feedback_adapter_destroy(&cc->adapter);
+	cc_feedback_adapter_destroy(&cc->adapter);
 
 	bin_stream_destroy(&cc->strm);
 
@@ -106,7 +106,7 @@ int sender_cc_add_pace_packet(sender_cc_t* cc, uint32_t packet_id, int retrans, 
 
 void sender_on_send_packet(sender_cc_t* cc, uint16_t seq, size_t size)
 {
-	feedback_add_packet(&cc->adapter, seq, size);
+	cc_feedback_add_packet(&cc->adapter, seq, size);
 
 	/*todo:进行RTT周期内是否发送码率溢出，可以不实现*/
 }
@@ -133,7 +133,7 @@ void sender_on_feedback(sender_cc_t* cc, uint8_t* feedback, int feedback_size)
 
 	/*处理proxy estimate的信息*/
 	if ((msg.flag & proxy_ts_msg) == proxy_ts_msg){
-		if (feedback_on_feedback(&cc->adapter, &msg) <= 0)
+		if (cc_feedback_on_feedback(&cc->adapter, &msg) <= 0)
 			return;
 
 		cur_alr = pace_get_limited_start_time(cc->pacer) > 0 ? 0 : -1;
