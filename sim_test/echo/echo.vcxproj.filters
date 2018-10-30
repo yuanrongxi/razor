@@ -111,6 +111,12 @@
     <ClInclude Include="codec\x264\echo_h264_encoder.h">
       <Filter>codec\h264</Filter>
     </ClInclude>
+    <ClInclude Include="codec\x265\echo_h265_encoder.h">
+      <Filter>codec\h265</Filter>
+    </ClInclude>
+    <ClInclude Include="codec\x265\echo_h265_decoder.h">
+      <Filter>codec\h265</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="echo.cpp">
@@ -169,6 +175,12 @@
     </ClCompile>
     <ClCompile Include="codec\codec_common.cpp">
       <Filter>codec</Filter>
+    </ClCompile>
+    <ClCompile Include="codec\x265\echo_h265_encoder.cpp">
+      <Filter>codec\h265</Filter>
+    </ClCompile>
+    <ClCompile Include="codec\x265\echo_h265_decoder.cpp">
+      <Filter>codec\h265</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

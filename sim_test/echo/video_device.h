@@ -12,8 +12,7 @@
 #include <string>
 #include <vector>
 
-#include "echo_h264_encoder.h"
-#include "echo_h264_decoder.h"
+#include "codec_common.h"
 
 #include "streams.h"
 #include "qedit.h"
@@ -32,12 +31,14 @@ enum PIX_FORMAT
 	RGB24 = 2
 };
 
+
 #define WM_ENCODER_RESOLUTION	WM_USER + 100
 #define WM_DECODER_RESOLUTION	WM_ENCODER_RESOLUTION + 1
 
 #define MAX_PIC_SIZE 1024000
 
 typedef struct{
+	int				codec;			/*codec类型*/
 	int				rate;			/*每秒的帧数*/
 	PIX_FORMAT		pix_format;		/*视频输入源格式*/
 	uint32_t		width;			/*输入视频的宽度*/
@@ -104,7 +105,7 @@ private:
 	SimpleLock			lock_;
 
 	/*增加编码器对象*/
-	H264Encoder*		encoder_;
+	VideoEncoder*		encoder_;
 	bool				encode_on_;
 	bool				intra_frame_;
 };
@@ -135,7 +136,8 @@ private:
 
 	uint8_t*	data_;
 	/*增加解码器对象*/
-	H264Decoder* decoder_;
+	int			codec_type_;
+	VideoDecoder* decoder_;
 
 	std::string	resolution_;
 };

@@ -57,6 +57,7 @@ protected:
 	void CloseAll();
 
 	int	GetVideoResolution();
+	int GetCodec();
 
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
@@ -88,4 +89,6 @@ public:
 	afx_msg void OnBnClickedChkpad();
 	CComboBox m_cbxResolution;
 	CString m_strResolution;
+	CComboBox m_cbxCodec;
+	CString m_strCodec;
 };

@@ -15,6 +15,12 @@
 #include <thread>
 #include <chrono>
 
+#include "echo_h264_encoder.h"
+#include "echo_h264_decoder.h"
+
+#include "echo_h265_encoder.h"
+#include "echo_h265_decoder.h"
+
 #include "gettimeofday.h"
 
 using namespace std;
@@ -34,6 +40,7 @@ CFVideoRecorder::CFVideoRecorder(const std::wstring& dev_name) : frame_intval_(1
 	info_.codec_width = 160;
 	info_.codec_height = 120;
 
+	info_.codec = codec_h264;
 	info_.rate = 8;
 	info_.pix_format = RGB24;
 
@@ -132,7 +139,11 @@ bool CFVideoRecorder::open()
 	video_data_ = new uint8_t[video_data_size_];
 
 	/*初始化编码器*/
-	encoder_ = new H264Encoder();
+	if (info_.codec == codec_h264)
+		encoder_ = new H264Encoder();
+	else
+		encoder_ = new H265Encoder();
+
 	if (!encoder_->init(info_.rate, info_.width, info_.height, info_.codec_width, info_.codec_height))
 		return false;
 
@@ -168,6 +179,7 @@ void CFVideoRecorder::close()
 	}
 	
 	if (encoder_){
+		encoder_->destroy();
 		delete encoder_;
 		encoder_ = NULL;
 	}
@@ -244,6 +256,7 @@ int CFVideoRecorder::read(void* data, uint32_t data_size, int& key_frame, uint8_
 	begin = steady_clock::now();
 	prev_timer_ = cur_timer;
 
+	data_size = 0;
 	if (capture_sample()){
 		// 如果local_hwnd_hdc_不为空，则需要在本地预览
 		if (hwnd_hdc_ != NULL){
@@ -257,7 +270,7 @@ int CFVideoRecorder::read(void* data, uint32_t data_size, int& key_frame, uint8_
 			if (encoder_->encode(video_data_, video_data_size_, (PixelFormat)info_.pix_format, (uint8_t*)data, &out_size, &key_frame, intra_frame_) && out_size > 0){
 				key_frame = ((key_frame == 0x0001 || key_frame == 0x0002) ? 1 : 0);
 				data_size = out_size;
-				payload_type = codec_h264;
+				payload_type = encoder_->get_payload_type();
 
 				char tmp[64] = { 0 };
 				info_.codec_width = encoder_->get_codec_width();
@@ -268,11 +281,8 @@ int CFVideoRecorder::read(void* data, uint32_t data_size, int& key_frame, uint8_
 				intra_frame_ = false;
 			}
 		}
-		else
-			data_size = 0;
 	}
-	else
-		data_size = 0;
+
 
 	return data_size;
 }
@@ -394,6 +404,7 @@ bool CFVideoPlayer::open()
 			return false;
 	}
 
+	codec_type_ = codec_h264;
 	decoder_ = new H264Decoder();
 	if (!decoder_->init()){
 		::ReleaseDC(hwnd_, hdc_);
@@ -435,7 +446,23 @@ int CFVideoPlayer::write(const void* data, uint32_t size, uint8_t payload_type)
 
 	int32_t pic_type;
 
-	if (size > 0 && payload_type == codec_h264){
+	if (size > 0){
+
+		if (payload_type != codec_type_){
+			decoder_->destroy();
+			delete decoder_;
+
+			codec_type_ = payload_type;
+			if (payload_type == codec_h264){
+				decoder_ = new H264Decoder();
+			}
+			else{
+				decoder_ = new H265Decoder();
+			}
+
+			decoder_->init();
+		}
+
 		/*先解码，在显示*/
 		if(decoder_ != NULL && !decoder_->decode((uint8_t *)data, size, &data_, width, height, pic_type))
 			return 0;

@@ -72,6 +72,7 @@ CechoDlg::CechoDlg(CWnd* pParent /*=NULL*/)
 	, m_strCC(_T(""))
 	, m_bPadding(TRUE)
 	, m_strResolution(_T(""))
+	, m_strCodec(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_viewing = FALSE;
@@ -104,6 +105,8 @@ void CechoDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_CHKPAD, m_bPadding);
 	DDX_Control(pDX, IDC_CBXRES, m_cbxResolution);
 	DDX_CBString(pDX, IDC_CBXRES, m_strResolution);
+	DDX_Control(pDX, IDC_CBXCODEC, m_cbxCodec);
+	DDX_CBString(pDX, IDC_CBXCODEC, m_strCodec);
 }
 
 BEGIN_MESSAGE_MAP(CechoDlg, CDialogEx)
@@ -170,6 +173,9 @@ BOOL CechoDlg::OnInitDialog()
 	srand((uint32_t)time(NULL));
 
 	::CoInitialize(NULL);
+
+	//初始化编码器参数
+	setup_codec(codec_h264);
 
 	m_iUser = rand() % 10000 + 1000;
 
@@ -332,6 +338,10 @@ void CechoDlg::InitVideoDevices()
 	m_cbxResolution.AddString(_T("1080P"));
 
 	m_cbxResolution.SetCurSel(3);
+
+	m_cbxCodec.AddString(_T("H.264"));
+	m_cbxCodec.AddString(_T("H.265"));
+	m_cbxCodec.SetCurSel(0);
 }
 
 int CechoDlg::GetVideoResolution()
@@ -362,6 +372,17 @@ int CechoDlg::GetVideoResolution()
 	return ret;
 }
 
+int CechoDlg::GetCodec()
+{
+	int ret = codec_h264;
+	if (m_strCodec == _T("H.264"))
+		ret = codec_h264;
+	else if (m_strCodec == _T("H.265"))
+		ret = codec_h265;
+
+	return ret;
+}
+
 void CechoDlg::OnBnClickedBtnview()
 {
 	UpdateData(TRUE);
@@ -379,6 +400,7 @@ void CechoDlg::OnBnClickedBtnview()
 		video_info_t info;
 		info.pix_format = RGB24;
 		info.rate = 24;
+		info.codec = GetCodec();
 		info.width = resolution_infos[i].codec_width;
 		info.height = resolution_infos[i].codec_height;
 		info.codec_width = resolution_infos[i].codec_width;
@@ -432,6 +454,8 @@ void CechoDlg::OnBnClickedBtnconnect()
 		wip = m_strIP.GetBuffer(m_strIP.GetLength());
 		std::string ip = helper::app2asci(wip);
 
+		setup_codec(GetCodec());
+
 		if (m_strCC == _T("BBR"))
 			transport_type = bbr_transport;
 		else if (m_strCC == _T("GCC"))
@@ -480,6 +504,7 @@ LRESULT CechoDlg::OnConnectSucc(WPARAM wparam, LPARAM lparam)
 	video_info_t info;
 	info.pix_format = RGB24;
 	info.rate = 12;
+	info.codec = GetCodec();
 	info.width = resolution_infos[i].codec_width;
 	info.height = resolution_infos[i].codec_height;
 	info.codec_width = resolution_infos[i].codec_width;
