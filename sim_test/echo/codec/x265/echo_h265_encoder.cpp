@@ -149,9 +149,9 @@ void H265Encoder::config_param()
 
 	en_param_->logLevel = X265_LOG_NONE;
 
-	en_param_->rc.rfConstantMin = 5;
-	en_param_->rc.rfConstantMax = 36;
-	en_param_->rc.rfConstant = 28;
+	en_param_->rc.qpMin = 5;
+	en_param_->rc.qpMax = 36;
+	en_param_->rc.rfConstant = 25;
 	en_param_->rc.bitrate = res.min_rate;
 	en_param_->rc.vbvMaxBitrate = res.max_rate;
 	en_param_->keyframeMin = frame_rate_ * KEY_FRAME_SEC;
