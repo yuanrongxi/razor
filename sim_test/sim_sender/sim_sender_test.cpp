@@ -83,7 +83,7 @@ static void notify_callback(void* event, int type, uint32_t val)
 	su_mutex_unlock(main_mutex);
 }
 
-static void notify_change_bitrate(void* event, uint32_t bitrate_kbps)
+static void notify_change_bitrate(void* event, uint32_t bitrate_kbps, int lost)
 {
 	thread_msg_t msg;
 	msg.msg_id = el_change_bitrate;
@@ -224,8 +224,12 @@ static void main_loop_event()
 			case el_change_bitrate:
 				if (msg.val <= MAX_SEND_BITRATE / 1000){
 					sender.bitrate_kbps = msg.val;
-					printf("set bytes rate = %ukb/s\n", sender.bitrate_kbps / 8);
 				}
+				else{
+					sender.bitrate_kbps = MAX_SEND_BITRATE / 1000;
+				}
+
+				printf("set bytes rate = %ukb/s\n", sender.bitrate_kbps / 8);
 				break;
 			}
 		}
@@ -266,7 +270,7 @@ int main(int argc, const char* argv[])
 	sim_init(16000, NULL, log_win_write, notify_callback, notify_change_bitrate, notify_state);
 	sim_set_bitrates(MIN_SEND_BITRATE, START_SEND_BITRATE, MAX_SEND_BITRATE * 5/4);
 
-	if (sim_connect(1000, "10.224.0.104", 16001, gcc_transport) != 0){
+	if (sim_connect(1000, "192.168.10.140", 16001, gcc_transport, 0) != 0){
 		printf("sim connect failed!\n");
 		goto err;
 	}
