@@ -5,8 +5,8 @@
 * See the file LICENSE for redistribution information.
 */
 
-#ifndef __feedback_adapter_h_
-#define __feedback_adapter_h_
+#ifndef __cc_feedback_adapter_h_
+#define __cc_feedback_adapter_h_
 
 #include "sender_history.h"
 

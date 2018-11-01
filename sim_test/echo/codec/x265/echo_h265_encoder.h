@@ -1,3 +1,10 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
+
 #ifndef __echo_h265_encoder_h_
 #define __echo_h265_encoder_h_
 

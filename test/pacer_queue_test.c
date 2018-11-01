@@ -59,26 +59,25 @@ static void test_pacer_queue_sent()
 	}
 
 	/*确认发送中间的两个报文*/
-	pacer_queue_sent(&que, 1);
-	pacer_queue_sent(&que, 2);
+	pacer_queue_sent_by_id(&que, 1);
+	pacer_queue_sent_by_id(&que, 2);
 	EXPECT_EQ(oldest_ts, pacer_queue_oldest(&que));
 	EXPECT_EQ((k_packet_num - 2) * k_packet_size, pacer_queue_bytes(&que));
 	EXPECT_EQ(48, pacer_queue_target_bitrate_kbps(&que, now_ts));
 	assert(pacer_queue_empty(&que) != 0);
 
 	/*确认发送了第一个包,整个队列向前移动，所需的带宽回到初始发包的速度*/
-	pacer_queue_sent(&que, 0);
+	pacer_queue_sent_by_id(&que, 0);
 
 	EXPECT_EQ(oldest_ts + 300, pacer_queue_oldest(&que));
 	EXPECT_EQ((k_packet_num - 3) * k_packet_size, pacer_queue_bytes(&que));
-	EXPECT_EQ(80, pacer_queue_target_bitrate_kbps(&que, now_ts));
+	EXPECT_EQ(320, pacer_queue_target_bitrate_kbps(&que, now_ts));
 	assert(pacer_queue_empty(&que) != 0);
 
 	/*确认发送了最后两个包，队列为空*/
-	pacer_queue_sent(&que, 3);
-	pacer_queue_sent(&que, 4);
+	pacer_queue_sent_by_id(&que, 3);
+	pacer_queue_sent_by_id(&que, 4);
 
-	EXPECT_EQ(-1, pacer_queue_oldest(&que));
 	EXPECT_EQ(0, pacer_queue_bytes(&que));
 	EXPECT_EQ(0, pacer_queue_target_bitrate_kbps(&que, now_ts));
 	assert(pacer_queue_empty(&que) == 0);
@@ -113,7 +112,7 @@ void test_pacer_queue_front()
 		p = pacer_queue_front(&que);
 		EXPECT_EQ(i, p->seq);
 
-		pacer_queue_sent(&que, i);
+		pacer_queue_sent_by_id(&que, i);
 	}
 
 	assert(pacer_queue_empty(&que) == 0);
@@ -124,7 +123,7 @@ void test_pacer_queue_front()
 static void test_while()
 {
 	pacer_queue_t que;
-	packet_event_t packet, *p;
+	packet_event_t packet;
 	int i, num, pos;
 	int64_t now_ts, oldest_ts;
 
@@ -149,7 +148,7 @@ static void test_while()
 
 		pos = rand() % k_packet_num;
 		for (i = 0; i < k_packet_num; i++){
-			pacer_queue_sent(&que, pos);
+			pacer_queue_sent_by_id(&que, pos);
 			pos++;
 			if (pos >= k_packet_num)
 				pos = 0;

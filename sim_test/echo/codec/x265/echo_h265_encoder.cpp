@@ -1,3 +1,10 @@
+/*-
+* Copyright (c) 2017-2018 wenba, Inc.
+*	All rights reserved.
+*
+* See the file LICENSE for redistribution information.
+*/
+
 #include "echo_h265_encoder.h"
 
 H265Encoder::H265Encoder()

@@ -8,7 +8,7 @@ static int total_size = 0;
 static int send_total_size = 0;
 static int64_t g_update_ts;
 
-static void send_test(void* handler, uint32_t seq, int retrans, size_t size)
+static void send_test(void* handler, uint32_t seq, int retrans, size_t size, int padding)
 {
 	int64_t now_ts = GET_SYS_MS();
 	int out_bitrate, in_bitrate;

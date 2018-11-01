@@ -121,6 +121,17 @@ void pacer_queue_final(pacer_queue_t* que)
 	}
 }
 
+void pacer_queue_sent_by_id(pacer_queue_t* que, uint32_t id)
+{
+	skiplist_iter_t* iter;
+	skiplist_item_t key;
+
+	key.u32 = id;
+	iter = skiplist_search(que->cache, key);
+	if (iter != NULL)
+		pacer_queue_sent(que, iter->val.ptr);
+}
+
 /*删除第一个单元*/
 void pacer_queue_sent(pacer_queue_t* que, packet_event_t* ev)
 {
@@ -160,7 +171,7 @@ uint32_t pacer_queue_target_bitrate_kbps(pacer_queue_t* que, int64_t now_ts)
 	if (que->oldest_ts != -1 && now_ts > que->oldest_ts){
 		space = (uint32_t)(now_ts - que->oldest_ts);
 		if (space >= que->max_que_ms)
-			space = 1;
+			space = 500;
 		else
 			space = que->max_que_ms - space;
 	}

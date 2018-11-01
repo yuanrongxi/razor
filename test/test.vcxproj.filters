@@ -69,9 +69,6 @@
     <ClCompile Include="windowed_filter_test.c">
       <Filter>unit</Filter>
     </ClCompile>
-    <ClCompile Include="bbr_transfer_tracker_test.c">
-      <Filter>unit</Filter>
-    </ClCompile>
     <ClCompile Include="bbr_bandwidth_sampler_test.c">
       <Filter>unit</Filter>
     </ClCompile>

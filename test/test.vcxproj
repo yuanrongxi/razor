@@ -84,7 +84,6 @@
     <ClCompile Include="bbr_bandwidth_sampler_test.c" />
     <ClCompile Include="bbr_controller_test.c" />
     <ClCompile Include="bbr_receiver_test.c" />
-    <ClCompile Include="bbr_transfer_tracker_test.c" />
     <ClCompile Include="common_test.c" />
     <ClCompile Include="delay_base_bwe_test.c" />
     <ClCompile Include="interval_budget.c" />
