@@ -59,7 +59,7 @@ static void notify_callback(void* event, int type, uint32_t val)
 	su_mutex_unlock(main_mutex);
 }
 
-static void notify_change_bitrate(void* event, uint32_t bitrate_kbps)
+static void notify_change_bitrate(void* event, uint32_t bitrate_kbps, int lost)
 {
 }
 
