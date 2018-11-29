@@ -176,6 +176,7 @@ static bbr_network_ctrl_update_t bbr_create_rate_upate(bbr_controller_t* bbr, in
 	if (at_time == -1)
 		return ret;
 
+	wnd_filter_print(&bbr->max_bandwidth);
 	bandwidth = bbr_bandwidth_estimate(bbr);
 	if (bandwidth <= 0)
 		bandwidth = bbr->default_bandwidth;
@@ -732,7 +733,7 @@ static void bbr_calculate_pacing_rate(bbr_controller_t* bbr)
 
 	if (bbr->is_at_full_bandwidth){
 		bbr->pacing_rate = (int32_t)(bbr->min_congestion_window / (bbr_smoothed_rtt(&bbr->rtt_stat)));
-		bbr->pacing_rate = SU_MAX(bbr->pacing_rate, target_rate);
+		bbr->pacing_rate = SU_MIN(bbr->pacing_rate, target_rate);
 		return;
 	}
 
