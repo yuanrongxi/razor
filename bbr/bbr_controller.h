@@ -163,7 +163,7 @@ bbr_network_ctrl_update_t			bbr_on_newwork_router_change(bbr_controller_t* bbr);
 bbr_network_ctrl_update_t			bbr_on_heartbeat(bbr_controller_t* bbr, int64_t now_ts);
 bbr_network_ctrl_update_t			bbr_on_send_packet(bbr_controller_t* bbr, bbr_packet_info_t* packet);
 bbr_network_ctrl_update_t			bbr_on_target_rate_constraints(bbr_controller_t* bbr, bbr_target_rate_constraint_t* target);
-bbr_network_ctrl_update_t			bbr_on_feedback(bbr_controller_t* bbr, bbr_feedback_t* feedback);
+bbr_network_ctrl_update_t			bbr_on_feedback(bbr_controller_t* bbr, bbr_feedback_t* feedback, uint32_t bandwidth);
 
 void								bbr_on_remote_bitrate_report(bbr_controller_t* bbr, bbr_remote_bitrate_report_t* report);
 void								bbr_on_loss_report(bbr_controller_t* bbr, bbr_loss_report_t* report);

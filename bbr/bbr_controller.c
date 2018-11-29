@@ -27,7 +27,7 @@ static int32_t bbr_bandwidth_estimate(bbr_controller_t* bbr);
 static int bbr_is_probing_for_more_bandwidth(bbr_controller_t* bbr);
 
 static int bbr_update_round_trip_counter(bbr_controller_t* bbr, int64_t last_acked_packet);
-static int bbr_update_bandwidth_and_min_rtt(bbr_controller_t* bbr, int64_t now_ts, bbr_packet_info_t packets[], int size);
+static int bbr_update_bandwidth_and_min_rtt(bbr_controller_t* bbr, int64_t now_ts, bbr_packet_info_t packets[], int size, uint32_t bitrate);
 static void bbr_discard_lost_packets(bbr_controller_t* bbr, bbr_packet_info_t packets[], int size);
 
 static void bbr_update_gain_cycle_phase(bbr_controller_t* bbr, int64_t now_ts, size_t prior_in_flight, int losses);
@@ -180,8 +180,7 @@ static bbr_network_ctrl_update_t bbr_create_rate_upate(bbr_controller_t* bbr, in
 	if (bandwidth <= 0)
 		bandwidth = bbr->default_bandwidth;
 
-	wnd_filter_print(&bbr->max_bandwidth);
-	rtt = /*bbr_get_min_rtt(bbr);*/bbr_smoothed_rtt(&bbr->rtt_stat);
+	rtt = bbr_smoothed_rtt(&bbr->rtt_stat);
 
 	/*确定pacing rate和target rate*/
 	pacing_rate = bbr_pacing_rate(bbr);
@@ -360,7 +359,7 @@ static int32_t bbr_get_congestion_window(bbr_controller_t* bbr)
 	return bbr->congestion_window;
 }
 
-bbr_network_ctrl_update_t bbr_on_feedback(bbr_controller_t* bbr, bbr_feedback_t* feedback)
+bbr_network_ctrl_update_t bbr_on_feedback(bbr_controller_t* bbr, bbr_feedback_t* feedback, uint32_t bandwidth)
 {
 	int64_t	feedback_recv_time, last_acked_packet;
 	int loss_num = 0, acked_num = 0, i;
@@ -391,7 +390,7 @@ bbr_network_ctrl_update_t bbr_on_feedback(bbr_controller_t* bbr, bbr_feedback_t*
 	if (acked_num > 0){
 		last_acked_packet = acked_packets[acked_num - 1].seq;
 		is_round_start = bbr_update_round_trip_counter(bbr, last_acked_packet);
-		min_rtt_expired = bbr_update_bandwidth_and_min_rtt(bbr, feedback_recv_time, acked_packets, acked_num);
+		min_rtt_expired = bbr_update_bandwidth_and_min_rtt(bbr, feedback_recv_time, acked_packets, acked_num, bandwidth);
 
 		bbr_update_recovery_state(bbr, last_acked_packet, loss_num > 0 ? true : false, is_round_start);
 
@@ -498,7 +497,7 @@ static int bbr_should_extend_min_rtt_expiry(bbr_controller_t* bbr)
 	return false;
 }
 
-static int bbr_update_bandwidth_and_min_rtt(bbr_controller_t* bbr, int64_t now_ts, bbr_packet_info_t packets[], int size)
+static int bbr_update_bandwidth_and_min_rtt(bbr_controller_t* bbr, int64_t now_ts, bbr_packet_info_t packets[], int size, uint32_t bandwidth)
 {
 	int i, min_rtt_expired;
 	int64_t sample_rtt = -1;
@@ -515,16 +514,15 @@ static int bbr_update_bandwidth_and_min_rtt(bbr_controller_t* bbr, int64_t now_t
 			else
 				sample_rtt = SU_MIN(sample_rtt, sample.rtt);
 		}
-
-		/*进行带宽统计和滤波*/
-		if (!sample.is_app_limited || sample.bandwidth > bbr_bandwidth_estimate(bbr)){
-			wnd_filter_update(&bbr->max_bandwidth, sample.bandwidth, bbr->round_trip_count);
-			/*razor_debug("packet_size = %d, sample.bandwidth = %u\n", packets[i].size, sample.bandwidth);*/
-		}
 	}
 
 	if (sample_rtt == -1)
 		return false;
+
+	/*进行带宽统计和滤波*/
+	if (!sample.is_app_limited || sample.bandwidth > bbr_bandwidth_estimate(bbr)){
+		wnd_filter_update(&bbr->max_bandwidth, /*sample.bandwidth*/bandwidth <= bbr->constraints.min_rate ? sample.bandwidth : bandwidth, bbr->round_trip_count);
+	}
 
 	bbr->last_rtt = sample_rtt;
 	if (bbr->min_rtt_since_last_probe_rtt == -1)
