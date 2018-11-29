@@ -43,7 +43,7 @@ void wnd_filter_reset(windowed_filter_t* filter, int64_t new_sample, int64_t new
 
 void wnd_filter_print(windowed_filter_t* filter)
 {
-	razor_debug("sample[0] = %llu, sample[1] = %llu, sample[2] = %llu\n", filter->estimates[0].sample, filter->estimates[1].sample, filter->estimates[2].sample);
+	/*razor_debug("sample[0] = %llu, sample[1] = %llu, sample[2] = %llu\n", filter->estimates[0].sample, filter->estimates[1].sample, filter->estimates[2].sample);*/
 }
 
 void wnd_filter_set_window_size(windowed_filter_t* filter, int64_t wnd_size)
