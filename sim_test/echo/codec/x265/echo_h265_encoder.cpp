@@ -129,14 +129,12 @@ void H265Encoder::reconfig_encoder(uint32_t bitrate_kbps)
 
 	en_param_->rc.vbvMaxBitrate = bitrate_kbps;
 	en_param_->rc.bitrate = (bitrate_kbps + res.min_rate) / 2;
-	if (bitrate_kbps != en_param_->rc.vbvMaxBitrate){
-		if (en_param_->rc.bitrate < res.min_rate)
-			bitrate_kbps = res.min_rate;
+	if (en_param_->rc.bitrate < res.min_rate)
+		bitrate_kbps = res.min_rate;
 
-		/*从新配置x.265的码率,及时生效*/
-		if (en_h_ != NULL)
-			x265_encoder_reconfig(en_h_, en_param_);
-	}
+	/*从新配置x.265的码率,及时生效*/
+	if (en_h_ != NULL)
+		x265_encoder_reconfig(en_h_, en_param_);
 }
 
 void H265Encoder::config_param()
@@ -157,8 +155,8 @@ void H265Encoder::config_param()
 	en_param_->logLevel = X265_LOG_NONE;
 
 	en_param_->rc.qpMin = 5;
-	en_param_->rc.qpMax = 36;
-	en_param_->rc.rfConstant = 25;
+	en_param_->rc.qpMax = 40;
+	en_param_->rc.rfConstant = 28;
 	en_param_->rc.bitrate = res.min_rate;
 	en_param_->rc.vbvMaxBitrate = res.max_rate;
 	en_param_->keyframeMin = frame_rate_ * KEY_FRAME_SEC;

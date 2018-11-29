@@ -88,14 +88,12 @@ void H264Encoder::reconfig_encoder(uint32_t bitrate_kbps)
 
 	en_param_.rc.i_vbv_max_bitrate = bitrate_kbps;
 	en_param_.rc.i_bitrate = (bitrate_kbps + resolution_infos[curr_resolution_].min_rate) / 2;
-	if (bitrate_kbps != en_param_.rc.i_vbv_max_bitrate){
-		if (en_param_.rc.i_bitrate < resolution_infos[curr_resolution_].min_rate)
-			bitrate_kbps = resolution_infos[curr_resolution_].min_rate;
+	if (en_param_.rc.i_bitrate < resolution_infos[curr_resolution_].min_rate)
+		bitrate_kbps = resolution_infos[curr_resolution_].min_rate;
 
 		/*从新配置x.264的码率,及时生效*/
-		if (en_h_ != NULL)
-			x264_encoder_reconfig(en_h_, &en_param_);
-	}
+	if (en_h_ != NULL)
+		x264_encoder_reconfig(en_h_, &en_param_);
 }
 
 int H264Encoder::get_bitrate() const
@@ -129,7 +127,7 @@ void H264Encoder::config_param()
 
 	en_param_.rc.i_qp_min = 0;
 	en_param_.rc.i_qp_max = 40;
-	en_param_.rc.i_qp_constant = 8;
+	en_param_.rc.i_qp_constant = 28;
 	en_param_.rc.i_bitrate = (res.min_rate + res.max_rate) / 2;
 	en_param_.rc.i_vbv_max_bitrate = res.max_rate;
 	en_param_.i_bframe = 0;
