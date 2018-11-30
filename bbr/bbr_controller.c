@@ -522,7 +522,7 @@ static int bbr_update_bandwidth_and_min_rtt(bbr_controller_t* bbr, int64_t now_t
 
 	/*进行带宽统计和滤波*/
 	if (!sample.is_app_limited || sample.bandwidth > bbr_bandwidth_estimate(bbr)){
-		wnd_filter_update(&bbr->max_bandwidth, /*sample.bandwidth*/bandwidth <= bbr->constraints.min_rate ? sample.bandwidth : bandwidth, bbr->round_trip_count);
+		wnd_filter_update(&bbr->max_bandwidth, sample.bandwidth, bbr->round_trip_count); /*bandwidth <= bbr->constraints.min_rate ? sample.bandwidth : bandwidth*/
 	}
 
 	bbr->last_rtt = sample_rtt;
