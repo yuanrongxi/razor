@@ -15,7 +15,7 @@ void cc_feedback_adapter_init(feedback_adapter_t* adapter)
 	int i;
 	for (i = 0; i < FEEDBACK_RTT_WIN_SIZE; ++i){
 		adapter->rtts[i] = -1;
-	}
+	} 
 	 
 	adapter->min_feedback_rtt = 10;
 	adapter->num = 0;

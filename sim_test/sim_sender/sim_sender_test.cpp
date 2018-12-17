@@ -101,7 +101,7 @@ static void notify_state(void* event, const char* info)
 	strcpy(g_info, info);
 }
 
-#define MAX_SEND_BITRATE (300 * 8 * 1000)
+#define MAX_SEND_BITRATE (3000 * 8 * 1000)
 #define MIN_SEND_BITRATE (20 * 8 * 1000)
 #define START_SEND_BITRATE (140 * 8 * 1000)
 
