@@ -378,6 +378,7 @@ static uint32_t real_video_cache_delay(sim_session_t* s, sim_frame_cache_t* c)
 /*********************************************视频接收端处理*************************************************/
 typedef struct
 {
+	int64_t				loss_ts;
 	int64_t				ts;					/*丢包请求时刻，一般要过一个周期才进行重新请求，这个周期一般是RTT的倍数关系*/
 	int					count;				/*丢包请求时刻*/
 }sim_loss_t;
@@ -531,6 +532,7 @@ static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32
 			if (iter == NULL){
 				sim_loss_t* l = calloc(1, sizeof(sim_loss_t));
 				l->ts = now_ts - space;						/*设置下一个请求重传的时刻*/
+				l->loss_ts = now_ts;
 				l->count = 0;
 				val.ptr = l;
 
@@ -607,8 +609,8 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 			if (iter->key.u32 <= r->base_seq)
 				continue;
 
-			space_factor = (SU_MIN(1.3, 1 + (l->count * 0.1))) * (s->rtt + s->rtt_var); /*用于简单的拥塞限流，防止GET洪水*/
-			if (l->ts + space_factor <= cur_ts && l->count < 15 && ack.nack_num < NACK_NUM){
+			space_factor = (SU_MIN(1.5, 1 + (l->count * 0.1))) * (s->rtt + s->rtt_var); /*用于简单的拥塞限流，防止GET洪水*/
+			if (l->ts + space_factor <= cur_ts && l->count < 15 && l->loss_ts + MIN_EVICT_DELAY_MS / 2 > cur_ts && ack.nack_num < NACK_NUM){
 				ack.nack[ack.nack_num++] = iter->key.u32 - r->base_seq;
 				l->ts = cur_ts;
 
