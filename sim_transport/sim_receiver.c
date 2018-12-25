@@ -221,7 +221,7 @@ static inline void real_video_cache_sync_timestamp(sim_session_t* s, sim_frame_c
 {
 	uint64_t cur_ts = GET_SYS_MS();
 
-	if (cur_ts > c->play_ts){
+	if (cur_ts >= c->play_ts + 5){
 		c->frame_ts = (uint32_t)((cur_ts - c->play_ts) * c->f) + c->frame_ts;
 		c->play_ts = cur_ts;
 	}
@@ -302,9 +302,9 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 	/*计算播放时间同步*/
 	c->f = 1.0f;
 	if (c->play_frame_ts + space > c->max_ts)
-		c->f = 0.6f;
+		c->f = 0.8f;
 	else if (c->play_frame_ts + space * 2 < c->max_ts)
-		c->f = 1.6f;
+		c->f = 1.4f;
 	else if (c->play_frame_ts + space * 3 / 2 < c->max_ts)
 		c->f = 1.2f;
 
@@ -609,8 +609,8 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 			if (iter->key.u32 <= r->base_seq)
 				continue;
 
-			space_factor = (SU_MIN(1.5, 1 + (l->count * 0.1))) * (s->rtt + s->rtt_var); /*用于简单的拥塞限流，防止GET洪水*/
-			if (l->ts + space_factor <= cur_ts && l->count < 15 && ack.nack_num < NACK_NUM){ /*&& l->loss_ts + MIN_EVICT_DELAY_MS / 2 > cur_ts*/
+			space_factor = (SU_MIN(1.3, 1 + (l->count * 0.1))) * (s->rtt + s->rtt_var); /*用于简单的拥塞限流，防止GET洪水*/
+			if (l->ts + space_factor <= cur_ts && l->count < 15 && l->loss_ts + MIN_EVICT_DELAY_MS / 2 > cur_ts && ack.nack_num < NACK_NUM){
 				ack.nack[ack.nack_num++] = iter->key.u32 - r->base_seq;
 				l->ts = cur_ts;
 
