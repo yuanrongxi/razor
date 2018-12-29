@@ -732,7 +732,7 @@ static void bbr_calculate_pacing_rate(bbr_controller_t* bbr)
 		bbr->pacing_rate = (int32_t)(bbr->pacing_gain * wnd_filter_third_best(&bbr->max_bandwidth));
 
 	if (bbr->is_at_full_bandwidth){
-		bbr->pacing_rate = (int32_t)(bbr->min_congestion_window / (bbr_smoothed_rtt(&bbr->rtt_stat)));
+		bbr->pacing_rate = (int32_t)(bbr->congestion_window / (bbr_smoothed_rtt(&bbr->rtt_stat)));
 		bbr->pacing_rate = SU_MIN(bbr->pacing_rate, target_rate);
 		return;
 	}

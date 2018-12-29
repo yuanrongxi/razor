@@ -31,8 +31,10 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction
 	/*计算丢包率，用平滑遗忘算法进行逼近，webRTC用的是单位时间内最大和时间段平滑*/
 	if (s->loss_fraction == 0)
 		s->loss_fraction = fraction_loss;
-	else
+	else if (fraction_loss < s->loss_fraction)
 		s->loss_fraction = (s->loss_fraction * 3 + fraction_loss) / 4;
+	else
+		s->loss_fraction = fraction_loss;
 
 	loss = s->loss_fraction / 255.0;
 	/*todo:通过丢包率计算FEC比例，FEC机制在这进行计算！！！！*/
@@ -50,7 +52,7 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction
 
 	/*设置重发最大的码率*/
 	if (sender != NULL)
-		sim_limiter_set_max_bitrate(&sender->limiter, bitrate / 8);
+		sim_limiter_set_max_bitrate(&sender->limiter, bitrate * (1.0 - loss) / 8);
 }
 
 static void sim_send_packet(void* handler, uint32_t packet_id, int retrans, size_t size, int padding)

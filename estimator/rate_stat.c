@@ -50,7 +50,7 @@ void rate_stat_reset(rate_stat_t* rate)
 /*删除过期的统计数据*/
 static void rate_stat_erase(rate_stat_t* rate, int64_t now_ts)
 {
-	int new_oldest_ts;
+	int64_t new_oldest_ts;
 	rate_bucket_t* bucket;
 
 	if (rate->oldest_ts == -1)
@@ -110,7 +110,7 @@ int rate_stat_rate(rate_stat_t* rate, int64_t now_ts)
 	rate_stat_erase(rate, now_ts);
 
 	active_wnd_size = (int)(now_ts - rate->oldest_ts + 1);
-	if (rate->sample_num == 0 || active_wnd_size <= 1 || (active_wnd_size <= rate->wnd_size))
+	if (rate->sample_num == 0 || active_wnd_size <= 1 || (active_wnd_size < rate->wnd_size))
 		return -1;
 
 	ret = (int)(rate->accumulated_count * rate->scale / active_wnd_size + 0.5);

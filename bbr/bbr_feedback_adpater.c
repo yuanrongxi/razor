@@ -114,7 +114,7 @@ void bbr_feedback_on_feedback(bbr_fb_adapter_t* adapter, bbr_feedback_msg_t* msg
 			adapter->feedback.packets_num++;
 			if (adapter->feedback.packets_num >= MAX_BBR_FEELBACK_COUNT - 1)
 				adapter->feedback.packets_num = 0;
-
+ 
 			rate_stat_update(&adapter->acked_bitrate, p.payload_size, now_ts);
 		}
 
@@ -131,7 +131,7 @@ size_t bbr_feedback_get_in_flight(bbr_fb_adapter_t* adapter)
 
 int32_t bbr_feedback_get_birate(bbr_fb_adapter_t* adapter)
 {
-	return rate_stat_rate(&adapter->acked_bitrate, GET_SYS_MS());
+	return rate_stat_rate(&adapter->acked_bitrate, adapter->feedback.feedback_time);
 }
 
 
