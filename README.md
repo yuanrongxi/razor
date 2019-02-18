@@ -39,7 +39,7 @@ razor是一个GCC算法实现项目，主体算法来源于webRTC的CC实现，�
  ### 运行echo
     在echo UI上将receiver ip地址填写为：192.168.1.200：6009，点击start echo按钮即可
     
- # GCC与BBR的对比
+ # GCC与BBR的对比（来自仇波的贡献）
  ## 测试条件
   操作系统环境：VMWare虚拟机(win10)限定网速
   
