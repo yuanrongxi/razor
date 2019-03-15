@@ -309,6 +309,10 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 		if (iter != NULL){
 			seg = (sim_segment_t*)iter->val.ptr;
 
+			/*防止单个报文补偿过快,防止突发性拥塞*/
+			if (seg->timestamp + seg->send_ts + sender->first_ts + SU_MIN(200, SU_MAX(30, s->rtt / 4)) > now_ts)
+				continue;
+
 			/*将报文加入到cc的pacer中进行重发*/
 			if (sim_limiter_try(&sender->limiter, seg->data_size + SIM_SEGMENT_HEADER_SIZE, now_ts) == 0
 				&& sender->cc->add_packet(sender->cc, seg->packet_id, 1, seg->data_size + SIM_SEGMENT_HEADER_SIZE) == 0){
@@ -319,8 +323,6 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 	}
 
 	/*计算RTT*/
-	now_ts = GET_SYS_MS();
-
 	key.u32 = ack->acked_packet_id;
 	iter = skiplist_search(sender->cache, key);
 	if (iter != NULL){
