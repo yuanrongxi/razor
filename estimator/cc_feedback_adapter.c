@@ -40,7 +40,7 @@ void cc_feedback_add_packet(feedback_adapter_t* adapter, uint16_t seq, size_t si
 	packet.create_ts = packet.send_ts = GET_SYS_MS();
 	packet.payload_size = size;
 	packet.sequence_number = seq;
-
+	 
 	sender_history_add(adapter->hist, &packet);
 }
 
