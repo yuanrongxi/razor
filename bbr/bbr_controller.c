@@ -177,11 +177,12 @@ static bbr_network_ctrl_update_t bbr_create_rate_upate(bbr_controller_t* bbr, in
 		return ret;
 
 	wnd_filter_print(&bbr->max_bandwidth);
-	bandwidth = bbr_bandwidth_estimate(bbr);
-	if (bandwidth <= 0)
-		bandwidth = bbr->default_bandwidth;
-
 	rtt = bbr_smoothed_rtt(&bbr->rtt_stat);
+
+	if (rtt <= 0)
+		bandwidth = bbr->default_bandwidth;
+	else
+		bandwidth = bbr->congestion_window / rtt;
 
 	/*确定pacing rate和target rate*/
 	pacing_rate = bbr_pacing_rate(bbr);
@@ -739,7 +740,7 @@ static void bbr_calculate_pacing_rate(bbr_controller_t* bbr)
 
 	/*开始阶段，用初始化的拥塞窗口计算可以用的码率*/
 	if (bbr->pacing_rate == 0 && bbr_min_rtt(&bbr->rtt_stat) > 0){
-		bbr->pacing_rate = (int32_t)(bbr->initial_congestion_window / (bbr_smoothed_rtt(&bbr->rtt_stat)));
+		bbr->pacing_rate = (int32_t)(bbr->initial_congestion_window / (bbr_min_rtt(&bbr->rtt_stat)));
 		return;
 	}
 
