@@ -739,7 +739,7 @@ static void bbr_calculate_pacing_rate(bbr_controller_t* bbr)
 
 	/*开始阶段，用初始化的拥塞窗口计算可以用的码率*/
 	if (bbr->pacing_rate == 0 && bbr_min_rtt(&bbr->rtt_stat) > 0){
-		bbr->pacing_rate = (int32_t)(bbr->initial_congestion_window / (bbr_min_rtt(&bbr->rtt_stat)));
+		bbr->pacing_rate = (int32_t)(bbr->initial_congestion_window / (bbr_smoothed_rtt(&bbr->rtt_stat)));
 		return;
 	}
 
