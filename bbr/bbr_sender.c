@@ -91,18 +91,16 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 		target_rate_bps = target_rate_bps + SU_MIN(20 * 1000, SU_MAX(s->min_bitrate / 160, 2 * 1000));
 	}
 
+	bbr_pacer_set_pacing_rate(s->pacer, target_rate_bps / 1000);
+
 	if (s->info.target_rate.loss_rate_ratio > 0.07){
 		target_rate_bps = SU_MIN(acked_bitrate, target_rate_bps);
-		bbr_pacer_set_pacing_rate(s->pacer, target_rate_bps / 1000);
-	}
-	else{
-		bbr_pacer_set_pacing_rate(s->pacer, SU_MAX(pacing_rate_kbps, target_rate_bps/ 1000) * 8);
 	}
 
 	target_rate_bps = SU_MIN(s->max_bitrate, SU_MAX(target_rate_bps, s->min_bitrate));
 	loss = (uint8_t)(s->info.target_rate.loss_rate_ratio * 255 + 0.5f);
 
-	bbr_pacer_set_padding_rate(s->pacer, target_rate_bps / 1000);
+	bbr_pacer_set_padding_rate(s->pacer, target_rate_bps / (4 * 1000));
 
 	razor_debug("target = %u kbps, acked_birate = %dkbps, pacing = %u kbps, instant = %u kbps, loss = %u, congestion_window = %u, outstanding = %u, ratio = %2f, rtt = %lld\n\n", 
 		target_rate_bps / 8000, acked_bitrate / 8000, pacing_rate_kbps, instant_rate_kbps, loss, 
