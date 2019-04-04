@@ -83,9 +83,11 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 	/*如果拥塞窗口满了，进行带宽递减*/
 	if (fill > 1.0){
 		s->encoding_rate_ratio *= 0.875f;
-		target_rate_bps = target_rate_bps * 0.875f;
+		s->encoding_rate_ratio = SU_MAX(0.5, s->encoding_rate_ratio);
+		target_rate_bps = target_rate_bps * s->encoding_rate_ratio;
 	}
 	else if (fill < 0.8 && s->info.target_rate.loss_rate_ratio < 0.01){
+		s->encoding_rate_ratio = 1;
 		target_rate_bps = target_rate_bps + SU_MIN(20 * 1000, SU_MAX(s->min_bitrate / 160, 2 * 1000));
 	}
 

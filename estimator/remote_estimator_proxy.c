@@ -7,7 +7,10 @@
 
 #include "remote_estimator_proxy.h"
 
-#define DEFAULT_PROXY_INTERVAL_TIME 100
+#define kMaxSendIntervalMs 250
+#define kMinSendIntervalMs 10
+
+#define DEFAULT_PROXY_INTERVAL_TIME 20
 #define BACK_WINDOWS_MS 500
 
 
@@ -128,15 +131,12 @@ static int proxy_bulid_feelback_packet(estimator_proxy_t* proxy, feedback_msg_t*
 
 int estimator_proxy_heartbeat(estimator_proxy_t* proxy, int64_t cur_ts, feedback_msg_t* msg)
 {
-	if (cur_ts >= proxy->hb_ts + proxy->send_interval_ms || proxy->wnd_start_seq + DEFAULT_PROXY_INTERVAL_TIME <= proxy->max_arrival_seq){
+	if (cur_ts >= proxy->hb_ts + proxy->send_interval_ms || proxy->wnd_start_seq + 30 <= proxy->max_arrival_seq){
 		proxy->hb_ts = cur_ts;
 		return proxy_bulid_feelback_packet(proxy, msg);
 	}
 	return -1;
 }
-
-#define kMaxSendIntervalMs 250
-#define kMinSendIntervalMs 50
 
 /*码率发生变化时重新评估发送间隔时间*/
 void estimator_proxy_bitrate_changed(estimator_proxy_t* proxy, uint32_t bitrate)

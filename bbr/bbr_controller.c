@@ -69,7 +69,7 @@ static inline void bbr_set_default_config(bbr_config_t* config)
 	config->fully_drain_queue = false;
 	config->initial_conservation_in_startup = CONSERVATION;
 	config->max_ack_height_window_multiplier = 1;
-	config->probe_rtt_based_on_bdp = false;
+	config->probe_rtt_based_on_bdp = true;
 	config->probe_rtt_skipped_if_similar_rtt = false;
 	config->probe_rtt_disabled_if_app_limited = false;
 }
@@ -733,7 +733,7 @@ static void bbr_calculate_pacing_rate(bbr_controller_t* bbr)
 		bbr->pacing_rate = (int32_t)(bbr->pacing_gain * wnd_filter_third_best(&bbr->max_bandwidth));
 
 	if (bbr->is_at_full_bandwidth){
-		bbr->pacing_rate = (int32_t)(bbr->congestion_window / (bbr_smoothed_rtt(&bbr->rtt_stat)));
+		bbr->pacing_rate = (int32_t)(bbr_get_congestion_window(bbr) / (bbr_smoothed_rtt(&bbr->rtt_stat)));
 		bbr->pacing_rate = SU_MIN(bbr->pacing_rate, target_rate);
 		return;
 	}
