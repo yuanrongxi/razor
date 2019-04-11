@@ -75,9 +75,9 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 
 	bbr_pacer_update_outstanding(s->pacer, outstanding);
 
-	target_rate_bps = (s->info.target_rate.target_rate * 8000);
-	acked_bitrate = bbr_feedback_get_birate(&s->feedback);
 	instant_rate_kbps = s->info.congestion_window / s->info.target_rate.rtt;
+	target_rate_bps = (SU_MIN(s->info.target_rate.target_rate, instant_rate_kbps) * 8000);
+	acked_bitrate = bbr_feedback_get_birate(&s->feedback);
 
 	fill = 1.0 * outstanding / s->info.congestion_window;
 	/*如果拥塞窗口满了，进行带宽递减*/
