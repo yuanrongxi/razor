@@ -58,7 +58,7 @@ static inline void bbr_set_default_config(bbr_config_t* config)
 	config->min_congestion_window = kDefaultMinCongestionWindowPackets * kDefaultTCPMSS;
 
 	config->probe_rtt_congestion_window_gain = 0.75;
-	config->pacing_rate_as_target = true;
+	config->pacing_rate_as_target = false;
 
 	config->exit_startup_on_loss = true;
 	config->num_startup_rtts = 3;
