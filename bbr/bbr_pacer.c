@@ -108,7 +108,8 @@ size_t bbr_pacer_queue_size(bbr_pacer_t* pace)
 
 static int bbr_pacer_congestion(bbr_pacer_t* pace)
 {
-	return pace->congestion_window_size <= pace->outstanding_bytes ? -1 : 0;
+	return 0;
+	/*return pace->congestion_window_size <= pace->outstanding_bytes ? -1 : 0;*/
 }
 
 static int bbr_pacer_send(bbr_pacer_t* pace, packet_event_t* ev)

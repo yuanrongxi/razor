@@ -15,7 +15,7 @@
 #define kBbrRttVariationWeight 0.0f
 
 // Congestion window gain for QUIC BBR during PROBE_BW phase.
-#define kProbeBWCongestionWindowGain 2.0f
+#define kProbeBWCongestionWindowGain 1.5f
 
 // The maximum packet size of any QUIC packet, based on ethernet's max size,
 // minus the IP and UDP headers. IPv6 has a 40 byte header, UDP adds an
@@ -143,7 +143,7 @@ typedef struct
 	bbr_target_transfer_rate_t  target_rate;
 }bbr_network_ctrl_update_t;
 
-#define MAX_BBR_FEELBACK_COUNT	64
+#define MAX_BBR_FEELBACK_COUNT	128
 
 enum{
 	bbr_loss_info_msg = 0x01,

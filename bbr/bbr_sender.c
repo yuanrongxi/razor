@@ -21,6 +21,8 @@ bbr_sender_t* bbr_sender_create(void* trigger, bitrate_changed_func bitrate_cb, 
 	s->notify_ts = -1;
 
 	s->info.congestion_window = -1;
+	s->target_bitrate = k_min_pace_bitrate;
+
 
 	bbr_feedback_adapter_init(&s->feedback);
 
@@ -82,41 +84,40 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 	fill = 1.0 * outstanding / s->info.congestion_window;
 	/*如果拥塞窗口满了，进行带宽递减*/
 	if (fill > 1.0){
-		s->encoding_rate_ratio *= 0.95f;
-		s->encoding_rate_ratio = SU_MAX(0.5, s->encoding_rate_ratio);
-		target_rate_bps = target_rate_bps * s->encoding_rate_ratio;
+		s->encoding_rate_ratio = 0.95f;
+		s->target_bitrate = s->target_bitrate * s->encoding_rate_ratio;
 	}
-	else if (fill < 0.8 && s->info.target_rate.loss_rate_ratio < 0.01){
+	else {
 		s->encoding_rate_ratio = 1;
-		target_rate_bps = target_rate_bps + SU_MIN(20 * 1000, SU_MAX(s->min_bitrate / 160, 2 * 1000));
-	}
-	else{
-		target_rate_bps = target_rate_bps * s->encoding_rate_ratio;
+		if (fill < 0.9)
+			s->target_bitrate = s->target_bitrate + SU_MIN(64 * 1000, SU_MAX(s->min_bitrate / 32, 8 * 1000));
 	}
 
 	bbr_pacer_set_pacing_rate(s->pacer, pacing_rate_kbps * 8);
 
-	if (s->info.target_rate.loss_rate_ratio > 0.07){
-		target_rate_bps = SU_MIN(acked_bitrate, target_rate_bps);
-	}
+	s->target_bitrate = SU_MIN(target_rate_bps, s->target_bitrate);
+	s->target_bitrate = SU_MAX(s->target_bitrate, s->min_bitrate);
+	s->target_bitrate = SU_MIN(s->max_bitrate, s->target_bitrate);
 
-	target_rate_bps = SU_MIN(s->max_bitrate, SU_MAX(target_rate_bps, s->min_bitrate));
 	loss = (uint8_t)(s->info.target_rate.loss_rate_ratio * 255 + 0.5f);
 
-	bbr_pacer_set_padding_rate(s->pacer, target_rate_bps / 1000);
+	if (pading_rate_kbps != 0)
+		bbr_pacer_set_padding_rate(s->pacer, SU_MIN(target_rate_bps / 1000, pading_rate_kbps * 8));
+	else
+		bbr_pacer_set_padding_rate(s->pacer, 0);
 
 	razor_debug("target = %u kbps, acked_birate = %dkbps, pacing = %u kbps, instant = %u kbps, loss = %u, congestion_window = %u, outstanding = %u, ratio = %2f, rtt = %lld\n\n", 
-		target_rate_bps / 8000, acked_bitrate / 8000, pacing_rate_kbps, instant_rate_kbps, loss, 
+		s->target_bitrate / 8000, acked_bitrate / 8000, pacing_rate_kbps, instant_rate_kbps, loss,
 		s->info.congestion_window, outstanding, s->encoding_rate_ratio, s->info.target_rate.rtt);
 
 	/*如果数据发生变化，进行触发一个通信层通知*/
-	if (target_rate_bps != s->last_bitrate_bps || loss != s->last_fraction_loss){
-		s->last_bitrate_bps = target_rate_bps;
+	if (s->target_bitrate != s->last_bitrate_bps || loss != s->last_fraction_loss){
+		s->last_bitrate_bps = s->target_bitrate;
 		s->last_rtt = (uint32_t)s->info.target_rate.rtt;
 		s->last_fraction_loss = loss;
 
 		if (s->trigger != NULL && s->trigger_cb != NULL)
-			s->trigger_cb(s->trigger, target_rate_bps, loss, (uint32_t)s->info.target_rate.rtt);
+			s->trigger_cb(s->trigger, s->target_bitrate, loss, (uint32_t)s->info.target_rate.rtt);
 	}
 }
 
@@ -188,6 +189,8 @@ void bbr_sender_set_bitrates(bbr_sender_t* s, uint32_t min_bitrate, uint32_t sta
 
 	s->max_bitrate = max_bitrate;
 	s->min_bitrate = min_bitrate;
+
+	s->target_bitrate = start_bitrate;
 
 	bbr_pacer_set_estimate_bitrate(s->pacer, start_bitrate);
 	bbr_pacer_set_bitrate_limits(s->pacer, min_bitrate);

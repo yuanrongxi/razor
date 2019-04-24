@@ -37,6 +37,8 @@ typedef struct
 	uint32_t					max_bitrate;
 	uint32_t					min_bitrate;
 
+	uint32_t					target_bitrate;
+
 }bbr_sender_t;
 
 bbr_sender_t*					bbr_sender_create(void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms, int padding);

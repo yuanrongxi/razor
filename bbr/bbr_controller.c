@@ -176,13 +176,16 @@ static bbr_network_ctrl_update_t bbr_create_rate_upate(bbr_controller_t* bbr, in
 	if (at_time == -1)
 		return ret;
 
-	wnd_filter_print(&bbr->max_bandwidth);
+	/*wnd_filter_print(&bbr->max_bandwidth);*/
 	rtt = bbr_smoothed_rtt(&bbr->rtt_stat);
+
+	/*返回拥塞控制窗口*/
+	ret.congestion_window = bbr_get_congestion_window(bbr);
 
 	if (rtt <= 0)
 		bandwidth = bbr->default_bandwidth;
 	else
-		bandwidth = bbr->congestion_window / rtt;
+		bandwidth = ret.congestion_window / rtt;
 
 	/*确定pacing rate和target rate*/
 	pacing_rate = bbr_pacing_rate(bbr);
@@ -192,20 +195,16 @@ static bbr_network_ctrl_update_t bbr_create_rate_upate(bbr_controller_t* bbr, in
 	else
 		target_rate = (int32_t)(target_rate * bbr->config.encoder_rate_gain);
 
-	target_rate = SU_MIN(pacing_rate, target_rate);
 	if (bbr->constraints.at_time > 0){
 		if (bbr->constraints.max_rate > 0){
 			target_rate = SU_MIN(target_rate, bbr->constraints.max_rate);
-			pacing_rate = SU_MIN(pacing_rate, bbr->constraints.max_rate);
+			/*pacing_rate = SU_MIN(pacing_rate, bbr->constraints.max_rate);*/
 		}
 		if (bbr->constraints.min_rate > 0){
 			target_rate = SU_MAX(target_rate, bbr->constraints.min_rate);
 			pacing_rate = SU_MAX(pacing_rate, bbr->constraints.min_rate);
 		}
 	}
-
-	/*返回拥塞控制窗口*/
-	ret.congestion_window = bbr_get_congestion_window(bbr);
 
 	/*返回target_rate信息*/
 	ret.target_rate.at_time = at_time;
@@ -220,7 +219,7 @@ static bbr_network_ctrl_update_t bbr_create_rate_upate(bbr_controller_t* bbr, in
 	ret.pacer_config.time_window = rtt > 20 ? (rtt / 4) : 5;
 	ret.pacer_config.data_window = (size_t)(ret.pacer_config.time_window * pacing_rate);
 	if (bbr_is_probing_for_more_bandwidth(bbr) == 1)
-		ret.pacer_config.pad_window = ret.pacer_config.data_window;
+		ret.pacer_config.pad_window = ret.pacer_config.time_window * target_rate;
 	else
 		ret.pacer_config.pad_window = 0;
 
@@ -736,8 +735,8 @@ static void bbr_calculate_pacing_rate(bbr_controller_t* bbr)
 		bbr->pacing_rate = (int32_t)(bbr->pacing_gain * wnd_filter_third_best(&bbr->max_bandwidth));
 
 	if (bbr->is_at_full_bandwidth){
-		/*bbr->pacing_rate = (int32_t)(bbr_get_congestion_window(bbr) / (bbr_smoothed_rtt(&bbr->rtt_stat)));*/
-		bbr->pacing_rate = target_rate;//SU_MIN(bbr->pacing_rate, target_rate);
+		bbr->pacing_rate = bbr_get_congestion_window(bbr) / bbr_smoothed_rtt(&bbr->rtt_stat);
+		bbr->pacing_rate = SU_MAX(target_rate, bbr->pacing_rate);
 		return;
 	}
 

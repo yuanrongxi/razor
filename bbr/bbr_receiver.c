@@ -81,16 +81,27 @@ void bbr_receive_on_received(bbr_receiver_t* cc, uint16_t seq, uint32_t timestam
 			msg.samplers[msg.sampler_num].seq = iter->key.i64 & 0xffff;
 			msg.samplers[msg.sampler_num].delta_ts = now_ts > iter->val.i64 ? (now_ts - iter->val.i64) : 0; 
 			msg.sampler_num++;
+
+			if (msg.sampler_num >= MAX_BBR_FEELBACK_COUNT){
+				/*判断丢包消息*/
+				if (loss_statistics_calculate(&cc->loss_stat, now_ts, &msg.fraction_loss, &msg.packet_num) == 0)
+					msg.flag |= bbr_loss_info_msg;
+
+				bbr_feedback_msg_encode(&cc->strm, &msg);
+				cc->send_cb(cc->handler, cc->strm.data, cc->strm.used);
+				msg.sampler_num = 0;
+			}
+		}
+
+		if (msg.sampler_num > 0){
+			if (loss_statistics_calculate(&cc->loss_stat, now_ts, &msg.fraction_loss, &msg.packet_num) == 0)
+				msg.flag |= bbr_loss_info_msg;
+
+			bbr_feedback_msg_encode(&cc->strm, &msg);
+			cc->send_cb(cc->handler, cc->strm.data, cc->strm.used);
 		}
 
 		skiplist_clear(cc->cache);
-
-		/*判断丢包消息*/
-		if (loss_statistics_calculate(&cc->loss_stat, now_ts, &msg.fraction_loss, &msg.packet_num) == 0)
-			msg.flag |= bbr_loss_info_msg;
-
-		bbr_feedback_msg_encode(&cc->strm, &msg);
-		cc->send_cb(cc->handler, cc->strm.data, cc->strm.used);
 	}
 }
 
