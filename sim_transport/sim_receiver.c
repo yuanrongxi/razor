@@ -705,7 +705,7 @@ void sim_receiver_timer(sim_session_t* s, sim_receiver_t* r, int64_t now_ts)
 		else if (r->cache->wait_timer > 2 * (s->rtt + s->rtt_var))
 			r->cache->wait_timer = SU_MAX(r->cache->wait_timer * 15 / 16, r->cache->frame_timer);
 
-		r->cache_ts = GET_SYS_MS();
+		r->cache_ts = now_ts;
 		r->loss_count = 0;
 	}
 

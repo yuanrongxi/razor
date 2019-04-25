@@ -85,12 +85,15 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 	/*如果拥塞窗口满了，进行带宽递减*/
 	if (fill > 1.0){
 		s->encoding_rate_ratio = 0.95f;
-		s->target_bitrate = s->target_bitrate * s->encoding_rate_ratio;
+		if (acked_bitrate > 0)
+			s->target_bitrate = acked_bitrate * s->encoding_rate_ratio;
+		else
+			s->target_bitrate = s->target_bitrate * s->encoding_rate_ratio;
 	}
 	else {
 		s->encoding_rate_ratio = 1;
 		if (fill < 0.9)
-			s->target_bitrate = s->target_bitrate + SU_MIN(64 * 1000, SU_MAX(s->min_bitrate / 32, 8 * 1000));
+			s->target_bitrate = s->target_bitrate + SU_MIN(32 * 1000, SU_MAX(s->min_bitrate / 32, 16000));
 	}
 
 	bbr_pacer_set_pacing_rate(s->pacer, pacing_rate_kbps * 8);
