@@ -49,10 +49,6 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction
 	sim_info("loss = %f, bitrate = %u, video_bitrate_kbps = %u\n", loss, bitrate, video_bitrate_kbps);
 	/*通知上层进行码率调整*/
 	s->change_bitrate_cb(s->event, video_bitrate_kbps, loss > 0 ? 1 : 0);
-
-	/*设置重发最大的码率*/
-	if (sender != NULL)
-		sim_limiter_set_max_bitrate(&sender->limiter, bitrate * (1.0 - loss) / 8);
 }
 
 static void sim_send_packet(void* handler, uint32_t packet_id, int retrans, size_t size, int padding)
@@ -124,8 +120,6 @@ sim_sender_t* sim_sender_create(sim_session_t* s, int transport_type, int paddin
 	/*pacer queue的延迟不大于250ms*/
 	cc_type = (transport_type == bbr_transport ? bbr_congestion : gcc_congestion);
 	sender->cc = razor_sender_create(cc_type, padding, s, sim_bitrate_change, sender, sim_send_packet, 1000);
-	
-	sim_limiter_init(&sender->limiter, 300);
 
 	sender->s = s;
 
@@ -146,8 +140,6 @@ void sim_sender_destroy(sim_session_t* s, sim_sender_t* sender)
 		razor_sender_destroy(sender->cc);
 		sender->cc = NULL;
 	}
-
-	sim_limiter_destroy(&sender->limiter);
 
 	free(sender);
 }
@@ -301,8 +293,6 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 
 	now_ts = GET_SYS_MS();
 
-	sim_limiter_update(&sender->limiter, 0, now_ts);
-
 	for (i = 0; i < ack->nack_num; ++i){
 		key.u32 = ack->base_packet_id + ack->nack[i];
 		iter = skiplist_search(sender->cache, key);
@@ -314,11 +304,7 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 				continue;
 
 			/*将报文加入到cc的pacer中进行重发*/
-			if (sim_limiter_try(&sender->limiter, seg->data_size + SIM_SEGMENT_HEADER_SIZE, now_ts) == 0
-				&& sender->cc->add_packet(sender->cc, seg->packet_id, 1, seg->data_size + SIM_SEGMENT_HEADER_SIZE) == 0){
-				/*发送成功，将发送的字节数据加入到限制器当中*/
-				sim_limiter_update(&sender->limiter, seg->data_size + SIM_SEGMENT_HEADER_SIZE, now_ts);
-			}
+			sender->cc->add_packet(sender->cc, seg->packet_id, 1, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
 		}
 	}
 
