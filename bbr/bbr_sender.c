@@ -84,7 +84,7 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 	fill = 1.0 * outstanding / s->info.congestion_window;
 	/*如果拥塞窗口满了，进行带宽递减*/
 	if (fill > 1.0){
-		s->encoding_rate_ratio = 0.95f;
+		s->encoding_rate_ratio = 0.9f;
 		if (acked_bitrate > 0)
 			s->target_bitrate = acked_bitrate * s->encoding_rate_ratio;
 		else
