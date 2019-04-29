@@ -30,6 +30,8 @@ typedef struct
 
 	bin_stream_t				strm;
 
+	uint8_t						loss_fraction;
+
 	void*						trigger;					/*码率改变后需要通知给通信层的trigger*/
 	bitrate_changed_func		trigger_cb;					/*通知函数*/
 

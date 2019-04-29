@@ -15,7 +15,7 @@
 #define kBbrRttVariationWeight 0.0f
 
 // Congestion window gain for QUIC BBR during PROBE_BW phase.
-#define kProbeBWCongestionWindowGain 1.5f
+#define kProbeBWCongestionWindowGain 2.0f
 
 // The maximum packet size of any QUIC packet, based on ethernet's max size,
 // minus the IP and UDP headers. IPv6 has a 40 byte header, UDP adds an

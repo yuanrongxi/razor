@@ -93,7 +93,7 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 	else {
 		s->encoding_rate_ratio = 1;
 		if (fill < 0.9)
-			s->target_bitrate = s->target_bitrate + SU_MIN(32 * 1000, SU_MAX(s->min_bitrate / 32, 16000));
+			s->target_bitrate = s->target_bitrate + SU_MIN(32 * 1000, SU_MAX(s->min_bitrate / 32, 4 * 8000));
 	}
 
 	bbr_pacer_set_pacing_rate(s->pacer, pacing_rate_kbps * 8);
@@ -102,7 +102,7 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 	s->target_bitrate = SU_MAX(s->target_bitrate, s->min_bitrate);
 	s->target_bitrate = SU_MIN(s->max_bitrate, s->target_bitrate);
 
-	loss = (uint8_t)(s->info.target_rate.loss_rate_ratio * 255 + 0.5f);
+	loss = /*(uint8_t)(s->info.target_rate.loss_rate_ratio * 255 + 0.5f);*/s->loss_fraction;
 
 	if (pading_rate_kbps != 0)
 		bbr_pacer_set_padding_rate(s->pacer, SU_MIN(target_rate_bps / 1000, pading_rate_kbps * 8));
@@ -167,6 +167,9 @@ void bbr_sender_on_feedback(bbr_sender_t* s, uint8_t* feedback, int feedback_siz
 	bin_stream_set_used_size(&s->strm, feedback_size);
 
 	bbr_feedback_msg_decode(&s->strm, &msg);
+
+	if (msg.flag & bbr_loss_info_msg == bbr_loss_info_msg)
+		s->loss_fraction = msg.fraction_loss;
 
 	bbr_feedback_on_feedback(&s->feedback, &msg);
 	if (s->feedback.feedback.packets_num <= 0)
