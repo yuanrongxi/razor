@@ -609,7 +609,7 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 			if (iter->key.u32 <= r->base_seq)
 				continue;
 
-			space_factor = SU_MAX(30, s->rtt + s->rtt_var) + l->count * SU_MIN(100, s->rtt_var); /*用于简单的拥塞限流，防止GET洪水*/
+			space_factor = SU_MAX(30, s->rtt + s->rtt_var) + l->count * SU_MIN(100, SU_MIN(15, s->rtt_var)); /*用于简单的拥塞限流，防止GET洪水*/
 			if (l->ts + space_factor <= cur_ts && l->count < 15 && l->loss_ts + MIN_EVICT_DELAY_MS / 2 > cur_ts && ack.nack_num < NACK_NUM){
 				ack.nack[ack.nack_num++] = iter->key.u32 - r->base_seq;
 				l->ts = cur_ts;
