@@ -7,7 +7,7 @@
 #include "bbr_loss_rate_filter.h"
 
 #define kLimitNumPackets	50
-#define kUpdateIntervalMs	2000
+#define kUpdateIntervalMs	500
 
 void bbr_loss_filter_init(bbr_loss_rate_filter_t* filter)
 {

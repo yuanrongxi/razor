@@ -198,7 +198,7 @@ static bbr_network_ctrl_update_t bbr_create_rate_upate(bbr_controller_t* bbr, in
 	if (bbr->constraints.at_time > 0){
 		if (bbr->constraints.max_rate > 0){
 			target_rate = SU_MIN(target_rate, bbr->constraints.max_rate);
-			/*pacing_rate = SU_MIN(pacing_rate, bbr->constraints.max_rate);*/
+			pacing_rate = SU_MIN(pacing_rate, bbr->constraints.max_rate);
 		}
 		if (bbr->constraints.min_rate > 0){
 			target_rate = SU_MAX(target_rate, bbr->constraints.min_rate);
