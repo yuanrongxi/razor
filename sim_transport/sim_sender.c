@@ -29,10 +29,8 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction
 	payload_bitrate = bitrate - overhead_bitrate;
 
 	/*计算丢包率，用平滑遗忘算法进行逼近，webRTC用的是单位时间内最大和时间段平滑*/
-	if (s->loss_fraction == 0)
-		s->loss_fraction = fraction_loss;
-	else if (fraction_loss < s->loss_fraction)
-		s->loss_fraction = (s->loss_fraction * 3 + fraction_loss) / 4;
+	if (fraction_loss < s->loss_fraction)
+		s->loss_fraction = (s->loss_fraction * 15 + fraction_loss) / 16;
 	else
 		s->loss_fraction = fraction_loss;
 
