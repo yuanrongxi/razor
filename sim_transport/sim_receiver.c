@@ -300,12 +300,13 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 	space = SU_MAX(c->wait_timer, c->frame_timer);
 
 	/*计算播放时间同步*/
+	
+	play_ready_ts = real_video_ready_ms(s, c);
+
 	c->f = 1.0f;
-	if (c->play_frame_ts + space > c->max_ts)
+	if (c->play_frame_ts + space > c->max_ts && play_ready_ts > space / 2 && space > 2 * c->frame_timer)
 		c->f = 0.8f;
-	else if (c->play_frame_ts + space * 2 < c->max_ts)
-		c->f = 1.4f;
-	else if (c->play_frame_ts + space * 3 / 2 < c->max_ts)
+	else if (play_ready_ts + 2 * c->frame_timer > space)
 		c->f = 1.2f;
 
 	real_video_cache_sync_timestamp(s, c);
@@ -314,8 +315,6 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 	if (c->play_frame_ts + SU_MAX(MIN_EVICT_DELAY_MS, SU_MIN(MAX_EVICT_DELAY_MS, 4 * c->wait_timer)) < c->max_ts){
 		evict_gop_frame(s, c);
 	}
-
-	play_ready_ts = real_video_ready_ms(s, c);
 
 	pos = INDEX(c->min_fid + 1);
 	frame = &c->frames[pos];
@@ -335,12 +334,9 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 					break;
 				}
 			}
-			/*毕竟等待缓冲的时间*/
-			if (space * 3 / 2 < play_ready_ts){
-				c->frame_ts = frame->ts + c->frame_timer;
-			}
-			if (space < play_ready_ts)
-				c->frame_ts = frame->ts + 2;
+			/*等待缓冲的时间*/
+			if (c->frame_timer * 2 < play_ready_ts)
+				c->frame_ts = frame->ts + 5;
 			else
 				c->frame_ts = frame->ts;
 
