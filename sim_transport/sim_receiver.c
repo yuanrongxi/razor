@@ -304,9 +304,9 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 	play_ready_ts = real_video_ready_ms(s, c);
 
 	c->f = 1.0f;
-	if (loss != 0 && play_ready_ts < 6 * c->frame_timer)
+	if (loss != 0 && play_ready_ts < SU_MIN(space, 4 * c->frame_timer))
 		c->f = 0.8f;
-	else if (loss == 0 && play_ready_ts >= SU_MAX(80, 2 * c->frame_timer))
+	else if ((loss == 0 || play_ready_ts > space) && play_ready_ts >= SU_MAX(50, 2 * c->frame_timer))
 		c->f = 1.2f;
 
 	real_video_cache_sync_timestamp(s, c);
@@ -516,9 +516,9 @@ static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32
 	}
 	else{
 		if (s->rtt/2 < s->rtt_var)
-			space = 0;
+			space = (s->rtt_var + s->rtt )/ 2;
 		else
-			space = SU_MIN(100, SU_MAX(30, s->rtt / 2));
+			space = s->rtt;
 
 		key.u32 = seq;
 		skiplist_remove(r->loss, key);
