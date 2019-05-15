@@ -268,7 +268,7 @@ int CFVideoRecorder::read(void* data, uint32_t data_size, int& key_frame, uint8_
 		if (encode_on_){
 			/*编码，确定编码数据和是否是关键帧，如果是关键帧，key_frame = 1,否者 = 0*/
 			if (encoder_->encode(video_data_, video_data_size_, (PixelFormat)info_.pix_format, (uint8_t*)data, &out_size, &key_frame, intra_frame_) && out_size > 0){
-				key_frame = ((key_frame == 0x0001 || key_frame == 0x0002) ? 1 : 0);
+				key_frame = (key_frame == 0x0001 ? 1 : 0);
 				data_size = out_size;
 				payload_type = encoder_->get_payload_type();
 

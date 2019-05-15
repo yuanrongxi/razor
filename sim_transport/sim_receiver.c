@@ -305,7 +305,7 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 
 	c->f = 1.0f;
 	if (loss != 0 && play_ready_ts < SU_MIN(space, 4 * c->frame_timer))
-		c->f = 0.8f;
+		c->f = 0.6f;
 	else if ((loss == 0 || play_ready_ts > space) && play_ready_ts >= SU_MAX(50, 2 * c->frame_timer))
 		c->f = 1.2f;
 
@@ -623,10 +623,10 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 		r->ack_ts = cur_ts;
 
 		/*根据丢包重传确定视频缓冲区需要的缓冲时间*/
-		if (max_count > 1)
-			delay = (max_count + 8) * (s->rtt + s->rtt_var) / 8;
+		if (max_count >= 1)
+			delay = (max_count + 7) * (s->rtt + s->rtt_var) / 8;
 		else
-			delay = s->rtt + s->rtt_var;
+			delay = SU_MAX(80, (s->rtt + s->rtt_var) / 4);
 
 		r->cache->wait_timer = (r->cache->wait_timer * 7 + delay) / 8;
 		r->cache->wait_timer = SU_MAX(r->cache->frame_timer, r->cache->wait_timer);
@@ -695,11 +695,11 @@ void sim_receiver_timer(sim_session_t* s, sim_receiver_t* r, int64_t now_ts)
 	video_real_ack(s, r, 1, 0);
 
 	/*每1秒尝试缩一次缓冲区等待时间*/
-	if (r->cache_ts + SU_MAX(s->rtt + s->rtt_var, 1000) < now_ts){
+	if (r->cache_ts + SU_MAX(s->rtt + s->rtt_var, 500) < now_ts){
 		if (r->loss_count == 0)
-			r->cache->wait_timer = SU_MAX(r->cache->wait_timer * 7 / 8, r->cache->frame_timer);
+			r->cache->wait_timer = SU_MAX(r->cache->wait_timer * 7 / 8, (s->rtt + s->rtt_var) / 2);
 		else if (r->cache->wait_timer > 2 * (s->rtt + s->rtt_var))
-			r->cache->wait_timer = SU_MAX(r->cache->wait_timer * 15 / 16, r->cache->frame_timer);
+			r->cache->wait_timer = SU_MAX(r->cache->wait_timer * 15 / 16, (s->rtt + s->rtt_var));
 
 		r->cache_ts = now_ts;
 		r->loss_count = 0;

@@ -541,7 +541,8 @@ static void process_sim_pad(sim_session_t* s, sim_header_t* header, bin_stream_t
 	if (sim_decode_msg(strm, header, &pad) != 0)
 		return;
 
-	sim_receiver_padding(s, s->receiver, pad.transport_seq, pad.send_ts, pad.data_size);
+	if (s->receiver != NULL)
+		sim_receiver_padding(s, s->receiver, pad.transport_seq, pad.send_ts, pad.data_size);	
 }
 
 static void sim_session_process(sim_session_t* s, bin_stream_t* strm, su_addr* addr)
