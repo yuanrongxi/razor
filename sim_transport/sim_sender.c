@@ -180,21 +180,24 @@ int sim_sender_active(sim_session_t* s, sim_sender_t* sender)
 static uint16_t sim_split_frame(sim_session_t* s, uint16_t splits[], size_t size)
 {
 	uint16_t ret, i;
-	uint16_t remain_size;
+	uint16_t remain_size, packet_size;
 
 	if (size <= SIM_VIDEO_SIZE){
 		ret = 1;
 		splits[0] = size;
 	}
 	else{
-		ret = size / SIM_VIDEO_SIZE;
-		for (i = 0; i < ret; i++)
-			splits[i] = SIM_VIDEO_SIZE;
+		ret = (size + SIM_VIDEO_SIZE - 1) / SIM_VIDEO_SIZE;
+		packet_size = size / ret;
+		remain_size = size % ret;
 
-		remain_size = size % SIM_VIDEO_SIZE;
-		if (remain_size > 0){
-			splits[ret] = remain_size;
-			ret++;
+		for (i = 0; i < ret; i++){
+			if (remain_size > 0){
+				splits[i] = packet_size + 1;
+				remain_size--;
+			}
+			else
+				splits[i] = packet_size;
 		}
 	}
 
