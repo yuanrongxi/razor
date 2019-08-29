@@ -334,7 +334,7 @@ static size_t bbr_get_target_congestion_window(bbr_controller_t* bbr, double gai
 		congestion_window = (size_t)(gain * bbr->initial_congestion_window);
 
 	if (congestion_window < bbr->min_congestion_window)
-		printf("");
+		razor_debug("bdp = %d, max bandwidth = %u, min rtt = %u\n", congestion_window, bbr_bandwidth_estimate(bbr), bbr_get_min_rtt(bbr));
 
 	return SU_MAX(congestion_window, bbr->min_congestion_window);
 }
@@ -540,7 +540,7 @@ static int bbr_update_bandwidth_and_min_rtt(bbr_controller_t* bbr, int64_t now_t
 		if (bbr_should_extend_min_rtt_expiry(bbr))
 			min_rtt_expired = false;
 		else
-			bbr->min_rtt = sample_rtt;
+			bbr->min_rtt = SU_MAX(5, sample_rtt);
 
 		bbr->min_rtt_timestamp = now_ts;
 		bbr->min_rtt_since_last_probe_rtt = -1;

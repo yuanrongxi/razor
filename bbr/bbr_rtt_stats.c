@@ -31,9 +31,9 @@ void bbr_rtt_update(bbr_rtt_stat_t* s, int64_t send_delta, int64_t ack_delay, in
 		return;
 
 	if (s->min_rtt == 0 || s->min_rtt > send_delta)
-		s->min_rtt = SU_MAX(send_delta, 4);
+		s->min_rtt = SU_MAX(send_delta, 2);
 
-	rtt_sample = SU_MAX(10, send_delta);
+	rtt_sample = SU_MAX(2, send_delta);
 	s->previous_srtt = s->smoothed_rtt;
 	if (rtt_sample > ack_delay){
 		rtt_sample = rtt_sample - ack_delay;

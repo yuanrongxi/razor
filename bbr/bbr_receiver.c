@@ -8,7 +8,7 @@
 #include "bbr_common.h"
 
 #define k_bbr_recv_wnd_size 4096
-#define k_bbr_feedback_time 50
+#define k_bbr_feedback_time 10
 
 
 bbr_receiver_t* bbr_receive_create(void* handler, send_feedback_func cb)
@@ -71,7 +71,7 @@ void bbr_receive_on_received(bbr_receiver_t* cc, uint16_t seq, uint32_t timestam
 		skiplist_insert(cc->cache, key, val);
 	}
 
-	if (skiplist_size(cc->cache) >= MAX_BBR_FEELBACK_COUNT || (cc->feedback_ts + k_bbr_feedback_time <= now_ts && skiplist_size(cc->cache) > 2)){
+	if (skiplist_size(cc->cache) >= 2){
 		cc->feedback_ts = now_ts;
 		/*判断proxy estimator是否可以发送报告*/
 		msg.flag |= bbr_acked_msg;

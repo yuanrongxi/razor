@@ -168,7 +168,7 @@ void bbr_sender_on_feedback(bbr_sender_t* s, uint8_t* feedback, int feedback_siz
 
 	bbr_feedback_msg_decode(&s->strm, &msg);
 
-	if (msg.flag & bbr_loss_info_msg == bbr_loss_info_msg)
+	if ((msg.flag & bbr_loss_info_msg) == bbr_loss_info_msg)
 		s->loss_fraction = msg.fraction_loss;
 
 	bbr_feedback_on_feedback(&s->feedback, &msg);
