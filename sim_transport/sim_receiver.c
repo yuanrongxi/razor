@@ -306,7 +306,7 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 	c->f = 1.0f;
 	if (loss != 0 && play_ready_ts < SU_MIN(space, 4 * c->frame_timer))
 		c->f = 0.6f;
-	else if ((loss == 0 || play_ready_ts > space) && play_ready_ts >= SU_MAX(50, 2 * c->frame_timer))
+	else if (play_ready_ts > space && play_ready_ts >= SU_MAX(80, 2 * c->frame_timer))
 		c->f = 1.2f;
 
 	real_video_cache_sync_timestamp(s, c);
