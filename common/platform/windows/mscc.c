@@ -109,7 +109,7 @@ int su_udp_create(const char* ip, uint16_t port, su_socket* fd)
 {
 	SOCKET s;
 	SOCKADDR_IN addr;
-	int buf_size = 1024 * 64;
+	int buf_size = 1024 * 256;
 	s = socket(AF_INET,SOCK_DGRAM,0);
 
 	setsockopt(s, SOL_SOCKET, SO_RCVBUF, (void *)&buf_size, sizeof(int));
