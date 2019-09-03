@@ -8,7 +8,7 @@
 #include "razor_log.h"
 
 #define k_min_pace_bitrate (10*1000)
-#define k_bbr_heartbeat_timer 1000
+#define k_bbr_heartbeat_timer 30
 
 bbr_sender_t* bbr_sender_create(void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms, int padding)
 {
@@ -109,9 +109,9 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 	else
 		bbr_pacer_set_padding_rate(s->pacer, 0);
 
-	razor_debug("target = %u kbps, acked_birate = %dkbps, pacing = %u kbps, instant = %u kbps, loss = %u, congestion_window = %u, outstanding = %u, ratio = %2f, rtt = %lld\n\n", 
+	/*razor_debug("target = %u kbps, acked_birate = %dkbps, pacing = %u kbps, instant = %u kbps, loss = %u, congestion_window = %u, outstanding = %u, ratio = %2f, rtt = %lld\n\n", 
 		s->target_bitrate / 8000, acked_bitrate / 8000, pacing_rate_kbps, instant_rate_kbps, loss,
-		s->info.congestion_window, outstanding, s->encoding_rate_ratio, s->info.target_rate.rtt);
+		s->info.congestion_window, outstanding, s->encoding_rate_ratio, s->info.target_rate.rtt);*/
 
 	/*如果数据发生变化，进行触发一个通信层通知*/
 	if (s->target_bitrate != s->last_bitrate_bps || loss != s->last_fraction_loss){
@@ -178,9 +178,10 @@ void bbr_sender_on_feedback(bbr_sender_t* s, uint8_t* feedback, int feedback_siz
 	if (s->bbr != NULL){
 		acked_bitrate = bbr_feedback_get_birate(&s->feedback) / 8000;
 		s->info = bbr_on_feedback(s->bbr, &s->feedback.feedback, acked_bitrate);
-		bbr_on_network_invalidation(s);
-
-		s->notify_ts = GET_SYS_MS();
+		if (s->notify_ts + k_bbr_heartbeat_timer < GET_SYS_MS()){
+			bbr_on_network_invalidation(s);
+			s->notify_ts = GET_SYS_MS();
+		}
 	}
 }
 
