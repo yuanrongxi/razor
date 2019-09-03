@@ -334,7 +334,7 @@ static size_t bbr_get_target_congestion_window(bbr_controller_t* bbr, double gai
 		congestion_window = (size_t)(gain * bbr->initial_congestion_window);
 
 	if (congestion_window < bbr->min_congestion_window)
-		razor_debug("bdp = %d, max bandwidth = %u, min rtt = %u\n", congestion_window, bbr_bandwidth_estimate(bbr), bbr_get_min_rtt(bbr));
+		;/* razor_debug("bdp = %d, max bandwidth = %u, min rtt = %u\n", congestion_window, bbr_bandwidth_estimate(bbr), bbr_get_min_rtt(bbr));*/
 
 	return SU_MAX(congestion_window, bbr->min_congestion_window);
 }

@@ -109,9 +109,9 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 	else
 		bbr_pacer_set_padding_rate(s->pacer, 0);
 
-	/*razor_debug("target = %u kbps, acked_birate = %dkbps, pacing = %u kbps, instant = %u kbps, loss = %u, congestion_window = %u, outstanding = %u, ratio = %2f, rtt = %lld\n\n", 
+	razor_debug("target = %u kbps, acked_birate = %dkbps, pacing = %u kbps, instant = %u kbps, loss = %u, congestion_window = %u, outstanding = %u, ratio = %2f, rtt = %lld\n\n", 
 		s->target_bitrate / 8000, acked_bitrate / 8000, pacing_rate_kbps, instant_rate_kbps, loss,
-		s->info.congestion_window, outstanding, s->encoding_rate_ratio, s->info.target_rate.rtt);*/
+		s->info.congestion_window, outstanding, s->encoding_rate_ratio, s->info.target_rate.rtt);
 
 	/*如果数据发生变化，进行触发一个通信层通知*/
 	if (s->target_bitrate != s->last_bitrate_bps || loss != s->last_fraction_loss){

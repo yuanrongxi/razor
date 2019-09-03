@@ -340,8 +340,6 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 			else
 				c->frame_ts = frame->ts;
 
-			c->play_frame_ts = frame->ts;
-
 			real_video_clean_frame(s, c, frame);
 			ret = 0;
 		}

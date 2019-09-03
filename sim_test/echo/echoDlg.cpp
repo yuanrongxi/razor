@@ -462,7 +462,7 @@ void CechoDlg::OnBnClickedBtnconnect()
 			transport_type = gcc_transport;
 
 		int i = GetVideoResolution();
-		m_frame->set_bitrate(MIN_VIDEO_BITARE, resolution_infos[i].start_rate * 1000, resolution_infos[i].max_rate * 1000);
+		m_frame->set_bitrate(MIN_VIDEO_BITARE, resolution_infos[i].start_rate * 1000, resolution_infos[i].max_rate * 1000 * 5 / 4);
 
 		if (m_frame->connect(transport_type, (m_bPadding ? 1 : 0), m_iUser, ip.c_str(), m_iPort) == 0){
 			m_btnView.EnableWindow(FALSE);
