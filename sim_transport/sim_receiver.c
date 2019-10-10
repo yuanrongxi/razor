@@ -420,7 +420,7 @@ sim_receiver_t* sim_receiver_create(sim_session_t* s, int transport_type)
 	r->fir_state = fir_normal;
 
 	/*创建一个接收端的拥塞控制对象*/
-	r->cc_type = (transport_type == bbr_transport ? bbr_congestion : gcc_congestion);
+	r->cc_type = transport_type;
 	r->cc = razor_receiver_create(r->cc_type, MIN_BITRATE, MAX_BITRATE, SIM_SEGMENT_HEADER_SIZE, r, send_sim_feedback);
 
 	return r;
@@ -466,7 +466,7 @@ void sim_receiver_reset(sim_session_t* s, sim_receiver_t* r, int transport_type)
 		r->cc = NULL;
 	}
 
-	r->cc_type = (transport_type == bbr_transport ? bbr_congestion : gcc_congestion);
+	r->cc_type = transport_type;
 	r->cc = razor_receiver_create(r->cc_type, MIN_BITRATE, MAX_BITRATE, SIM_SEGMENT_HEADER_SIZE, r, send_sim_feedback);
 }
 

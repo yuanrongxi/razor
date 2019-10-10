@@ -36,10 +36,10 @@ struct __sim_session
 	int64_t			commad_ts;			/*信令时间戳*/
 	int64_t			stat_ts;
 
-	uint32_t		rbandwidth;			/*接收带宽*/
-	uint32_t		sbandwidth;			/*发送带宽*/
-	uint32_t		rcount;				/*接收的报文数量*/
-	uint32_t		scount;				/*发送的报文数量*/
+	uint64_t		rbandwidth;			/*接收带宽*/
+	uint64_t		sbandwidth;			/*发送带宽*/
+	uint64_t		rcount;				/*接收的报文数量*/
+	uint64_t		scount;				/*发送的报文数量*/
 	uint32_t		video_bytes;
 	uint32_t		max_frame_size;		/*周期内最大帧*/
 

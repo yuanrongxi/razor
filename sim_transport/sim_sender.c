@@ -32,7 +32,7 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction
 	if (fraction_loss < s->loss_fraction)
 		s->loss_fraction = (s->loss_fraction * 15 + fraction_loss) / 16;
 	else
-		s->loss_fraction = fraction_loss;
+		s->loss_fraction = (fraction_loss + s->loss_fraction) / 2;
 
 	loss = s->loss_fraction / 255.0;
 	/*todo:通过丢包率计算FEC比例，FEC机制在这进行计算！！！！*/
@@ -116,7 +116,10 @@ sim_sender_t* sim_sender_create(sim_session_t* s, int transport_type, int paddin
 
 	sender->cache = skiplist_create(idu32_compare, free_video_seg, s);
 	/*pacer queue的延迟不大于250ms*/
-	cc_type = (transport_type == bbr_transport ? bbr_congestion : gcc_congestion);
+	cc_type = transport_type;
+	if (cc_type < gcc_transport || cc_type > remb_transport)
+		cc_type = gcc_congestion;
+
 	sender->cc = razor_sender_create(cc_type, padding, s, sim_bitrate_change, sender, sim_send_packet, 1000);
 
 	sender->s = s;
@@ -162,7 +165,10 @@ void sim_sender_reset(sim_session_t* s, sim_sender_t* sender, int transport_type
 		sender->cc = NULL;
 	}
 
-	cc_type = (transport_type == bbr_transport ? bbr_congestion : gcc_congestion);
+	cc_type = transport_type;
+	if (cc_type < gcc_transport || cc_type > remb_transport)
+		cc_type = gcc_congestion;
+
 	sender->cc = razor_sender_create(cc_type, padding, s, sim_bitrate_change, sender, sim_send_packet, 300);
 }
 

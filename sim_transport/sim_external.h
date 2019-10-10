@@ -30,6 +30,7 @@ enum{
 enum{
 	gcc_transport = 0,
 	bbr_transport = 1,
+	remb_transport = 2,
 };
 
 typedef void(*sim_notify_fn)(void* event, int type, uint32_t val);
