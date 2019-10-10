@@ -31,7 +31,7 @@ typedef struct
 
 	float			scale;
 
-	int				accumulated_count;
+	int64_t			accumulated_count;
 	int				sample_num;
 }rate_stat_t;
 
