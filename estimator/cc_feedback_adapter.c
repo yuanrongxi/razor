@@ -30,7 +30,7 @@ void cc_feedback_adapter_destroy(feedback_adapter_t* adapter)
 		sender_history_destroy(adapter->hist);
 		adapter->hist = NULL;
 	}
-}
+}  
 
 void cc_feedback_add_packet(feedback_adapter_t* adapter, uint16_t seq, size_t size)
 {
