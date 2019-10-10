@@ -47,7 +47,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\common;..\estimator;..\pacing;..\cc;..\bbr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\common;..\estimator;..\pacing;..\cc;..\bbr;..\remb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -63,7 +63,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\common;..\estimator;..\pacing;..\cc;..\bbr;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\common;..\estimator;..\pacing;..\cc;..\bbr;..\remb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -115,6 +115,8 @@
     <ClCompile Include="..\pacing\interval_budget.c" />
     <ClCompile Include="..\pacing\pacer_queue.c" />
     <ClCompile Include="..\pacing\pace_sender.c" />
+    <ClCompile Include="..\remb\remb_receiver.c" />
+    <ClCompile Include="..\remb\remb_sender.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\bbr\bbr_bandwidth_sample.h" />
@@ -158,6 +160,8 @@
     <ClInclude Include="..\pacing\interval_budget.h" />
     <ClInclude Include="..\pacing\pacer_queue.h" />
     <ClInclude Include="..\pacing\pace_sender.h" />
+    <ClInclude Include="..\remb\remb_receiver.h" />
+    <ClInclude Include="..\remb\remb_sender.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

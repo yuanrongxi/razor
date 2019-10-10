@@ -22,6 +22,9 @@
     <Filter Include="bbr">
       <UniqueIdentifier>{430648d5-f6bb-4094-96e2-8db2d13c28be}</UniqueIdentifier>
     </Filter>
+    <Filter Include="remb">
+      <UniqueIdentifier>{95dd9241-d15b-4e9b-9104-4bc73ffb4507}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\common\cf_crc32.c">
@@ -150,6 +153,12 @@
     <ClCompile Include="..\estimator\cc_feedback_adapter.c">
       <Filter>estimator</Filter>
     </ClCompile>
+    <ClCompile Include="..\remb\remb_receiver.c">
+      <Filter>remb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\remb\remb_sender.c">
+      <Filter>remb</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\cf_crc32.h">
@@ -274,6 +283,12 @@
     </ClInclude>
     <ClInclude Include="..\bbr\bbr_sender.h">
       <Filter>bbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\remb\remb_sender.h">
+      <Filter>remb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\remb\remb_receiver.h">
+      <Filter>remb</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
