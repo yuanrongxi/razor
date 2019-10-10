@@ -8,6 +8,8 @@
 #include "razor_api.h"
 #include "sender_congestion_controller.h"
 #include "receiver_congestion_controller.h"
+#include "remb_sender.h"
+#include "remb_receiver.h"
 #include "bbr_sender.h"
 #include "bbr_receiver.h"
 
@@ -24,6 +26,13 @@ static void razor_bbr_sender_heartbeat(razor_sender_t* sender)
 		bbr_sender_heartbeat((bbr_sender_t*)sender, now_ts);
 }
 
+static void razor_remb_sender_heartbeat(razor_sender_t* sender)
+{
+	int64_t now_ts = GET_SYS_MS();
+	if(sender != NULL)
+		remb_sender_heartbeat((remb_sender_t*)sender, now_ts);
+}
+
 static void razor_sender_set_bitrates(razor_sender_t* sender, uint32_t min_bitrate, uint32_t start_bitrate, uint32_t max_bitrate)
 {
 	if (sender != NULL)
@@ -34,6 +43,12 @@ static void razor_bbr_sender_set_bitrates(razor_sender_t* sender, uint32_t min_b
 {
 	if (sender != NULL)
 		bbr_sender_set_bitrates((bbr_sender_t*)sender, min_bitrate, start_bitrate, max_bitrate);
+}
+
+static void razor_remb_sender_set_bitrates(razor_sender_t* sender, uint32_t min_bitrate, uint32_t start_bitrate, uint32_t max_bitrate)
+{
+	if (sender != NULL)
+		remb_sender_set_bitrates((remb_sender_t*)sender, min_bitrate, start_bitrate, max_bitrate);
 }
 
 static int razor_sender_add_packet(razor_sender_t* sender, uint32_t packet_id, int retrans, size_t size)
@@ -52,6 +67,14 @@ static int razor_bbr_sender_add_packet(razor_sender_t* sender, uint32_t packet_i
 		return -1;
 }
 
+static int razor_remb_sender_add_packet(razor_sender_t* sender, uint32_t packet_id, int retrans, size_t size)
+{
+	if (sender != NULL)
+		return remb_sender_add_pace_packet((remb_sender_t*)sender, packet_id, retrans, size);
+	else
+		return -1;
+}
+
 static void razor_sender_on_send(razor_sender_t* sender, uint16_t transport_seq, size_t size)
 {
 	if (sender != NULL)
@@ -62,6 +85,12 @@ static void razor_bbr_sender_on_send(razor_sender_t* sender, uint16_t transport_
 {
 	if (sender != NULL)
 		bbr_sender_send_packet((bbr_sender_t*)sender, transport_seq, size);
+}
+
+static void razor_remb_sender_on_send(razor_sender_t* sender, uint16_t transport_seq, size_t size)
+{
+	if (sender != NULL)
+		remb_sender_send_packet((remb_sender_t*)sender, transport_seq, size);
 }
 
 static void razor_sender_on_feedback(razor_sender_t* sender, uint8_t* feedback, int feedback_size)
@@ -76,6 +105,12 @@ static void razor_bbr_sender_on_feedback(razor_sender_t* sender, uint8_t* feedba
 		bbr_sender_on_feedback((bbr_sender_t*)sender, feedback, feedback_size);
 }
 
+static void razor_remb_sender_on_feedback(razor_sender_t* sender, uint8_t* feedback, int feedback_size)
+{
+	if (sender != NULL)
+		remb_sender_on_feedback((remb_sender_t*)sender, feedback, feedback_size);
+}
+
 static void razor_sender_update_rtt(razor_sender_t* sender, int32_t rtt)
 {
 	if (sender != NULL)
@@ -86,6 +121,12 @@ static void razor_bbr_sender_update_rtt(razor_sender_t* sender, int32_t rtt)
 {
 	if (sender != NULL)
 		bbr_sender_update_rtt((bbr_sender_t*)sender, rtt);
+}
+
+static void razor_remb_sender_update_rtt(razor_sender_t* sender, int32_t rtt)
+{
+	if (sender != NULL)
+		remb_sender_update_rtt((remb_sender_t*)sender, rtt);
 }
 
 static int razor_sender_get_pacer_queue_ms(razor_sender_t* sender)
@@ -100,6 +141,14 @@ static int razor_bbr_sender_get_pacer_queue_ms(razor_sender_t* sender)
 {
 	if (sender != NULL)
 		return (int)bbr_sender_get_pacer_queue_ms((bbr_sender_t*)sender);
+	else
+		return -1;
+}
+
+static int razor_remb_sender_get_pacer_queue_ms(razor_sender_t* sender)
+{
+	if (sender != NULL)
+		return (int)remb_sender_get_pacer_queue_ms((remb_sender_t*)sender);
 	else
 		return -1;
 }
@@ -120,10 +169,20 @@ static int64_t razor_bbr_sender_get_first_ts(razor_sender_t* sender)
 		return -1;
 }
 
+static int64_t razor_remb_sender_get_first_ts(razor_sender_t* sender)
+{
+	if (sender != NULL)
+		return remb_sender_get_first_packet_ts((remb_sender_t*)sender);
+	else
+		return -1;
+}
+
 razor_sender_t* razor_sender_create(int type, int padding, void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms)
 {
 	sender_cc_t* cc;
 	bbr_sender_t* bbr;
+	remb_sender_t* remb;
+
 	if (type == gcc_congestion){
 		cc = sender_cc_create(trigger, bitrate_cb, handler, send_cb, queue_ms);
 		cc->sender.heartbeat = razor_sender_heartbeat;
@@ -154,6 +213,21 @@ razor_sender_t* razor_sender_create(int type, int padding, void* trigger, bitrat
 
 		return (razor_sender_t*)bbr;
 	}
+	else if (type == remb_congestion){
+		remb = remb_sender_create(trigger, bitrate_cb, handler, send_cb, queue_ms, padding);
+		remb->sender.heartbeat = razor_remb_sender_heartbeat;
+		remb->sender.add_packet = razor_remb_sender_add_packet;
+		remb->sender.on_send = razor_remb_sender_on_send;
+		remb->sender.set_bitrates = razor_remb_sender_set_bitrates;
+		remb->sender.update_rtt = razor_remb_sender_update_rtt;
+		remb->sender.get_pacer_queue_ms = razor_remb_sender_get_pacer_queue_ms;
+		remb->sender.on_feedback = razor_remb_sender_on_feedback;
+		remb->sender.get_first_timestamp = razor_remb_sender_get_first_ts;
+		remb->sender.type = type;
+		remb->sender.padding = padding;
+
+		return (razor_sender_t*)remb;
+	}
 
 	return NULL;
 
@@ -166,6 +240,8 @@ void razor_sender_destroy(razor_sender_t* sender)
 			sender_cc_destroy((sender_cc_t*)sender);
 		else if (sender->type == bbr_congestion)
 			bbr_sender_destroy((bbr_sender_t*)sender);
+		else
+			remb_sender_destroy((remb_sender_t*)sender);
 	}
 }
 /**********************************************************************************/
@@ -181,6 +257,12 @@ static void razor_bbr_receiver_heartbeat(razor_receiver_t* receiver)
 		bbr_receive_check_acked((bbr_receiver_t*)receiver);
 }
 
+static void razor_remb_receiver_heartbeat(razor_receiver_t* receiver)
+{
+	if (receiver != NULL)
+		remb_receive_heartbeat((remb_receiver_t*)receiver);
+}
+
 static void razor_receiver_on_received(razor_receiver_t* receiver, uint16_t transport_seq, uint32_t timestamp, size_t size, int remb)
 {
 	if (receiver != NULL)
@@ -191,6 +273,12 @@ static void razor_bbr_receiver_on_received(razor_receiver_t* receiver, uint16_t 
 {
 	if (receiver != NULL)
 		bbr_receive_on_received((bbr_receiver_t*)receiver, transport_seq, timestamp, size, remb);
+}
+
+static void razor_remb_receiver_on_received(razor_receiver_t* receiver, uint16_t transport_seq, uint32_t timestamp, size_t size, int remb)
+{
+	if (receiver != NULL)
+		remb_receive_on_received((remb_receiver_t*)receiver, transport_seq, timestamp, size, remb);
 }
 
 static void razor_receiver_set_min_bitrate(razor_receiver_t* receiver, uint32_t bitrate)
@@ -205,6 +293,12 @@ static void razor_bbr_receiver_set_min_bitrate(razor_receiver_t* receiver, uint3
 		bbr_receive_set_min_bitrate((bbr_receiver_t*)receiver, bitrate);
 }
 
+static void razor_remb_receiver_set_min_bitrate(razor_receiver_t* receiver, uint32_t bitrate)
+{
+	if (receiver != NULL)
+		remb_receive_set_min_bitrate((remb_receiver_t*)receiver, bitrate);
+}
+
 static void razor_receiver_set_max_bitrate(razor_receiver_t* receiver, uint32_t bitrate)
 {
 	if (receiver != NULL)
@@ -215,6 +309,12 @@ static void razor_bbr_receiver_set_max_bitrate(razor_receiver_t* receiver, uint3
 {
 	if (receiver != NULL)
 		bbr_receive_set_max_bitrate((bbr_receiver_t*)receiver, bitrate);
+}
+
+static void razor_remb_receiver_set_max_bitrate(razor_receiver_t* receiver, uint32_t bitrate)
+{
+	if (receiver != NULL)
+		remb_receive_set_max_bitrate((remb_receiver_t*)receiver, bitrate);
 }
 
 static void razor_receiver_cc_update_rtt(razor_receiver_t* receiver, int32_t rtt)
@@ -229,10 +329,17 @@ static void razor_bbr_receiver_update_rtt(razor_receiver_t* receiver, int32_t rt
 		bbr_receive_update_rtt((bbr_receiver_t*)receiver, rtt);
 }
 
+static void razor_remb_receiver_upate_rtt(razor_receiver_t* receiver, int32_t rtt)
+{
+	if (receiver != NULL && rtt > 0)
+		remb_receive_update_rtt((remb_receiver_t*)receiver, rtt);
+}
+
 razor_receiver_t* razor_receiver_create(int type, int min_bitrate, int max_bitrate, int packet_header_size, void* handler, send_feedback_func cb)
 {
 	receiver_cc_t* cc;
 	bbr_receiver_t* bbr;
+	remb_receiver_t* remb;
 
 	if (type == gcc_congestion){
 		cc = receiver_cc_create(min_bitrate, max_bitrate, packet_header_size, handler, cb);
@@ -256,6 +363,16 @@ razor_receiver_t* razor_receiver_create(int type, int min_bitrate, int max_bitra
 
 		return (razor_receiver_t *)bbr;
 	}
+	else if (type == remb_congestion){
+		remb = remb_receive_create(handler, cb);
+		remb->receiver.heartbeat = razor_remb_receiver_heartbeat;
+		remb->receiver.on_received = razor_remb_receiver_on_received;
+		remb->receiver.set_max_bitrate = razor_remb_receiver_set_max_bitrate;
+		remb->receiver.set_min_bitrate = razor_remb_receiver_set_min_bitrate;
+		remb->receiver.update_rtt = razor_remb_receiver_upate_rtt;
+		remb->receiver.type = type;
+		return (razor_receiver_t*)remb;
+	}
 
 	return NULL;
 }
@@ -267,6 +384,8 @@ void razor_receiver_destroy(razor_receiver_t* receiver)
 			receiver_cc_destroy((receiver_cc_t*)receiver);
 		else if (receiver->type == bbr_congestion)
 			bbr_receive_destroy((bbr_receiver_t*)receiver);
+		else
+			remb_receive_destroy((remb_receiver_t*)receiver);
 	}
 }
 
