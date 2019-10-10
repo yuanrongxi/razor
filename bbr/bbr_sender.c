@@ -26,7 +26,7 @@ bbr_sender_t* bbr_sender_create(void* trigger, bitrate_changed_func bitrate_cb, 
 
 	bbr_feedback_adapter_init(&s->feedback);
 
-	s->pacer = bbr_pacer_create(handler, send_cb, queue_ms, padding);
+	s->pacer = bbr_pacer_create(handler, send_cb, NULL, NULL, queue_ms, padding);
 	
 	bbr_pacer_set_bitrate_limits(s->pacer, k_min_pace_bitrate);
 	bbr_pacer_set_estimate_bitrate(s->pacer, k_min_pace_bitrate);
@@ -102,7 +102,7 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 	s->target_bitrate = SU_MAX(s->target_bitrate, s->min_bitrate);
 	s->target_bitrate = SU_MIN(s->max_bitrate, s->target_bitrate);
 
-	loss = /*(uint8_t)(s->info.target_rate.loss_rate_ratio * 255 + 0.5f);*/s->loss_fraction;
+	loss = s->loss_fraction;
 
 	if (pading_rate_kbps != 0)
 		bbr_pacer_set_padding_rate(s->pacer, SU_MIN(target_rate_bps / 1000, pading_rate_kbps * 8));

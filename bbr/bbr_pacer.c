@@ -13,12 +13,14 @@
 #define k_default_pace_factor		1.5			/*默认的pace factor因子*/	
 
 
-bbr_pacer_t* bbr_pacer_create(void* handler, pace_send_func send_cb, uint32_t que_ms, int padding)
+bbr_pacer_t* bbr_pacer_create(void* handler, pace_send_func send_cb, void* notify_handler, pacer_send_notify_cb notify_cb, uint32_t que_ms, int padding)
 {
 	bbr_pacer_t* pace = calloc(1, sizeof(bbr_pacer_t));
 	pace->last_update_ts = GET_SYS_MS();
 	pace->handler = handler;
 	pace->send_cb = send_cb;
+	pace->notify_handler = notify_handler;
+	pace->notify_cb = notify_cb;
 	pace->padding = padding;
 	pace->factor = k_default_pace_factor;
 	pace->congestion_window_size = 0xffffffff;
@@ -48,7 +50,7 @@ void bbr_pacer_set_estimate_bitrate(bbr_pacer_t* pace, uint32_t bitrate_bps)
 {
 	pace->estimated_bitrate = bitrate_bps;
 	pace->pacing_bitrate_kpbs = SU_MAX(bitrate_bps / 1000, pace->min_sender_bitrate_kpbs) * pace->factor;
-	razor_debug("set pacer bitrate, bitrate = %ubps\n", bitrate_bps);
+	razor_debug("set pacer bitrate, bitrate = %uKB/s\n", pace->pacing_bitrate_kpbs / 8);
 }
 
 void bbr_pacer_set_bitrate_limits(bbr_pacer_t* pace, uint32_t min_bitrate)
@@ -122,6 +124,9 @@ static int bbr_pacer_send(bbr_pacer_t* pace, packet_event_t* ev)
 	if (pace->send_cb != NULL)
 		pace->send_cb(pace->handler, ev->seq, ev->retrans, ev->size, 0);
 
+	if (pace->notify_cb != NULL)
+		pace->notify_cb(pace->notify_handler, ev->size);
+
 	use_budget(&pace->media_budget, ev->size);
 	use_budget(&pace->padding_budget, ev->size);
 	pace->outstanding_bytes += ev->size;
@@ -148,6 +153,9 @@ void bbr_pacer_try_transmit(bbr_pacer_t* pace, int64_t now_ts)
 		if (ev != NULL){
 			if (pace->send_cb != NULL)
 				pace->send_cb(pace->handler, ev->seq, ev->retrans, ev->size, 0);
+
+			if (pace->notify_cb != NULL)
+				pace->notify_cb(pace->notify_handler, ev->size);
 
 			pace->outstanding_bytes += ev->size;
 			pacer_queue_sent(&pace->que, ev);
@@ -188,6 +196,9 @@ void bbr_pacer_try_transmit(bbr_pacer_t* pace, int64_t now_ts)
 			
 			if (pace->send_cb != NULL){
 				pace->send_cb(pace->handler, 0, 0, PADDING_SIZE, 1);
+
+				if (pace->notify_cb != NULL)
+					pace->notify_cb(pace->notify_handler, PADDING_SIZE);
 
 				use_budget(&pace->media_budget, PADDING_SIZE);
 				use_budget(&pace->padding_budget, PADDING_SIZE);

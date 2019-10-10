@@ -54,14 +54,14 @@ void bbr_receive_on_received(bbr_receiver_t* cc, uint16_t seq, uint32_t timestam
 	int64_t sequence, now_ts;
 	skiplist_iter_t* iter;
 	skiplist_item_t key, val;
+
+	now_ts = GET_SYS_MS();
 	/*Í³¼Æ¶ª°ü*/
-	loss_statistics_incoming(&cc->loss_stat, seq);
+	loss_statistics_incoming(&cc->loss_stat, seq, now_ts);
 
 	sequence = wrap_uint16(&cc->unwrapper, seq);
 	if (sequence > cc->base_seq + 32767)
 		return;
-
-	now_ts = GET_SYS_MS();
 
 	cc->base_seq = SU_MAX(cc->base_seq, sequence);
 

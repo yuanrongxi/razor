@@ -11,6 +11,8 @@
 #include "razor_api.h"
 #include "interval_budget.h"
 
+typedef void(*pacer_send_notify_cb)(void* handler, int size);
+
 /*这里没有利用gcc中的pacer的原因是因为BBR是基于发送窗口和pacing rate来控制发送频率的，不像GCC只是单纯使用estimator rate来控制发送频率*/
 
 typedef struct
@@ -32,9 +34,12 @@ typedef struct
 	/*发包回调函数*/
 	void*				handler;
 	pace_send_func		send_cb;
+
+	void*				notify_handler;
+	pacer_send_notify_cb notify_cb;
 }bbr_pacer_t;
 
-bbr_pacer_t*				bbr_pacer_create(void* handler, pace_send_func send_cb, uint32_t que_ms, int padding);
+bbr_pacer_t*				bbr_pacer_create(void* handler, pace_send_func send_cb, void* notify_handler, pacer_send_notify_cb notify_cb, uint32_t que_ms, int padding);
 void						bbr_pacer_destroy(bbr_pacer_t* pace);
 
 void						bbr_pacer_set_estimate_bitrate(bbr_pacer_t* pace, uint32_t bitrate_pbs);
