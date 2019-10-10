@@ -16,7 +16,7 @@ static void test_no_loss()
 
 	for (i = 0; i < 1200; ++i){
 		now_ts++;
-		loss_statistics_incoming(&loss_stat, seq++);
+		loss_statistics_incoming(&loss_stat, seq++, now_ts);
 	}
 
 	fraction_loss = 0;
@@ -44,11 +44,11 @@ static void test_out_of_order()
 	for (i = 2; i < 1202; ++i){
 		now_ts++;
 		if (i % 10 == 0)
-			loss_statistics_incoming(&loss_stat, seq + 1);
+			loss_statistics_incoming(&loss_stat, seq + 1, now_ts);
 		else if (i % 10 == 1)
-			loss_statistics_incoming(&loss_stat, seq - 1);
+			loss_statistics_incoming(&loss_stat, seq - 1, now_ts);
 		else
-			loss_statistics_incoming(&loss_stat, seq);
+			loss_statistics_incoming(&loss_stat, seq, now_ts);
 		seq++;
 	}
 
@@ -79,7 +79,7 @@ static void test_lost_packet()
 		now_ts++;
 		seq++;
 		if (i % 10 != 0)
-			loss_statistics_incoming(&loss_stat, seq);
+			loss_statistics_incoming(&loss_stat, seq, now_ts);
 	}
 
 	/*第一个周期统计*/
@@ -93,14 +93,14 @@ static void test_lost_packet()
 		now_ts++;
 		seq++;
 		if (i % 10 != 0)
-			loss_statistics_incoming(&loss_stat, seq);
+			loss_statistics_incoming(&loss_stat, seq, now_ts);
 	}
 
 	/*在发起一个周期统计*/
 	fraction_loss = 0;
 	num = 0;
 	loss_statistics_calculate(&loss_stat, now_ts, &fraction_loss, &num);
-	EXPECT_EQ(num, 600);
+	EXPECT_EQ(num, 1200);
 	EXPECT_EQ(fraction_loss, 25);
 
 	loss_statistics_destroy(&loss_stat);

@@ -192,7 +192,7 @@ static void test_run_simulation(test_bbr_controller_t* ctrl, int64_t duration,
 					feedback.data_in_flight += packet->size;
 				}
 
-				ctrl->update = bbr_on_feedback(ctrl->bbr, &feedback);
+				ctrl->update = bbr_on_feedback(ctrl->bbr, &feedback, 0xffffffff);
 			}
 		}
 

@@ -327,6 +327,7 @@ void CechoDlg::InitVideoDevices()
 
 	m_cbxCC.AddString(_T("GCC"));
 	m_cbxCC.AddString(_T("BBR"));
+	m_cbxCC.AddString(_T("REMB"));
 	m_cbxCC.SetCurSel(0);
 
 	m_cbxResolution.AddString(_T("120P"));
@@ -460,6 +461,8 @@ void CechoDlg::OnBnClickedBtnconnect()
 			transport_type = bbr_transport;
 		else if (m_strCC == _T("GCC"))
 			transport_type = gcc_transport;
+		else if (m_strCC == _T("REMB"))
+			transport_type = remb_transport;
 
 		int i = GetVideoResolution();
 		m_frame->set_bitrate(MIN_VIDEO_BITARE, resolution_infos[i].start_rate * 1000, resolution_infos[i].max_rate * 1000 * 5 / 4);
