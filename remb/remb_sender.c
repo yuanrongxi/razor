@@ -114,15 +114,15 @@ void remb_sender_on_feedback(remb_sender_t* s, uint8_t* feedback, int feedback_s
 		razor_debug("remb sender bitrates, remb = %dKB/s, target = %uKB/s, send rate = %uKB/s, loss fraction = %u\n", 
 			msg.remb / 8000, s->target_bitrate/8000, bitrate/8000, s->loss_fraction);
 
-		if (msg.remb > bitrate * 5 / 4)
+		if (msg.remb > bitrate * 1.4142f)
 				s->target_bitrate = SU_MIN(s->target_bitrate, msg.remb);
 		else if (s->loss_fraction <= 0)
 			s->target_bitrate = SU_MAX(s->target_bitrate, msg.remb);
 		else
 			s->target_bitrate = msg.remb;
 
-		if (s->loss_fraction < 20)
-			s->target_bitrate = s->target_bitrate + SU_MAX(32000, SU_MIN(400000, s->target_bitrate / 32));
+		if (s->loss_fraction < 5)
+			s->target_bitrate = s->target_bitrate + SU_MAX(16000, SU_MIN(400000, s->target_bitrate / 32));
 
 		s->target_bitrate = SU_MIN(s->max_bitrate, SU_MAX(s->min_bitrate, s->target_bitrate));
 
