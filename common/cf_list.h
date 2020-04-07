@@ -29,6 +29,7 @@ typedef struct {
 base_list_t*				create_list();
 void						destroy_list(base_list_t* l);
 
+void						list_clear(base_list_t* l);
 void						list_push(base_list_t* l, void* data);
 void*						list_pop(base_list_t* l);
 void*						list_front(base_list_t* l);

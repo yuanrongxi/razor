@@ -101,6 +101,12 @@ size_t list_size(base_list_t* l)
 	return l->size;
 }
 
+void list_clear(base_list_t* l)
+{
+	while (list_size(l) > 0)
+		list_pop(l);
+}
+
 
 
 
