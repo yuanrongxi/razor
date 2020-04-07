@@ -90,6 +90,17 @@ void sim_fec_active(sim_session_t* s, sim_receiver_fec_t* f)
 {
 }
 
+static inline void sim_fec_evict_segment(sim_session_t* s, sim_receiver_fec_t* f, flex_fec_receiver_t* flex)
+{
+	int i;
+	skiplist_item_t key;
+
+	for (i = 0; i < flex->count; i++){
+		key.u32 = flex->base_id + i;
+		skiplist_remove(f->segs_cache, key);
+	}
+}
+
 static void sim_fec_packet_add_recover(sim_session_t* s, sim_receiver_fec_t *f, sim_segment_t* seg)
 {
 	skiplist_item_t key, val;
@@ -126,13 +137,14 @@ static void sim_fec_add_segment_to_flex(sim_session_t* s, sim_receiver_fec_t* f,
 	}
 }
 
+#define EVICT_FEC_DELAY 3000
 void sim_fec_put_fec_packet(sim_session_t* s, sim_receiver_fec_t* f, sim_fec_t* fec)
 {
 	skiplist_iter_t* iter;
 	skiplist_item_t key, val;
 	flex_fec_receiver_t* flex;
 
-	if (fec->base_id + fec->count < f->base_id + 1){
+	if (fec->base_id + fec->count < f->base_id + 1 || fec->send_ts + EVICT_FEC_DELAY < f->max_ts){
 		sim_receiver_fec_free_fec(fec, NULL);
 		return;
 	}
@@ -144,7 +156,7 @@ void sim_fec_put_fec_packet(sim_session_t* s, sim_receiver_fec_t* f, sim_fec_t* 
 		val.ptr = flex;
 		skiplist_insert(f->flexes, key, val);
 
-		flex->fec_ts = GET_SYS_MS();
+		flex->fec_ts = fec->send_ts;
 		flex_fec_receiver_active(flex, fec->fec_id, fec->col, fec->row, fec->base_id, fec->count);
 
 		/*将已经在segs中的segments放入FLEX中*/
@@ -169,6 +181,7 @@ void sim_fec_put_segment(sim_session_t* s, sim_receiver_fec_t* f, sim_segment_t*
 	if (skiplist_search(f->segs_cache, key) != NULL)
 		return;
 
+	f->max_ts = SU_MAX(seg->timestamp, f->max_ts);
 	in_seg = malloc(sizeof(sim_segment_t));
 	*in_seg = *seg;
 	val.ptr = in_seg;
@@ -178,14 +191,19 @@ void sim_fec_put_segment(sim_session_t* s, sim_receiver_fec_t* f, sim_segment_t*
 	iter = skiplist_search(f->flexes, key);
 	if (iter == NULL || iter->val.ptr == NULL)
 		return;
-
+	 
 	list_clear(f->out);
 	flex_fec_receiver_on_segment(iter->val.ptr, in_seg, f->out);
 	while (list_size(f->out) > 0)
 		sim_fec_packet_add_recover(s, f, list_pop(f->out));
+	
+	/*如果已经完成了，释放掉FEC对象*/
+	if (flex_fec_receiver_full(iter->val.ptr) == 0){
+		sim_fec_evict_segment(s, f, iter->val.ptr);
+		skiplist_remove(f->flexes, iter->key);
+	}
 }
 
-#define EVICT_FEC_DELAY 3000
 void sim_fec_evict(sim_session_t* s, sim_receiver_fec_t* f, int64_t now_ts)
 {
 	flex_fec_receiver_t* flex;
@@ -201,10 +219,8 @@ void sim_fec_evict(sim_session_t* s, sim_receiver_fec_t* f, int64_t now_ts)
 	while (skiplist_size(f->flexes) > 0){
 		iter = skiplist_first(f->flexes);
 		flex = iter->val.ptr;
-		if (flex->fec_ts + EVICT_FEC_DELAY <= now_ts){
-			if (flex->base_id + flex->count > f->base_id + 1)
-				f->base_id = flex->base_id + flex->count - 1;
-
+		if (flex->fec_ts + EVICT_FEC_DELAY <= f->max_ts || flex_fec_receiver_full(flex) == 0){
+			sim_fec_evict_segment(s, f, flex);
 			skiplist_remove(f->flexes, iter->key);
 		}
 		else
@@ -214,7 +230,7 @@ void sim_fec_evict(sim_session_t* s, sim_receiver_fec_t* f, int64_t now_ts)
 	while (skiplist_size(f->segs_cache) > 0){
 		iter = skiplist_first(f->segs_cache);
 		seg = iter->val.ptr;
-		if (seg->packet_id <= f->base_id)
+		if (seg->timestamp + EVICT_FEC_DELAY * 2 < f->max_ts)
 			skiplist_remove(f->segs_cache, iter->key);
 		else
 			break;

@@ -26,7 +26,7 @@ typedef struct
 	uint16_t		cache_size;
 	sim_segment_t** cache;
 
-	int				fec_ts;
+	uint32_t		fec_ts;
 
 	flex_fec_free_f flex_fec_free_cb;
 	flex_segment_free_f flex_seg_free_cb;
@@ -38,6 +38,8 @@ flex_fec_receiver_t*		flex_fec_receiver_create(flex_segment_free_f seg_free, fle
 void						flex_fec_receiver_desotry(flex_fec_receiver_t* r);
 void						flex_fec_receiver_reset(flex_fec_receiver_t* r);
 void						flex_fec_receiver_active(flex_fec_receiver_t* r, uint16_t fec_id, uint8_t col, uint8_t row, uint32_t base_id, uint16_t count);
+
+int							flex_fec_receiver_full(flex_fec_receiver_t* r);
 
 sim_segment_t*				flex_fec_receiver_on_fec(flex_fec_receiver_t* r, sim_fec_t* fec);
 int							flex_fec_receiver_on_segment(flex_fec_receiver_t* r, sim_segment_t* seg, base_list_t* out);

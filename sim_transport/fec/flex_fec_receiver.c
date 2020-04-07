@@ -80,7 +80,6 @@ void flex_fec_receiver_active(flex_fec_receiver_t* r, uint16_t fec_id, uint8_t c
 	r->col = col;
 	r->count = count;
 	r->inited = 1;
-	r->fec_ts = GET_SYS_MS();
 
 	skiplist_clear(r->segs);
 	skiplist_clear(r->fecs);
@@ -90,6 +89,14 @@ void flex_fec_receiver_active(flex_fec_receiver_t* r, uint16_t fec_id, uint8_t c
 		r->cache_size = (cache_size / k_default_cache_size + 1) * k_default_cache_size;
 		r->cache = realloc(r->cache, sizeof(sim_segment_t*)*r->cache_size);
 	}
+}
+
+int flex_fec_receiver_full(flex_fec_receiver_t* r)
+{
+	if (skiplist_size(r->segs) >= r->count)
+		return 0;
+	else
+		return -1;
 }
 
 /*»Ö¸´ºáÏò¶ªÊ§µÄ°üX

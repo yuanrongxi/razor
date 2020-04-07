@@ -223,16 +223,16 @@ void flex_fec_sender_update(flex_fec_sender_t* fec, uint8_t protect_fraction, ba
 					}
 				}
 			}
-
-			fec->fec_id++; /*只增FEC对象ID*/
-			if (fec->fec_id == 0)
-				fec->fec_id = 1;
 		}
 
 		fec->fec_ts = 0;
 		fec->segs_count = 0;
 		fec->base_id = 0;
 		fec->first = 1;
+
+		fec->fec_id++; /*只增FEC对象ID*/
+		if (fec->fec_id == 0)
+			fec->fec_id = 1;
 	}
 }
 
