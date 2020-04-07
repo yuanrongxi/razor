@@ -83,6 +83,10 @@ void sim_encode_msg(bin_stream_t* strm, sim_header_t* header, void* body)
 		sim_pad_encode(strm, body);
 		break;
 
+	case SIM_FEC:
+		sim_fec_encode(strm, body);
+		break;
+
 	default:
 		;
 	}
@@ -134,6 +138,10 @@ int sim_decode_msg(bin_stream_t* strm, sim_header_t* header, void* body)
 		ret = sim_pad_decode(strm, body);
 		break;
 
+	case SIM_FEC:
+		ret = sim_fec_decode(strm, body);
+		break;
+
 	default:
 		;
 	}
@@ -176,6 +184,9 @@ const char* sim_get_msg_name(uint8_t msg_id)
 
 	case SIM_PAD:
 		return "SIM_PAD";
+
+	case SIM_FEC:
+		return "SIM_FEC";
 
 	default:
 		return "unknown message";

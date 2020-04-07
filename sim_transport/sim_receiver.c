@@ -423,6 +423,8 @@ sim_receiver_t* sim_receiver_create(sim_session_t* s, int transport_type)
 	r->cc_type = transport_type;
 	r->cc = razor_receiver_create(r->cc_type, MIN_BITRATE, MAX_BITRATE, SIM_SEGMENT_HEADER_SIZE, r, send_sim_feedback);
 
+	r->recover = sim_fec_create(s);
+
 	return r;
 }
 
@@ -439,6 +441,11 @@ void sim_receiver_destroy(sim_session_t* s, sim_receiver_t* r)
 	if (r->cc != NULL){
 		razor_receiver_destroy(r->cc);
 		r->cc = NULL;
+	}
+
+	if (r->recover != NULL){
+		sim_fec_destroy(s, r->recover);
+		r->recover = NULL;
 	}
 
 	free(r);
@@ -459,6 +466,9 @@ void sim_receiver_reset(sim_session_t* s, sim_receiver_t* r, int transport_type)
 	r->loss_count = 0;
 	r->fir_state = fir_normal;
 	r->fir_seq = 0;
+
+	if (r->recover != NULL)
+		sim_fec_reset(s, r->recover);
 
 	/*重新创建一个CC对象*/
 	if (r->cc != NULL){
@@ -481,6 +491,10 @@ int sim_receiver_active(sim_session_t* s, sim_receiver_t* r, uint32_t uid)
 	r->base_uid = uid;
 	r->active_ts = GET_SYS_MS();
 	r->fir_state = fir_normal;
+
+	if (r->recover != NULL)
+		sim_fec_active(s, r->recover);
+
 	return 0;
 }
 
@@ -631,13 +645,9 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 	}
 }
 
-int sim_receiver_put(sim_session_t* s, sim_receiver_t* r, sim_segment_t* seg)
+static int sim_receiver_internal_put(sim_session_t* s, sim_receiver_t* r, sim_segment_t* seg)
 {
 	uint32_t seq;
-
-	/*拥塞报告*/
-	if (r->cc != NULL)
-		r->cc->on_received(r->cc, seg->transport_seq, seg->timestamp + seg->send_ts, seg->data_size + SIM_SEGMENT_HEADER_SIZE, seg->remb);
 
 	if (r->max_seq == 0 && seg->ftype == 0)
 		return -1;
@@ -665,7 +675,68 @@ int sim_receiver_put(sim_session_t* s, sim_receiver_t* r, sim_segment_t* seg)
 	r->max_seq = SU_MAX(r->max_seq, seq);
 	r->max_ts = SU_MAX(r->max_ts, seg->timestamp);
 
+	return 0;
+}
+
+static void sim_receiver_recover(sim_session_t* s, sim_receiver_t* r)
+{
+	skiplist_iter_t* iter;
+	skiplist_t* recover_map;
+	sim_segment_t* seg, *in_seg;
+
+	/*将已经恢复的包进行处理*/
+	recover_map = r->recover->recover_packets;
+	while (skiplist_size(recover_map) > 0){
+		iter = skiplist_first(recover_map);
+		seg = iter->val.ptr;
+
+		in_seg = malloc(sizeof(sim_segment_t));
+		*in_seg = *seg;
+
+		skiplist_remove(recover_map, iter->key);
+
+		if (sim_receiver_internal_put(s, r, in_seg) == 0){
+			sim_debug("fec recover video segment, packet id = %u\n", in_seg->packet_id);
+			sim_fec_put_segment(s, r->recover, in_seg); /*将恢复的包插入到FEC继续恢复其他报文*/
+		}
+		else
+			free(in_seg);
+	}
+}
+
+int sim_receiver_put(sim_session_t* s, sim_receiver_t* r, sim_segment_t* seg)
+{
+	int rc;
+
+	/*拥塞报告*/
+	if (r->cc != NULL)
+		r->cc->on_received(r->cc, seg->transport_seq, seg->timestamp + seg->send_ts, seg->data_size + SIM_SEGMENT_HEADER_SIZE, seg->remb);
+
+	rc = sim_receiver_internal_put(s, r, seg);
+	if (rc != 0)
+		return rc;
+		
+	sim_debug("put video segment, packet id = %u\n", seg->packet_id);
+	/*进行FEC 恢复*/
+	if (r->recover != NULL && seg->fec_id > 0){
+		sim_fec_put_segment(s, r->recover, seg);
+		sim_receiver_recover(s, r);
+	}
+
 	video_real_ack(s, r, 0, seg->packet_id);
+
+	return rc;
+}
+
+int sim_receiver_put_fec(sim_session_t* s, sim_receiver_t* r, sim_fec_t* fec)
+{
+	if (r->cc != NULL)
+		r->cc->on_received(r->cc, fec->transport_seq, fec->send_ts, fec->fec_data_size + SIM_SEGMENT_HEADER_SIZE, 1);
+
+	if (r->recover != NULL){
+		sim_fec_put_fec_packet(s, r->recover, fec);
+		sim_receiver_recover(s, r);
+	}
 
 	return 0;
 }
@@ -706,6 +777,9 @@ void sim_receiver_timer(sim_session_t* s, sim_receiver_t* r, int64_t now_ts)
 	/*拥塞控制心跳*/
 	if (r->cc != NULL)
 		r->cc->heartbeat(r->cc);
+
+	if (r->recover != NULL)
+		sim_fec_evict(s, r->recover, now_ts);
 }
 
 void sim_receiver_update_rtt(sim_session_t* s, sim_receiver_t* r)

@@ -77,6 +77,9 @@ struct __sim_receiver
 
 	razor_receiver_t*	cc;
 	sim_session_t*		s;
+
+	sim_receiver_fec_t* recover;			/*FEC报文恢复对象*/
 };
+
 
 

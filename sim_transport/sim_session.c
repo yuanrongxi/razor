@@ -49,6 +49,7 @@ sim_session_t* sim_session_create(uint16_t port, void* event, sim_notify_fn noti
 
 	session->transport_type = gcc_transport;
 	session->padding = 1;
+	session->fec = 1;
 
 	session->notify_cb = notify_cb;
 	session->change_bitrate_cb = change_bitrate_cb;
@@ -118,6 +119,7 @@ static void sim_session_reset(sim_session_t* s)
 	s->interrupt = net_normal;
 	s->transport_type = gcc_transport;
 	s->padding = 1;
+	s->fec = 1;
 	
 	if (s->sender != NULL){
 		sim_sender_destroy(s, s->sender);
@@ -150,7 +152,7 @@ static void sim_session_send_connect(sim_session_t* s, int64_t now_ts)
 	s->resend++;
 }
 
-int sim_session_connect(sim_session_t* s, uint32_t local_uid, const char* peer_ip, uint16_t peer_port, int transport_type, int padding)
+int sim_session_connect(sim_session_t* s, uint32_t local_uid, const char* peer_ip, uint16_t peer_port, int transport_type, int padding, int fec)
 {
 	int ret = -1;
 	su_mutex_lock(s->mutex);
@@ -168,8 +170,11 @@ int sim_session_connect(sim_session_t* s, uint32_t local_uid, const char* peer_i
 	s->state = session_connecting;
 	s->transport_type = transport_type;
 	s->padding = padding;
+	s->fec = fec;
 	s->resend = 0;
 	s->scid = rand();
+
+	s->loss_fraction = 0;
 
 	sim_session_send_connect(s, GET_SYS_MS());
 
@@ -399,10 +404,10 @@ static void process_sim_connect_ack(sim_session_t* s, sim_header_t* header, bin_
 		s->state = session_connected;
 		/*´´½¨sender*/
 		if (s->sender == NULL){
-			s->sender = sim_sender_create(s, s->transport_type, s->padding);
+			s->sender = sim_sender_create(s, s->transport_type, s->padding, s->fec);
 		}
 		else
-			sim_sender_reset(s, s->sender, s->transport_type, s->padding);
+			sim_sender_reset(s, s->sender, s->transport_type, s->padding, s->fec);
 		sim_sender_active(s, s->sender);
 
 
@@ -545,6 +550,21 @@ static void process_sim_pad(sim_session_t* s, sim_header_t* header, bin_stream_t
 		sim_receiver_padding(s, s->receiver, pad.transport_seq, pad.send_ts, pad.data_size);	
 }
 
+static void process_sim_fec(sim_session_t* s, sim_header_t* header, bin_stream_t* strm, su_addr* addr)
+{
+	sim_fec_t* fec;
+	fec = malloc(sizeof(sim_fec_t));
+	if (sim_decode_msg(strm, header, fec) != 0){
+		free(fec);
+		return;
+	}
+
+	if (s->receiver != NULL)
+		sim_receiver_put_fec(s, s->receiver, fec);
+	else
+		free(fec);
+}
+
 static void sim_session_process(sim_session_t* s, bin_stream_t* strm, su_addr* addr)
 {
 	sim_header_t header;
@@ -607,6 +627,10 @@ static void sim_session_process(sim_session_t* s, bin_stream_t* strm, su_addr* a
 	case SIM_PAD:
 		process_sim_pad(s, &header, strm, addr);
 		break;
+
+	case SIM_FEC:
+		process_sim_fec(s, &header, strm, addr);
+		break;
 	}
 }
 
@@ -659,9 +683,11 @@ static void sim_session_state_timer(sim_session_t* s, int64_t now_ts, sim_sessio
 			s->state_cb(s->event, info);
 		}
 
-		sim_info("sim transport, send count = %u, recv count = %u, send bandwidth = %ukb/s, recv bandwidth = %ukb/s, rtt = %d, video rate = %ukb/s, pacer delay = %ums\n",
-			(uint32_t)(s->scount / 3), (uint32_t)(s->rcount / 3), (uint32_t)(s->sbandwidth * 1000 / delay), 
-			(uint32_t)(s->rbandwidth * 1000 / delay), s->rtt + s->rtt_var, s->video_bytes * 1000 / delay, pacer_ms);
+		if (s->sender != NULL){
+			sim_info("sim transport, send count = %u, recv count = %u, send bandwidth = %ukb/s, recv bandwidth = %ukb/s, rtt = %d, video rate = %ukb/s, pacer delay = %ums, loss=%u\n",
+				(uint32_t)(s->scount / 3), (uint32_t)(s->rcount / 3), (uint32_t)(s->sbandwidth * 1000 / delay),
+				(uint32_t)(s->rbandwidth * 1000 / delay), s->rtt + s->rtt_var, s->video_bytes * 1000 / delay, pacer_ms, s->loss_fraction);
+		}
 
 		s->rbandwidth = 0;
 		s->sbandwidth = 0;

@@ -22,17 +22,23 @@ struct __sim_sender
 	int							actived;
 	uint32_t					base_packet_id;			/*接受端报告已经接收到连续的最大报文ID*/
 
-	uint32_t					packet_id_seed;
+	uint32_t					packet_id_seed;			/*视频报文ID*/
+	uint32_t					send_id_seed;			/*与CC模块关联的发送ID*/
 	uint32_t					frame_id_seed;
 	uint32_t					transport_seq_seed;
 
 	int64_t						first_ts;			/*第一帧起始时间戳*/
 
-	skiplist_t*					cache;				/*发送窗口*/
+	skiplist_t*					segs_cache;			/*视频分片cache*/
+	skiplist_t*					fecs_cache;			/*fec发送窗口*/
+	skiplist_t*					ack_cache;			/*ack重传分片cache*/
 
 	razor_sender_t*				cc;					/*拥塞控制对象*/
 
 	sim_session_t*				s;
+
+	flex_fec_sender_t*			flex;				/*flex FEC对象*/
+	base_list_t*				out_fecs;
 };
 
 

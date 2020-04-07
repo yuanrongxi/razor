@@ -47,7 +47,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../common;../cc;../estimator;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../common;../cc;../estimator;./;./fec;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -81,7 +81,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="fec\flex_fec_receiver.h" />
+    <ClInclude Include="fec\flex_fec_sender.h" />
+    <ClInclude Include="fec\flex_fec_xor.h" />
     <ClInclude Include="sim_external.h" />
+    <ClInclude Include="sim_fec.h" />
     <ClInclude Include="sim_internal.h" />
     <ClInclude Include="sim_proto.h" />
     <ClInclude Include="sim_receiver.h" />
@@ -92,7 +96,11 @@
     <None Include="sim_proto.inl" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="fec\flex_fec_receiver.c" />
+    <ClCompile Include="fec\flex_fec_sender.c" />
+    <ClCompile Include="fec\flex_fec_xor.c" />
     <ClCompile Include="sim_external.c" />
+    <ClCompile Include="sim_fec.c" />
     <ClCompile Include="sim_limiter.c" />
     <ClCompile Include="sim_proto.c" />
     <ClCompile Include="sim_receiver.c" />
