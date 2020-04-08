@@ -354,6 +354,9 @@ int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t payload_type,
 
 		/*将报文加入到cc的pacer中*/
 		sender->cc->add_packet(sender->cc, seg->send_id, 0, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
+
+		if (sender->flex != NULL && sender->flex->segs_count >= 100)
+			sim_sender_fec(s, sender);
 	}
 	if (sender->flex != NULL)
 		sim_sender_fec(s, sender);

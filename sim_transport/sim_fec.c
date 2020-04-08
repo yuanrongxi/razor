@@ -182,6 +182,8 @@ void sim_fec_put_segment(sim_session_t* s, sim_receiver_fec_t* f, sim_segment_t*
 		return;
 
 	f->max_ts = SU_MAX(seg->timestamp, f->max_ts);
+
+	/*这个malloc出来的内存块在skiplist_remove(f->segs_cache)自动释放*/
 	in_seg = malloc(sizeof(sim_segment_t));
 	*in_seg = *seg;
 	val.ptr = in_seg;
@@ -189,7 +191,7 @@ void sim_fec_put_segment(sim_session_t* s, sim_receiver_fec_t* f, sim_segment_t*
 
 	key.u16 = seg->fec_id;
 	iter = skiplist_search(f->flexes, key);
-	if (iter == NULL || iter->val.ptr == NULL)
+	if (iter == NULL)
 		return;
 	 
 	list_clear(f->out);
