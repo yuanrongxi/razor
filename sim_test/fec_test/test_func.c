@@ -287,7 +287,7 @@ static void test_flex_order(sim_segment_t* segs[], base_list_t* fec_list, uint8_
 	flex_fec_receiver_desotry(receiver);
 }
 
-static uint8_t loss[] = { 0, 15, 21, 4, 23, 8, 10, 12, 17 };
+static uint8_t loss[] = { 5, 6, 7, 9 };
 
 void test_flex_receiver(uint8_t protect_fraction, uint8_t loss_num)
 {
