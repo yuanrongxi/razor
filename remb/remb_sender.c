@@ -122,7 +122,7 @@ void remb_sender_on_feedback(remb_sender_t* s, uint8_t* feedback, int feedback_s
 			s->target_bitrate = msg.remb;
 
 		if (s->loss_fraction < 5)
-			s->target_bitrate = s->target_bitrate + SU_MAX(16000, SU_MIN(400000, s->target_bitrate / 32));
+			s->target_bitrate = s->target_bitrate + SU_MAX(32000, SU_MIN(400000, s->target_bitrate / 32));
 
 		s->target_bitrate = SU_MIN(s->max_bitrate, SU_MAX(s->min_bitrate, s->target_bitrate));
 
