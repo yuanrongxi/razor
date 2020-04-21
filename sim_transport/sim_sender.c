@@ -246,17 +246,17 @@ int sim_sender_active(sim_session_t* s, sim_sender_t* sender)
 
 /*视频分片*/
 #define SPLIT_NUMBER	1024
-static uint16_t sim_split_frame(sim_session_t* s, uint16_t splits[], size_t size)
+static uint16_t sim_split_frame(sim_session_t* s, uint16_t splits[], size_t size, int segment_size)
 {
 	uint16_t ret, i;
 	uint16_t remain_size, packet_size;
 
-	if (size <= SIM_VIDEO_SIZE){
+	if (size <= segment_size){
 		ret = 1;
 		splits[0] = size;
 	}
 	else{
-		ret = (size + SIM_VIDEO_SIZE - 1) / SIM_VIDEO_SIZE;
+		ret = (size + segment_size - 1) / segment_size;
 		packet_size = size / ret;
 		remain_size = size % ret;
 
@@ -301,12 +301,15 @@ int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t payload_type,
 	uint8_t* pos;
 	skiplist_item_t key, val;
 	uint32_t timestamp;
+	int segment_size;
 
 	assert((size / SIM_VIDEO_SIZE) < SPLIT_NUMBER);
-
+	if (ftype == 1)
+		sim_debug("sender put video frame, data size = %d\n", size);
 	now_ts = GET_SYS_MS();
 	/*帧分包*/
-	total = sim_split_frame(s, splits, size);
+	segment_size = SIM_VIDEO_SIZE / 2;
+	total = sim_split_frame(s, splits, size, segment_size);
 
 	/*计算时间戳*/
 	if (sender->first_ts == -1){

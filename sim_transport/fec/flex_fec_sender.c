@@ -81,13 +81,13 @@ int flex_fec_sender_num_packets(flex_fec_sender_t* fec, uint8_t protect_fraction
 		return ret;
 	}
 
-	if (protect_fraction >= FEC_LOSS_THROLD && fec->segs_count > 6){ /*½øÐÐÖ¡Õó¾ØÕó±àÂë*/
+	if (protect_fraction >= FEC_LOSS_THROLD && fec->segs_count >= 6){ /*½øÐÐÖ¡Õó¾ØÕó±àÂë*/
 		f = sqrt(fec->segs_count);
 		colum = (int)f;
 		if (colum + 0.1f < f)
 			colum = 1 + (int)f;
 
-		colum = SU_MIN(20, SU_MAX(6, colum));
+		colum = SU_MIN(20, SU_MAX(3, colum));
 
 		fec->row = fec->segs_count / colum;
 		if ((fec->segs_count % colum) != 0)
@@ -160,7 +160,7 @@ void flex_fec_sender_update(flex_fec_sender_t* fec, uint8_t protect_fraction, ba
 				if (count > fec->segs_count - row_first)
 					count = fec->segs_count - row_first;
 
-				if (count > 1){
+				if (count >= 1){
 					out = malloc(sizeof(sim_fec_t));
 
 					if (flex_fec_generate(&fec->segs[row_first], count, out) == 0){			
@@ -205,7 +205,7 @@ void flex_fec_sender_update(flex_fec_sender_t* fec, uint8_t protect_fraction, ba
 							break;
 					}
 
-					if (count > 1){
+					if (count >= 1){
 						out = malloc(sizeof(sim_fec_t));
 
 						if (flex_fec_generate(fec->cache, count, out) == 0){

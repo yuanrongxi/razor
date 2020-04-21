@@ -716,7 +716,7 @@ int sim_receiver_put(sim_session_t* s, sim_receiver_t* r, sim_segment_t* seg)
 	if (rc != 0)
 		return rc;
 		
-	sim_debug("put video segment, packet id = %u\n", seg->packet_id);
+	/*sim_debug("put video segment, packet id = %u\n", seg->packet_id);*/
 	/*½øÐÐFEC »Ö¸´*/
 	if (r->recover != NULL && seg->fec_id > 0){
 		sim_fec_put_segment(s, r->recover, seg);

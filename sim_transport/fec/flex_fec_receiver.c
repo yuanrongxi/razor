@@ -47,7 +47,7 @@ void flex_fec_receiver_desotry(flex_fec_receiver_t* r)
 
 		if (r->cache != NULL){
 			free(r->cache);
-			r->cache;
+			r->cache = NULL;
 		}
 
 		free(r);
@@ -123,6 +123,8 @@ static sim_segment_t* flex_recover_row(flex_fec_receiver_t* r, uint8_t row)
 	/*拼凑基于row的恢复信息，并判断是否丢包*/
 	for (i = 0; i < r->col; ++i){
 		key.u32 = row * r->col + i + r->base_id;
+		if (key.u32 >= r->base_id + r->count)
+			break;
 
 		iter = skiplist_search(r->segs, key);
 		if (iter != NULL)
@@ -171,12 +173,15 @@ static sim_segment_t* flex_recover_col(flex_fec_receiver_t* r, uint8_t col)
 	count = 0;
 	loss = 0;
 
-	if (skiplist_size(r->segs) >= r->count)
+	if (skiplist_size(r->segs) >= r->count){
 		return seg;
+	}
 
 	/*拼凑基于colum的恢复信息，并判断是否丢包*/
 	for (i = 0; i < r->row; ++i){
 		key.u32 = i * r->col + col + r->base_id;
+		if (key.u32 >= r->base_id + r->count)
+			break;
 
 		iter = skiplist_search(r->segs, key);
 		if (iter != NULL)

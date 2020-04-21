@@ -82,6 +82,9 @@ int flex_fec_recover(sim_segment_t* segs[], int segs_count, sim_fec_t* fec, sim_
 		out_seg->data_size ^= seg->data_size;
 
 		/*²¹0²ÎÓëÔËËã*/
+		if (fec->fec_data_size < seg->data_size)
+			return -1;
+
 		memset(seg->data + seg->data_size, 0x00, fec->fec_data_size - seg->data_size);
 
 		for (j = 0; j < fec->fec_data_size; j++)
