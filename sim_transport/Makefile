@@ -1,6 +1,6 @@
 include ../Makefile.inc
 
-SRCS=$(wildcard *.c platform/posix/*.c)
+SRCS=$(wildcard *.c fec/*.c platform/posix/*.c)
 SRC_COMM=$(patsubst %.c, %.o, $(SRCS))
 
 #SRC_COMM = cf_crc32.c  cf_hex.c  cf_list.c  cf_skiplist.c  cf_stream.c  cf_unwrapper.c \
@@ -34,4 +34,4 @@ depend:
 install:
 
 clean: 
-	rm -f *.o $(DIR)/$(SLIB) 
+	rm -f fec/*.o *.o $(DIR)/$(SLIB) 
