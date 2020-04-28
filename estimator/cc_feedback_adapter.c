@@ -43,7 +43,7 @@ void cc_feedback_add_packet(feedback_adapter_t* adapter, uint16_t seq, size_t si
 	 
 	sender_history_add(adapter->hist, &packet);
 }
-
+ 
 static int feedback_packet_comp(const void* arg1, const void* arg2)
 {
 	packet_feedback_t *p1, *p2;
@@ -105,9 +105,9 @@ int cc_feedback_on_feedback(feedback_adapter_t* adapter, feedback_msg_t* msg)
 	return adapter->num;
 }
 
+ 
 
 
 
 
-
-
+ 

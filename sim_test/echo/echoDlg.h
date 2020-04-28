@@ -91,4 +91,5 @@ public:
 	CString m_strResolution;
 	CComboBox m_cbxCodec;
 	CString m_strCodec;
+	BOOL m_bFEC;
 };

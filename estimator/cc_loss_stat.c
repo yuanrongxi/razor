@@ -72,8 +72,6 @@ int loss_statistics_calculate(cc_loss_statistics_t* loss_stat, int64_t now_ts, u
 		*fraction_loss = 0;
 	else{
 		*fraction_loss = (disance - count) * 255 / disance;
-		if (*fraction_loss > 12) /*%5ртио*/
-			razor_info("loss!! fraction = %u\n", *fraction_loss);
 	}
 	*num = disance;
 

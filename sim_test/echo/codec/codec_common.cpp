@@ -142,7 +142,7 @@ void VideoEncoder::set_bitrate(uint32_t bitrate_kbps, int lost)
 
 int VideoEncoder::get_codec_width() const
 {
-	return resolution_infos[curr_resolution_].codec_width;;
+	return resolution_infos[curr_resolution_].codec_width;
 }
 
 int VideoEncoder::get_codec_height() const

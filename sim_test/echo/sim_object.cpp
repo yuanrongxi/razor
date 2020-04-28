@@ -99,13 +99,13 @@ void SimFramework::set_bitrate(uint32_t conf_min_bitrate, uint32_t conf_start_bi
 		sim_set_bitrates(conf_min_bitrate, conf_start_bitrate, conf_max_bitrate);
 }
 
-int SimFramework::connect(int transport_type, int padding, uint32_t user_id, const char* receiver_ip, uint16_t receiver_port)
+int SimFramework::connect(int transport_type, int padding, int fec, uint32_t user_id, const char* receiver_ip, uint16_t receiver_port)
 {
 	if (state_ != eframe_inited)
 		return -1;
 
 	//连接接收端
-	if (sim_connect(user_id, receiver_ip, receiver_port, transport_type, padding) != 0){
+	if (sim_connect(user_id, receiver_ip, receiver_port, transport_type, padding, fec) != 0){
 		printf("sim connect failed!\n");
 		return -2;
 	}

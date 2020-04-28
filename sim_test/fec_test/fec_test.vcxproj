@@ -11,19 +11,19 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{3FA0EFD2-F0D4-429A-BAF8-AB73EE59E40A}</ProjectGuid>
+    <ProjectGuid>{1866FE90-D23F-4556-9C18-5E7F69096C5A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>sim_transport</RootNamespace>
+    <RootNamespace>fec_test</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -39,19 +39,25 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../common;../cc;../estimator;./;./fec;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../sim_transport/fec;../../sim_transport/;../../common/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Wldap32.lib;WS2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -62,50 +68,29 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../common;../cc;../estimator;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\project\razor.vcxproj">
+    <ProjectReference Include="..\..\project\razor.vcxproj">
       <Project>{08200605-bf0e-4c36-aef2-c06d7254e533}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\sim_transport\sim_transport.vcxproj">
+      <Project>{3fa0efd2-f0d4-429a-baf8-ab73ee59e40a}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="fec\flex_fec_receiver.h" />
-    <ClInclude Include="fec\flex_fec_sender.h" />
-    <ClInclude Include="fec\flex_fec_xor.h" />
-    <ClInclude Include="sim_external.h" />
-    <ClInclude Include="sim_fec.h" />
-    <ClInclude Include="sim_internal.h" />
-    <ClInclude Include="sim_proto.h" />
-    <ClInclude Include="sim_receiver.h" />
-    <ClInclude Include="sim_sender.h" />
-    <ClInclude Include="sim_session.h" />
+    <ClCompile Include="main.c" />
+    <ClCompile Include="test_func.c" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="sim_proto.inl" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="fec\flex_fec_receiver.c" />
-    <ClCompile Include="fec\flex_fec_sender.c" />
-    <ClCompile Include="fec\flex_fec_xor.c" />
-    <ClCompile Include="sim_external.c" />
-    <ClCompile Include="sim_fec.c" />
-    <ClCompile Include="sim_limiter.c" />
-    <ClCompile Include="sim_proto.c" />
-    <ClCompile Include="sim_receiver.c" />
-    <ClCompile Include="sim_sender.c" />
-    <ClCompile Include="sim_session.c" />
+    <ClInclude Include="test_func.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

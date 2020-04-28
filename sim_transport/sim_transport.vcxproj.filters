@@ -13,6 +13,9 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="fec">
+      <UniqueIdentifier>{dcbf88f2-f12c-4107-bf21-e5d58bd5f26e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -34,6 +37,18 @@
       <Filter>transport</Filter>
     </ClInclude>
     <ClInclude Include="sim_external.h">
+      <Filter>transport</Filter>
+    </ClInclude>
+    <ClInclude Include="fec\flex_fec_sender.h">
+      <Filter>fec</Filter>
+    </ClInclude>
+    <ClInclude Include="fec\flex_fec_receiver.h">
+      <Filter>fec</Filter>
+    </ClInclude>
+    <ClInclude Include="fec\flex_fec_xor.h">
+      <Filter>fec</Filter>
+    </ClInclude>
+    <ClInclude Include="sim_fec.h">
       <Filter>transport</Filter>
     </ClInclude>
   </ItemGroup>
@@ -59,6 +74,18 @@
       <Filter>transport</Filter>
     </ClCompile>
     <ClCompile Include="sim_limiter.c">
+      <Filter>transport</Filter>
+    </ClCompile>
+    <ClCompile Include="fec\flex_fec_sender.c">
+      <Filter>fec</Filter>
+    </ClCompile>
+    <ClCompile Include="fec\flex_fec_xor.c">
+      <Filter>fec</Filter>
+    </ClCompile>
+    <ClCompile Include="fec\flex_fec_receiver.c">
+      <Filter>fec</Filter>
+    </ClCompile>
+    <ClCompile Include="sim_fec.c">
       <Filter>transport</Filter>
     </ClCompile>
   </ItemGroup>

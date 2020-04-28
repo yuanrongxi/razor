@@ -55,12 +55,12 @@ void sim_destroy()
 	g_inited = 0;
 }
 
-int sim_connect(uint32_t local_uid, const char* peer_ip, uint16_t peer_port, int transport_type, int padding)
+int sim_connect(uint32_t local_uid, const char* peer_ip, uint16_t peer_port, int transport_type, int padding, int fec)
 {
 	if (g_inited == 0)
 		return -1;
 
-	return sim_session_connect(g_session, local_uid, peer_ip, peer_port, transport_type, padding);
+	return sim_session_connect(g_session, local_uid, peer_ip, peer_port, transport_type, padding, fec);
 }
 
 int sim_disconnect()

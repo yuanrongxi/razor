@@ -24,6 +24,7 @@ struct __sim_session
 
 	int				transport_type;		/*拥塞控制的类型*/
 	int				padding;			/*cc是否采用填充模式*/
+	int				fec;				/*是否启动FEC*/
 
 	volatile int	run;				/*run线程标示 */
 	su_mutex		mutex;				/*用于上层多线程操作的保护锁*/

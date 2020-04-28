@@ -19,7 +19,7 @@ using namespace std;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
-//#include "vld.h"
+#include "vld.h"
 #endif
 
 
@@ -70,9 +70,10 @@ CechoDlg::CechoDlg(CWnd* pParent /*=NULL*/)
 	, m_strLocalRes(_T(""))
 	, m_strRemoteRes(_T(""))
 	, m_strCC(_T(""))
-	, m_bPadding(TRUE)
+	, m_bPadding(FALSE)
 	, m_strResolution(_T(""))
 	, m_strCodec(_T(""))
+	, m_bFEC(TRUE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_viewing = FALSE;
@@ -107,6 +108,7 @@ void CechoDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_CBString(pDX, IDC_CBXRES, m_strResolution);
 	DDX_Control(pDX, IDC_CBXCODEC, m_cbxCodec);
 	DDX_CBString(pDX, IDC_CBXCODEC, m_strCodec);
+	DDX_Check(pDX, IDC_CHK_FEC, m_bFEC);
 }
 
 BEGIN_MESSAGE_MAP(CechoDlg, CDialogEx)
@@ -467,7 +469,7 @@ void CechoDlg::OnBnClickedBtnconnect()
 		int i = GetVideoResolution();
 		m_frame->set_bitrate(MIN_VIDEO_BITARE, resolution_infos[i].start_rate * 1000, resolution_infos[i].max_rate * 1000 * 5 / 4);
 
-		if (m_frame->connect(transport_type, (m_bPadding ? 1 : 0), m_iUser, ip.c_str(), m_iPort) == 0){
+		if (m_frame->connect(transport_type, (m_bPadding ? 1 : 0), (m_bFEC ? 1 : 0), m_iUser, ip.c_str(), m_iPort) == 0){
 			m_btnView.EnableWindow(FALSE);
 			m_btnEcho.SetWindowText(_T("stop echo"));
 			m_connected = TRUE;
