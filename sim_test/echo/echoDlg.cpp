@@ -508,7 +508,7 @@ LRESULT CechoDlg::OnConnectSucc(WPARAM wparam, LPARAM lparam)
 
 	video_info_t info;
 	info.pix_format = RGB24;
-	info.rate = 16;
+	info.rate = 24;
 	info.codec = GetCodec();
 	info.width = resolution_infos[i].codec_width;
 	info.height = resolution_infos[i].codec_height;
