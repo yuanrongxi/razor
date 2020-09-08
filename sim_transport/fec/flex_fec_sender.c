@@ -1,7 +1,7 @@
 #include "flex_fec_sender.h"
 #include <math.h>
 
-#define DEFAULT_SIZE 16
+#define DEFAULT_SIZE 32
 #define FEC_REPAIR_WINDOW 500
 #define FEC_LOSS_THROLD 52
 
@@ -48,9 +48,18 @@ void flex_fec_sender_reset(flex_fec_sender_t* fec)
 /*必须按照从小到大 连续 不重复的将视频包数据增加到flex fec当中*/
 void flex_fec_sender_add_segment(flex_fec_sender_t* fec, sim_segment_t* seg)
 {
+	int64_t now_ts;
+	now_ts = GET_SYS_MS();
+	
 	/*更新FEC窗口时间*/
 	if (fec->fec_ts == 0)
-		fec->fec_ts = GET_SYS_MS();
+		fec->fec_ts = now_ts;
+	else if (fec->fec_ts + FEC_REPAIR_WINDOW * 4 < now_ts) {
+		fec->segs_count = 0;
+		fec->base_id = 0;
+		fec->first = 1;
+		fec->fec_ts = now_ts;
+	}
 
 	if (fec->first == 1)
 		fec->base_id = seg->packet_id;
@@ -60,7 +69,8 @@ void flex_fec_sender_add_segment(flex_fec_sender_t* fec, sim_segment_t* seg)
 	fec->first = 0;
 	
 	if (fec->segs_count >= fec->seg_size){
-		fec->seg_size += DEFAULT_SIZE;
+		while(fec->segs_count >= fec->seg_size)
+			fec->seg_size += DEFAULT_SIZE;
 		fec->segs = realloc(fec->segs, sizeof(sim_segment_t*) * fec->seg_size);
 	}
 	/*默认去重*/
@@ -126,7 +136,7 @@ int flex_fec_sender_num_packets(flex_fec_sender_t* fec, uint8_t protect_fraction
 
 static inline int flex_fec_sender_over(flex_fec_sender_t* fec, int64_t now_ts)
 {
-	if (fec->fec_ts + FEC_REPAIR_WINDOW < now_ts || fec->segs_count >= 4)
+	if (fec->fec_ts + FEC_REPAIR_WINDOW < now_ts || fec->segs_count >= 6)
 		return 0;
 	else
 		return -1;
@@ -137,7 +147,7 @@ void flex_fec_sender_update(flex_fec_sender_t* fec, uint8_t protect_fraction, ba
 {
 	int64_t now_ts;
 	sim_fec_t* out;
-	int row, col, count, row_first, fec_index, rc;
+	int row, col, count, row_first, rc;
 
 	now_ts = GET_SYS_MS();
 
@@ -146,7 +156,6 @@ void flex_fec_sender_update(flex_fec_sender_t* fec, uint8_t protect_fraction, ba
 		rc = flex_fec_sender_num_packets(fec, protect_fraction);
 
 		if (fec->col > 1){
-			fec_index = 0;
 			/*计算横向FEC packet
 			-------------------------------------------
 			| 1 | 2 | 3 | 4 | 5 | R0 = xor(1,2,3,4,5) |
@@ -188,7 +197,6 @@ void flex_fec_sender_update(flex_fec_sender_t* fec, uint8_t protect_fraction, ba
 			----------------------
 			*/
 			if (fec->row > 1 && rc == 1){
-				fec_index = 0;
 				if (fec->cache_size < fec->row){
 					while (fec->cache_size < fec->row)
 						fec->cache_size += DEFAULT_SIZE;
@@ -236,17 +244,17 @@ void flex_fec_sender_update(flex_fec_sender_t* fec, uint8_t protect_fraction, ba
 	}
 }
 
-void flex_fec_sender_release(flex_fec_sender_t* fec, base_list_t* packet_list)
+void flex_fec_sender_release(flex_fec_sender_t* fec, base_list_t* out_fecs)
 {
 	base_list_unit_t* iter;
 	sim_fec_t* packet;
 
-	LIST_FOREACH(packet_list, iter){
+	LIST_FOREACH(out_fecs, iter){
 		packet = iter->pdata;
 		if (packet != NULL)
 			free(packet);
 	}
 
-	list_clear(packet_list);
+	list_clear(out_fecs);
 }
 

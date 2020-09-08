@@ -4,16 +4,12 @@
 
 static void flex_free_segment(skiplist_item_t key, skiplist_item_t val, void* args)
 {
-	flex_fec_receiver_t* r = (flex_fec_receiver_t*)args;
-	if (r != NULL && r->flex_seg_free_cb != NULL)
-		r->flex_seg_free_cb(val.ptr, r->args);
 }
 
 static void flex_free_fec(skiplist_item_t key, skiplist_item_t val, void* args)
 {
-	flex_fec_receiver_t* r = (flex_fec_receiver_t*)args;
-	if (r != NULL && r->flex_fec_free_cb != NULL)
-		r->flex_fec_free_cb(val.ptr, r->args);
+	if (val.ptr != NULL)
+		free(val.ptr);
 }
 
 flex_fec_receiver_t* flex_fec_receiver_create(flex_segment_free_f seg_free, flex_fec_free_f fec_free, void* args)
@@ -22,8 +18,8 @@ flex_fec_receiver_t* flex_fec_receiver_create(flex_segment_free_f seg_free, flex
 	r->cache_size = k_default_cache_size;
 	r->cache = calloc(1, sizeof(sim_segment_t*) * k_default_cache_size);
 
-	r->segs = skiplist_create(idu32_compare, flex_free_segment, r);
-	r->fecs = skiplist_create(idu16_compare, flex_free_fec, r);
+	r->segs = skiplist_create(idu32_compare, flex_free_segment, NULL);
+	r->fecs = skiplist_create(idu16_compare, flex_free_fec, NULL);
 
 	r->args = args;
 	r->flex_fec_free_cb = fec_free;
@@ -127,8 +123,9 @@ static sim_segment_t* flex_recover_row(flex_fec_receiver_t* r, uint8_t row)
 			break;
 
 		iter = skiplist_search(r->segs, key);
-		if (iter != NULL)
+		if (iter != NULL){
 			r->cache[count++] = iter->val.ptr;
+		}
 		else
 			loss++;
 	}
@@ -173,9 +170,8 @@ static sim_segment_t* flex_recover_col(flex_fec_receiver_t* r, uint8_t col)
 	count = 0;
 	loss = 0;
 
-	if (skiplist_size(r->segs) >= r->count){
+	if (skiplist_size(r->segs) >= r->count)
 		return seg;
-	}
 
 	/*拼凑基于colum的恢复信息，并判断是否丢包*/
 	for (i = 0; i < r->row; ++i){
@@ -184,12 +180,12 @@ static sim_segment_t* flex_recover_col(flex_fec_receiver_t* r, uint8_t col)
 			break;
 
 		iter = skiplist_search(r->segs, key);
-		if (iter != NULL)
+		if (iter != NULL){
 			r->cache[count++] = iter->val.ptr;
+		}
 		else
 			loss++;
 	}
-
 	/*FEC无法恢复*/
 	if (loss != 1 || count == 0)
 		return seg;
@@ -240,8 +236,7 @@ sim_segment_t* flex_fec_receiver_on_fec(flex_fec_receiver_t* r, sim_fec_t* fec)
 	return recover;
 
 err:
-	if (r->flex_fec_free_cb != NULL)
-		r->flex_fec_free_cb(fec, r->args);
+	free(fec);
 	return NULL;
 }
 
@@ -281,8 +276,6 @@ int flex_fec_receiver_on_segment(flex_fec_receiver_t* r, sim_segment_t* seg, bas
 	return 0;
 
 err:
-	if (r->flex_seg_free_cb != NULL)
-		r->flex_seg_free_cb(seg, r->args);
 	return -1;
 }
 

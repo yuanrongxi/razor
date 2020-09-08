@@ -522,7 +522,7 @@ static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32
 		skiplist_clear(r->loss);
 		sim_receiver_send_fir(s, r);
 	}
-	else if (skiplist_size(r->loss) > 300){
+	else if (skiplist_size(r->loss) > 80){
 		skiplist_clear(r->loss);
 		sim_receiver_send_fir(s, r);
 	}
@@ -594,6 +594,9 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 	uint32_t min_seq, delay, space_factor;
 	int max_count = 0;
 
+	uint32_t numbers[NACK_NUM];
+	int i, evict_count = 0;
+
 	cur_ts = GET_SYS_MS();
 	/*如果是心跳触发*/
 	if ((hb == 0 && r->ack_ts + ACK_REAL_TIME < cur_ts) || (r->ack_ts + ACK_HB_TIME < cur_ts)){
@@ -618,7 +621,11 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 				continue;
 
 			space_factor = SU_MAX(10, s->rtt + s->rtt_var) + l->count * SU_MIN(100, SU_MAX(10, s->rtt_var)); /*用于简单的拥塞限流，防止GET洪水*/
-			if (l->ts + space_factor <= cur_ts && l->count < 15 && l->loss_ts + MIN_EVICT_DELAY_MS / 2 > cur_ts && ack.nack_num < NACK_NUM){
+			if (l->count < 15 && l->loss_ts + MIN_EVICT_DELAY_MS / 2 > cur_ts){
+				if (evict_count < NACK_NUM)
+					numbers[evict_count++] = iter->key.u32;
+			}
+			else if (l->ts + space_factor <= cur_ts && ack.nack_num < NACK_NUM){
 				ack.nack[ack.nack_num++] = iter->key.u32 - r->base_seq;
 				l->ts = cur_ts;
 
@@ -642,6 +649,11 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 
 		r->cache->wait_timer = (r->cache->wait_timer * 7 + delay) / 8;
 		r->cache->wait_timer = SU_MAX(r->cache->frame_timer, r->cache->wait_timer);
+
+		for (i = 0; i < evict_count; i++){
+			key.u32 = numbers[i];
+			skiplist_remove(r->loss, key);
+		}
 	}
 }
 

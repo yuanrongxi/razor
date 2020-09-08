@@ -1,4 +1,5 @@
 #include "flex_fec_xor.h"
+#include <assert.h>
 
 int flex_fec_generate(sim_segment_t* segs[], int segs_count, sim_fec_t* fec)
 {
@@ -8,24 +9,27 @@ int flex_fec_generate(sim_segment_t* segs[], int segs_count, sim_fec_t* fec)
 	if (segs_count <= 1)
 		return -1;
 
-	fec->fec_meta.seq = segs[0]->packet_id;
-	fec->fec_meta.fid = segs[0]->fid;
-	fec->fec_meta.ts = segs[0]->timestamp;
-	fec->fec_meta.payload_type = segs[0]->payload_type;
-	fec->fec_meta.ftype = segs[0]->ftype;
-	fec->fec_meta.index = segs[0]->index;
-	fec->fec_meta.total = segs[0]->total;
-	fec->fec_meta.size = segs[0]->data_size;
-
-	memcpy(fec->fec_data, segs[0]->data, segs[0]->data_size);
+	seg = segs[0];
+	fec->fec_meta.seq = seg->packet_id;
+	fec->fec_meta.fid = seg->fid;
+	fec->fec_meta.ts = seg->timestamp;
+	fec->fec_meta.payload_type = seg->payload_type;
+	fec->fec_meta.ftype = seg->ftype;
+	fec->fec_meta.index = seg->index;
+	fec->fec_meta.total = seg->total;
+	fec->fec_meta.size = seg->data_size;
 
 	fec->fec_data_size = 0;
-	for (i = 0; i < segs_count; i++){
+	for (i = 0; i < segs_count; i++) {
 		if (fec->fec_data_size < segs[i]->data_size)
 			fec->fec_data_size = segs[i]->data_size;
 	}
+	if (fec->fec_data_size > SIM_VIDEO_SIZE)
+		return -1;
+
+	memcpy(fec->fec_data, seg->data, seg->data_size);
 	/*补0参与运算*/
-	memset(fec->fec_data + segs[0]->data_size, 0x00, fec->fec_data_size - segs[0]->data_size);
+	memset(fec->fec_data + seg->data_size, 0x00, fec->fec_data_size - seg->data_size);
 
 	for (i = 1; i < segs_count; i++){
 		seg = segs[i];
@@ -67,7 +71,6 @@ int flex_fec_recover(sim_segment_t* segs[], int segs_count, sim_fec_t* fec, sim_
 	out_seg->data_size = fec->fec_meta.size;
 
 	memcpy(out_seg->data, fec->fec_data, fec->fec_data_size);
-
 	/*求值*/
 	for (i = 0; i < segs_count; i++){
 		seg = segs[i];
