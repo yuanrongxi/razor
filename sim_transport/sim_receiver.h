@@ -67,6 +67,8 @@ struct __sim_receiver
 	uint64_t			cache_ts;
 	uint64_t			active_ts;
 
+	uint64_t			fir_ts;
+
 	int					actived;
 
 	/*和FIR有关的参数*/

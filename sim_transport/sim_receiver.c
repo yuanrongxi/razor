@@ -498,16 +498,22 @@ int sim_receiver_active(sim_session_t* s, sim_receiver_t* r, uint32_t uid)
 	return 0;
 }
 
+#define FIR_DELAY_TIME 2000
 static void sim_receiver_send_fir(sim_session_t* s, sim_receiver_t* r)
 {
 	sim_fir_t fir;
 	sim_header_t header;
 
-	INIT_SIM_HEADER(header, SIM_FIR, s->uid);
-	fir.fir_seq = (r->fir_state == fir_flightting) ? r->fir_seq : (++r->fir_seq);
+	int64_t cur_ts = GET_SYS_MS();
+	if (r->fir_ts + FIR_DELAY_TIME < cur_ts){
+		INIT_SIM_HEADER(header, SIM_FIR, s->uid);
+		fir.fir_seq = (r->fir_state == fir_flightting) ? r->fir_seq : (++r->fir_seq);
 
-	sim_encode_msg(&s->sstrm, &header, &fir);
-	sim_session_network_send(s, &s->sstrm);
+		sim_encode_msg(&s->sstrm, &header, &fir);
+		sim_session_network_send(s, &s->sstrm);
+
+		r->fir_ts = cur_ts;
+	}
 }
 
 static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32_t seq, uint32_t ts)
