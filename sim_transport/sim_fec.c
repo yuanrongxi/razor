@@ -206,6 +206,7 @@ void sim_fec_put_segment(sim_session_t* s, sim_receiver_fec_t* f, sim_segment_t*
 	}
 }
 
+#define EVICT_FEC_TIMER 300
 void sim_fec_evict(sim_session_t* s, sim_receiver_fec_t* f, int64_t now_ts)
 {
 	flex_fec_receiver_t* flex;
@@ -213,7 +214,7 @@ void sim_fec_evict(sim_session_t* s, sim_receiver_fec_t* f, int64_t now_ts)
 
 	skiplist_iter_t* iter;
 
-	if (f->evict_ts + 300 > now_ts)
+	if (f->evict_ts + EVICT_FEC_TIMER > now_ts)
 		return;
 
 	f->evict_ts = now_ts;
