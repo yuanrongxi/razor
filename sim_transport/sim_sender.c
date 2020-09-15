@@ -409,9 +409,6 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 			if (seg->timestamp + seg->send_ts + sender->first_ts + SU_MIN(200, SU_MAX(30, s->rtt / 4)) > now_ts)
 				continue;
 
-			if (seg->timestamp + 8 * s->rtt < now_ts - sender->first_ts)
-				continue;
-
 			/*将报文加入到cc的pacer中进行重发*/
 			sender->cc->add_packet(sender->cc, seg->send_id, 0, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
 		}

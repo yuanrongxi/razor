@@ -10,7 +10,7 @@
 
 #define CACHE_SIZE 1024
 #define INDEX(i)	((i) % CACHE_SIZE)
-#define MAX_EVICT_DELAY_MS 8000
+#define MAX_EVICT_DELAY_MS 6000
 #define MIN_EVICT_DELAY_MS 3000
 
 /************************************************播放缓冲区的定义**********************************************************/
