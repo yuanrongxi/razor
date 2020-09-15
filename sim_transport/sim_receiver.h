@@ -43,6 +43,8 @@ typedef struct
 
 	float				f;
 
+	skiplist_t*			discard_loss;
+
 	sim_frame_t*		frames;
 }sim_frame_cache_t;
 

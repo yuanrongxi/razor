@@ -13,6 +13,8 @@
 #define MAX_EVICT_DELAY_MS 6000
 #define MIN_EVICT_DELAY_MS 3000
 
+static void sim_receiver_send_fir(sim_session_t* s, sim_receiver_t* r);
+
 /************************************************播放缓冲区的定义**********************************************************/
 static sim_frame_cache_t* open_real_video_cache(sim_session_t* s)
 {
@@ -24,11 +26,15 @@ static sim_frame_cache_t* open_real_video_cache(sim_session_t* s)
 	cache->f = 1.0f;
 	cache->size = CACHE_SIZE;
 	cache->frames = calloc(cache->size, sizeof(sim_frame_cache_t));
+
+	cache->discard_loss = skiplist_create(idu32_compare, NULL, NULL);
 	return cache;
 }
 
 static inline void real_video_clean_frame(sim_session_t* session, sim_frame_cache_t* c, sim_frame_t* frame)
 {
+	skiplist_iter_t* iter;
+
 	int i;
 	if (frame->seg_number == 0)
 		return;
@@ -49,56 +55,14 @@ static inline void real_video_clean_frame(sim_session_t* session, sim_frame_cach
 	frame->seg_number = 0;
 
 	c->min_fid = frame->fid;
-}
 
-static void close_real_video_cache(sim_session_t* s, sim_frame_cache_t* cache)
-{
-	uint32_t i;
-	for (i = 0; i < cache->size; ++i)
-		real_video_clean_frame(s, cache, &cache->frames[i]);
-
-	free(cache->frames);
-	free(cache);
-}
-
-static void reset_real_video_cache(sim_session_t* s, sim_frame_cache_t* cache)
-{
-	uint32_t i;
-
-	for (i = 0; i < cache->size; ++i)
-		real_video_clean_frame(s, cache, &cache->frames[i]);
-
-	cache->min_seq = 0;
-	cache->min_fid = 0;
-	cache->max_fid = 0;
-	cache->play_ts = 0;
-	cache->frame_ts = 0;
-	cache->max_ts = 100;
-	cache->frame_timer = 100;
-	cache->f = 1.0f;
-
-	cache->state = buffer_waiting;
-	cache->wait_timer = SU_MAX(100, s->rtt + 2 * s->rtt_var);
-	cache->loss_flag = 0;
-}
-
-static void real_video_evict_frame(sim_session_t* s, sim_frame_cache_t* c, uint32_t fid)
-{
-	uint32_t pos, i;
-
-	for (pos = c->max_fid + 1; pos <= fid; pos++)
-		real_video_clean_frame(s, c, &c->frames[INDEX(pos)]);
-
-	if (fid < c->min_fid + c->size)
-		return;
-
-	for (pos = c->min_fid + 1; pos < c->max_fid; ++pos){
-		if (c->frames[INDEX(pos)].frame_type == 1)
+	while (skiplist_size(c->discard_loss) > 0){
+		iter = skiplist_first(c->discard_loss);
+		if (iter->key.u32 <= c->min_seq)
+			skiplist_remove(c->discard_loss, iter->key);
+		else
 			break;
 	}
-
-	for (i = c->min_fid + 1; i < pos; ++i)
-		real_video_clean_frame(s, c, &c->frames[INDEX(i)]);
 }
 
 static int evict_gop_frame(sim_session_t* s, sim_frame_cache_t* c)
@@ -124,10 +88,130 @@ static int evict_gop_frame(sim_session_t* s, sim_frame_cache_t* c)
 		c->frame_ts = c->frames[INDEX(i)].ts;
 		real_video_clean_frame(s, c, &c->frames[INDEX(i)]);
 	}
-	 
+
 	c->min_fid = key_frame_id - 1;
 
 	return 0;
+}
+
+static inline int real_video_cache_check_frame_full(sim_session_t* s, sim_frame_t* frame)
+{
+	int i;
+	if (frame->seg_number <= 0)
+		return -1;
+
+	for (i = 0; i < frame->seg_number; ++i)
+		if (frame->segments[i] == NULL)
+			return -1;
+
+	return 0;
+}
+
+static void real_video_cache_evict_discard(sim_session_t* s, sim_frame_cache_t* c)
+{
+	uint32_t pos, missing_seq, i, j;
+	sim_frame_t* frame;
+	skiplist_item_t key;
+
+	if (c->min_fid == c->max_fid)
+		return;
+
+	missing_seq = 0;
+
+	pos = INDEX(c->min_fid + 1);
+	frame = &c->frames[pos];
+	if ((c->min_fid + 1 == frame->fid || frame->frame_type == 1) && real_video_cache_check_frame_full(s, frame) == 0)
+		return;
+
+	for (i = c->min_fid + 1; i <= c->max_fid; ++i){
+		frame = &c->frames[INDEX(i)];
+		if (frame->seg_number <= 0)
+			continue;
+
+		for (j = 0; j < frame->seg_number; ++j){
+			if (frame->segments[j] != NULL){
+				missing_seq = frame->segments[j]->packet_id + frame->segments[j]->total - frame->segments[j]->index;
+				goto evict_lab;
+			}
+		}
+	}
+
+evict_lab:
+	for (i = c->min_seq + 1; i <= missing_seq; ++i){
+		key.u32 = i;
+		if (skiplist_search(c->discard_loss, key) != NULL){
+			if(evict_gop_frame(s, c) != 0)
+				sim_receiver_send_fir(s, s->receiver);
+			break;
+		}
+	}
+}
+
+static void real_video_cache_discard(sim_session_t* s, sim_frame_cache_t* c, uint32_t seq)
+{
+	skiplist_item_t key, val;
+
+	if (seq <= c->min_seq)
+		return;
+
+	key.u32 = val.u32 = seq;
+	skiplist_insert(c->discard_loss, key, val);
+
+	real_video_cache_evict_discard(s, c);
+}
+
+static void close_real_video_cache(sim_session_t* s, sim_frame_cache_t* cache)
+{
+	uint32_t i;
+	for (i = 0; i < cache->size; ++i)
+		real_video_clean_frame(s, cache, &cache->frames[i]);
+
+	skiplist_destroy(cache->discard_loss);
+
+	free(cache->frames);
+	free(cache);
+}
+
+static void reset_real_video_cache(sim_session_t* s, sim_frame_cache_t* cache)
+{
+	uint32_t i;
+
+	for (i = 0; i < cache->size; ++i)
+		real_video_clean_frame(s, cache, &cache->frames[i]);
+
+	cache->min_seq = 0;
+	cache->min_fid = 0;
+	cache->max_fid = 0;
+	cache->play_ts = 0;
+	cache->frame_ts = 0;
+	cache->max_ts = 100;
+	cache->frame_timer = 100;
+	cache->f = 1.0f;
+
+	cache->state = buffer_waiting;
+	cache->wait_timer = SU_MAX(100, s->rtt + 2 * s->rtt_var);
+	cache->loss_flag = 0;
+
+	skiplist_clear(cache->discard_loss);
+}
+
+static void real_video_evict_frame(sim_session_t* s, sim_frame_cache_t* c, uint32_t fid)
+{
+	uint32_t pos, i;
+
+	for (pos = c->max_fid + 1; pos <= fid; pos++)
+		real_video_clean_frame(s, c, &c->frames[INDEX(pos)]);
+
+	if (fid < c->min_fid + c->size)
+		return;
+
+	for (pos = c->min_fid + 1; pos < c->max_fid; ++pos){
+		if (c->frames[INDEX(pos)].frame_type == 1)
+			break;
+	}
+
+	for (i = c->min_fid + 1; i < pos; ++i)
+		real_video_clean_frame(s, c, &c->frames[INDEX(i)]);
 }
 
 static int real_video_cache_put(sim_session_t* s, sim_frame_cache_t* c, sim_segment_t* seg)
@@ -152,10 +236,7 @@ static int real_video_cache_put(sim_session_t* s, sim_frame_cache_t* c, sim_segm
 
 		if (c->max_fid >= 0 && c->max_fid < seg->fid && c->max_ts < seg->timestamp){
 			c->frame_timer = (seg->timestamp - c->max_ts) / (seg->fid - c->max_fid);
-			if (c->frame_timer < 20)
-				c->frame_timer = 20;
-			else if (c->frame_timer > 200)
-				c->frame_timer = 200;
+			c->frame_timer = SU_MAX(20, SU_MIN(200, c->frame_timer));
 		}
 		c->max_ts = seg->timestamp;
 		c->max_fid = seg->fid;
@@ -202,19 +283,6 @@ static void real_video_cache_check_playing(sim_session_t* s, sim_frame_cache_t* 
 
 static inline void real_video_cache_check_waiting(sim_session_t* s, sim_frame_cache_t* c)
 {
-}
-
-static inline int real_video_cache_check_frame_full(sim_session_t* s, sim_frame_t* frame)
-{
-	int i;
-	if (frame->seg_number <= 0)
-		return -1;
-
-	for (i = 0; i < frame->seg_number; ++i)
-		if (frame->segments[i] == NULL)
-			return -1;
-
-	return 0;
 }
 
 static inline void real_video_cache_sync_timestamp(sim_session_t* s, sim_frame_cache_t* c)
@@ -317,6 +385,8 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 	if (c->play_frame_ts + SU_MAX(MIN_EVICT_DELAY_MS, SU_MIN(MAX_EVICT_DELAY_MS, 4 * c->wait_timer)) < c->max_ts){
 		evict_gop_frame(s, c);
 	}
+
+	real_video_cache_evict_discard(s, c);
 
 	pos = INDEX(c->min_fid + 1);
 	frame = &c->frames[pos];
@@ -661,6 +731,7 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 		for (i = 0; i < evict_count; i++){
 			key.u32 = numbers[i];
 			skiplist_remove(r->loss, key);
+			real_video_cache_discard(s, r->cache, key.u32);
 		}
 	}
 }
