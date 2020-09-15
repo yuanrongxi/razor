@@ -11,7 +11,7 @@
 #define CACHE_SIZE 1024
 #define INDEX(i)	((i) % CACHE_SIZE)
 #define MAX_EVICT_DELAY_MS 8000
-#define MIN_EVICT_DELAY_MS 6000
+#define MIN_EVICT_DELAY_MS 3000
 
 /************************************************播放缓冲区的定义**********************************************************/
 static sim_frame_cache_t* open_real_video_cache(sim_session_t* s)
@@ -306,6 +306,8 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 	c->f = 1.0f;
 	if (loss != 0 && play_ready_ts < SU_MIN(space, 4 * c->frame_timer))
 		c->f = 0.6f;
+	else if (play_ready_ts > c->frame_timer * 4 && play_ready_ts > MIN_EVICT_DELAY_MS / 2)
+		c->f = 3.0f;
 	else if (play_ready_ts > space && play_ready_ts >= SU_MAX(80, 2 * c->frame_timer))
 		c->f = 1.2f;
 

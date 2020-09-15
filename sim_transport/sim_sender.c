@@ -43,6 +43,9 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction
 	/*计算视频编码器的码率,单位kbps*/
 	video_bitrate_kbps = (uint32_t)((1.0 - loss) * payload_bitrate) / 1000;
 
+	if (sender->flex != NULL)
+		video_bitrate_kbps = video_bitrate_kbps * 4 / 5;
+
 	/*sim_info("loss = %f, bitrate = %u, video_bitrate_kbps = %u\n", loss, bitrate, video_bitrate_kbps);*/
 	/*通知上层进行码率调整*/
 	s->change_bitrate_cb(s->event, video_bitrate_kbps, loss > 0 ? 1 : 0);
@@ -402,6 +405,9 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 
 			/*防止单个报文补偿过快,防止突发性拥塞*/
 			if (seg->timestamp + seg->send_ts + sender->first_ts + SU_MIN(200, SU_MAX(30, s->rtt / 4)) > now_ts)
+				continue;
+
+			if (seg->timestamp + 8 * s->rtt < now_ts - sender->first_ts)
 				continue;
 
 			/*将报文加入到cc的pacer中进行重发*/
