@@ -198,6 +198,8 @@ void sim_sender_destroy(sim_session_t* s, sim_sender_t* sender)
 	free(sender);
 }
 
+#define MAX_PACE_QUEUE_DELAY 300
+
 void sim_sender_reset(sim_session_t* s, sim_sender_t* sender, int transport_type, int padding, int fec)
 {
 	int cc_type;
@@ -232,7 +234,7 @@ void sim_sender_reset(sim_session_t* s, sim_sender_t* sender, int transport_type
 	if (cc_type < gcc_transport || cc_type > remb_transport)
 		cc_type = gcc_congestion;
 
-	sender->cc = razor_sender_create(cc_type, padding, s, sim_bitrate_change, sender, sim_send_packet, 300);
+	sender->cc = razor_sender_create(cc_type, padding, s, sim_bitrate_change, sender, sim_send_packet, MAX_PACE_QUEUE_DELAY);
 
 	if (fec == 1)
 		sender->flex = flex_fec_sender_create();
@@ -425,6 +427,11 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 	}
 
 	return 0;
+}
+
+void sim_clean_ack_cache(sim_session_t* s, sim_sender_t* sender)
+{
+	skiplist_clear(sender->ack_cache);
 }
 
 /*处理接收端来的feedback消息*/

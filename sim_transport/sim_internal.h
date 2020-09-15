@@ -59,6 +59,7 @@ void					sim_sender_timer(sim_session_t* s, sim_sender_t* sender, uint64_t now_t
 void					sim_sender_update_rtt(sim_session_t* s, sim_sender_t* r);
 void					sim_sender_feedback(sim_session_t* s, sim_sender_t* sender, sim_feedback_t* feedback);
 void					sim_sender_set_bitrates(sim_session_t* s, sim_sender_t* sender, uint32_t min_bitrate, uint32_t start_bitrate, uint32_t max_bitrate);
+void					sim_clean_ack_cache(sim_session_t* s, sim_sender_t* sender);
 /***************************************************************************************************/
 sim_receiver_fec_t*		sim_fec_create(sim_session_t* s);
 void					sim_fec_destroy(sim_session_t* s, sim_receiver_fec_t* f);

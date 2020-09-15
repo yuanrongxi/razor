@@ -121,6 +121,8 @@ static void sim_session_reset(sim_session_t* s)
 	s->padding = 1;
 	s->fec = 1;
 	
+	s->fir_seq = 0;
+
 	if (s->sender != NULL){
 		sim_sender_destroy(s, s->sender);
 		s->sender = NULL;
@@ -173,6 +175,8 @@ int sim_session_connect(sim_session_t* s, uint32_t local_uid, const char* peer_i
 	s->fec = fec;
 	s->resend = 0;
 	s->scid = rand();
+
+	s->fir_seq = 0;
 
 	s->loss_fraction = 0;
 
@@ -537,6 +541,9 @@ static void process_sim_fir(sim_session_t* s, sim_header_t* header, bin_stream_t
 	if (s->fir_seq < fir.fir_seq){
 		s->fir_seq = fir.fir_seq;
 		s->notify_cb(s->event, sim_fir_notify, 0);
+
+		if (s->sender != NULL)
+			sim_clean_ack_cache(s, s->sender);
 	}
 }
 
