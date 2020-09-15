@@ -600,10 +600,6 @@ static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32
 		skiplist_clear(r->loss);
 		sim_receiver_send_fir(s, r);
 	}
-	else if (skiplist_size(r->loss) > 80){
-		skiplist_clear(r->loss);
-		sim_receiver_send_fir(s, r);
-	}
 	else{
 		if (s->rtt/2 < s->rtt_var)
 			space = (s->rtt_var + s->rtt)/ 2;
@@ -638,27 +634,6 @@ static inline void sim_receiver_send_ack(sim_session_t* s, sim_segment_ack_t* ac
 	/*sim_debug("send SEG_ACK, base = %u, ack_id = %u\n", ack->base_packet_id, ack->acked_packet_id);*/
 }
 
-static void sim_receiver_check_lost_frame(sim_session_t* s, sim_receiver_t* r, uint64_t now_ts)
-{
-	skiplist_iter_t* iter;
-	sim_loss_t* loss;
-
-	if (skiplist_size(r->loss) == 0)
-		return;
-
-	/*进行丢帧判断*/
-	iter = skiplist_first(r->loss);
-	loss = (sim_loss_t*)iter->val.ptr;
-	if (loss->count >= 15 || real_video_check_fir(s, r->cache) == 0){ /*确定报文丢失*/
-		if (evict_gop_frame(s, r->cache) != 0){
-			sim_receiver_send_fir(s, r);
-			r->fir_state = fir_flightting;
-		}
-		else
-			r->fir_state = fir_normal;
-	}
-}
-
 /*进行ack和nack确认，并计算缓冲区的等待时间*/
 #define ACK_REAL_TIME	20
 #define ACK_HB_TIME		200
@@ -678,9 +653,6 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 	cur_ts = GET_SYS_MS();
 	/*如果是心跳触发*/
 	if ((hb == 0 && r->ack_ts + ACK_REAL_TIME < cur_ts) || (r->ack_ts + ACK_HB_TIME < cur_ts)){
-
-		/*进行丢帧判断，如果发现有丢帧，进行evict frame*/
-		sim_receiver_check_lost_frame(s, r, cur_ts);
 
 		ack.acked_packet_id = seq;
 		min_seq = real_video_cache_get_min_seq(s, r->cache);
