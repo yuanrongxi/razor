@@ -12,7 +12,7 @@
 #define k_history_cache_ms		60000
 void cc_feedback_adapter_init(feedback_adapter_t* adapter)
 {  
-	int i;
+	int i; 
 	for (i = 0; i < FEEDBACK_RTT_WIN_SIZE; ++i){
 		adapter->rtts[i] = -1;
 	} 
@@ -49,14 +49,14 @@ static int feedback_packet_comp(const void* arg1, const void* arg2)
 	packet_feedback_t *p1, *p2;
 	p1 = (packet_feedback_t*)arg1; 
 	p2 = (packet_feedback_t*)arg2;
-
+		
 	if (p1->arrival_ts < p2->arrival_ts)
 		return -1;
 	else if (p1->arrival_ts > p2->arrival_ts)
 		return 1;
 	else if (p1->send_ts < p2->send_ts)
 		return -1;
-	else 
+	else  
 		return 1;
 }
 

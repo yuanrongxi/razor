@@ -19,7 +19,7 @@ using namespace std;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
-#include "vld.h"
+//#include "vld.h"
 #endif
 
 

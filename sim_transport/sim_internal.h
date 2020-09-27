@@ -38,6 +38,8 @@ typedef struct __sim_receiver_fec		sim_receiver_fec_t;
 #define MAX_BITRATE		16000000				/*2MB*/
 #define START_BITRATE	800000					/*100KB*/
 
+#define CACHE_MAX_DELAY 1500
+
 void					free_video_seg(skiplist_item_t key, skiplist_item_t val, void* args);
 
 /****************************************************************************************************/

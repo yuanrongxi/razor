@@ -398,7 +398,7 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 
 	for (i = 0; i < ack->nack_num; ++i){
 		key.u32 = ack->base_packet_id + ack->nack[i];
-		if (sender->base_packet_id >= key.u32)
+		if (sender->base_packet_id >= key.u32)	
 			continue;
 
 		iter = skiplist_search(sender->ack_cache, key);
@@ -410,7 +410,8 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 				continue;
 
 			/*将报文加入到cc的pacer中进行重发*/
-			sender->cc->add_packet(sender->cc, seg->send_id, 0, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
+			if (s->rtt < CACHE_MAX_DELAY)
+				sender->cc->add_packet(sender->cc, seg->send_id, 0, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
 		}
 	}
 

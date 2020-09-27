@@ -600,6 +600,10 @@ static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32
 		skiplist_clear(r->loss);
 		sim_receiver_send_fir(s, r);
 	}
+	else if (s->rtt >= CACHE_MAX_DELAY){
+		skiplist_clear(r->loss);
+		sim_receiver_send_fir(s, r);
+	}
 	else{
 		if (s->rtt/2 < s->rtt_var)
 			space = (s->rtt_var + s->rtt)/ 2;
@@ -685,6 +689,13 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 
 			if (l->count > max_count)
 				max_count = l->count;
+		}
+
+		if (s->rtt >= CACHE_MAX_DELAY && ack.nack_num > 0){
+			skiplist_clear(r->loss);
+			sim_receiver_send_fir(s, r);
+
+			ack.nack_num = 0;
 		}
 		
 		sim_receiver_send_ack(s, &ack);
