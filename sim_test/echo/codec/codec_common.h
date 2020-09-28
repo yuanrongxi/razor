@@ -141,6 +141,8 @@ protected:
 	int				curr_resolution_;		// 当前编码器所处的分辨率
 	int				frame_index_;
 
+	int64_t			up_ts_;
+
 	rate_stat_t		rate_stat_;
 };
 

@@ -9,10 +9,10 @@
 #include <assert.h>
 
 const encoder_resolution_t h264_resolution_infos[RESOLUTIONS_NUMBER] = {
-	{ VIDEO_120P, PIC_WIDTH_160, PIC_HEIGHT_120, 48, 32, 48 },
-	{ VIDEO_240P, PIC_WIDTH_320, PIC_HEIGHT_240, 140, 80, 120 },
-	{ VIDEO_360P, PIC_WIDTH_480, PIC_HEIGHT_360, 300, 180, 240 },
-	{ VIDEO_480P, PIC_WIDTH_640, PIC_HEIGHT_480, 880, 360, 800 },
+	{ VIDEO_120P, PIC_WIDTH_160, PIC_HEIGHT_120, 86, 32, 48 },
+	{ VIDEO_240P, PIC_WIDTH_320, PIC_HEIGHT_240, 200, 80, 120 },
+	{ VIDEO_360P, PIC_WIDTH_480, PIC_HEIGHT_360, 500, 180, 240 },
+	{ VIDEO_480P, PIC_WIDTH_640, PIC_HEIGHT_480, 1200, 360, 800 },
 	{ VIDEO_640P, PIC_WIDTH_960, PIC_HEIGHT_640, 1480, 1000, 1200 },
 	{ VIDEO_720P, PIC_WIDTH_1280, PIC_HEIGHT_720, 2200, 1600, 1800 },
 	{ VIDEO_1080P, PIC_WIDTH_1920, PIC_HEIGHT_1080, 4000, 2400, 2800 },
@@ -77,6 +77,8 @@ VideoEncoder::VideoEncoder()
 
 	inited_ = false;
 	frame_index_ = 0;
+
+	up_ts_ = GET_SYS_MS();
 }
 
 VideoEncoder::~VideoEncoder()
@@ -185,8 +187,11 @@ void VideoEncoder::try_change_resolution()
 		set_bitrate(bitrate_kbps_, 0);
 
 		rate_stat_reset(&rate_stat_);
+
+		up_ts_ = GET_SYS_MS();
 	}
-	else if (frame_index >= (KEY_FRAME_SEC * frame_rate_ / 2) && res.max_rate < bitrate_kbps_ && curr_resolution_ + 1 <= max_resolution_){
+	else if (frame_index >= (KEY_FRAME_SEC * frame_rate_ / 2) && res.max_rate < bitrate_kbps_ && curr_resolution_ + 1 <= max_resolution_
+		&& up_ts_ + 12000 < GET_SYS_MS()){
 		/*升高一层分辨率*/
 		curr_resolution_ = find_resolution(bitrate_kbps_);
 		close_encoder();
@@ -194,6 +199,8 @@ void VideoEncoder::try_change_resolution()
 		set_bitrate(bitrate_kbps_, 0);
 
 		rate_stat_reset(&rate_stat_);
+
+		up_ts_ = GET_SYS_MS();
 	}
 }
 
@@ -261,7 +268,7 @@ bool VideoDecoder::init()
 
 	return true;
 }
-
+		
 void VideoDecoder::destroy()
 {
 	if (!inited_)

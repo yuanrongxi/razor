@@ -406,10 +406,13 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 			seg = (sim_segment_t*)iter->val.ptr;
 
 			/*防止单个报文补偿过快,防止突发性拥塞*/
-			if (seg->timestamp + seg->send_ts + sender->first_ts + SU_MIN(200, SU_MAX(30, s->rtt / 4)) > now_ts)
+			if (seg->send_ts + sender->first_ts + SU_MIN(200, SU_MAX(30, s->rtt / 4)) > now_ts)
 				continue;
 
-			/*将报文加入到cc的pacer中进行重发*/
+			if (seg->timestamp + CACHE_MAX_DELAY + sender->first_ts < now_ts)
+				continue;
+
+			/*将报文加入到cc的pacCACHE_MAX_DELAYer中进行重发*/
 			if (s->rtt < CACHE_MAX_DELAY)
 				sender->cc->add_packet(sender->cc, seg->send_id, 0, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
 		}

@@ -12,6 +12,21 @@
 #include "bbr_pacer.h"
 #include "razor_api.h"
 
+#define DELAY_WND_SIZE 20
+typedef struct
+{
+	int				frags[DELAY_WND_SIZE];
+	int				index;
+
+	int				acc;
+	int				count;
+
+	int32_t			var_rtt;
+	int32_t			prev_rtt;
+
+	int				slope;
+}remb_slope_filter_t;
+
 typedef struct
 {
 	razor_sender_t				sender;
@@ -34,6 +49,9 @@ typedef struct
 	bbr_pacer_t*				pacer;
 	bin_stream_t				strm;
 	rate_stat_t					rate;
+
+
+	remb_slope_filter_t			slope;
 }remb_sender_t;
 
 remb_sender_t*					remb_sender_create(void* trigger, bitrate_changed_func bitrate_cb, void* handler, pace_send_func send_cb, int queue_ms, int padding);

@@ -46,6 +46,8 @@ remb_sender_t* remb_sender_create(void* trigger, bitrate_changed_func bitrate_cb
 	bin_stream_init(&sender->strm);
 	rate_stat_init(&sender->rate, remb_rate_wnd_size, remb_rate_scale);
 
+	sender->slope.var_rtt = sender->slope.prev_rtt = 0;
+
 	return sender;
 }
 
@@ -83,7 +85,34 @@ void remb_sender_send_packet(remb_sender_t* s, uint16_t seq, size_t size)
 
 void remb_sender_update_rtt(remb_sender_t* s, int32_t rtt)
 {
+	int32_t delta = 0;
+	if (s->slope.prev_rtt == 0){
+		s->slope.var_rtt = rtt;
+		s->slope.prev_rtt = rtt;
+		s->slope.slope = 0;
+	}
+	else{
+		delta = rtt - s->slope.prev_rtt;
 
+		s->slope.acc -= s->slope.frags[s->slope.index++ % DELAY_WND_SIZE];
+		s->slope.frags[s->slope.index % DELAY_WND_SIZE] = delta;
+		s->slope.acc += delta;
+
+		if (s->slope.index > DELAY_WND_SIZE)
+			s->slope.slope = s->slope.acc / DELAY_WND_SIZE;
+		else if (s->slope.index > 4)
+			s->slope.slope = s->slope.acc / s->slope.index;
+
+		s->slope.var_rtt = (abs(delta) + s->slope.var_rtt * 3) / 4;
+
+		s->slope.prev_rtt = rtt;
+
+		if (s->slope.acc > SU_MAX(50, s->slope.var_rtt)){
+			s->target_bitrate = s->target_bitrate * 7 / 8;
+			s->target_bitrate = SU_MIN(s->max_bitrate, SU_MAX(s->min_bitrate, s->target_bitrate));
+			sender_remb_on_change_bitrate(s, s->target_bitrate, s->loss_fraction, 0);
+		}
+	}
 }
 
 void remb_sender_on_feedback(remb_sender_t* s, uint8_t* feedback, int feedback_size)
@@ -114,15 +143,21 @@ void remb_sender_on_feedback(remb_sender_t* s, uint8_t* feedback, int feedback_s
 		razor_debug("remb sender bitrates, remb = %dKB/s, target = %uKB/s, send rate = %uKB/s, loss fraction = %u\n", 
 			msg.remb / 8000, s->target_bitrate/8000, bitrate/8000, s->loss_fraction);
 
-		if (msg.remb > bitrate * 1.4142f)
+		if (msg.remb > bitrate * 1.4142f || s->slope.acc > SU_MIN(50, s->slope.var_rtt))
 				s->target_bitrate = SU_MIN(s->target_bitrate, msg.remb);
-		else if (s->loss_fraction <= 0)
+		else if (s->loss_fraction <= 0 && s->slope.prev_rtt < 1500)
 			s->target_bitrate = SU_MAX(s->target_bitrate, msg.remb);
 		else
 			s->target_bitrate = msg.remb;
 
-		if (s->loss_fraction < 2)
-			s->target_bitrate = s->target_bitrate + SU_MAX(32000, SU_MIN(400000, s->target_bitrate / 32));
+		if (s->slope.acc >  SU_MIN(50, s->slope.var_rtt)){
+			s->target_bitrate = s->target_bitrate * 7 / 8;
+		}
+		else{
+			if (s->loss_fraction < 2 && s->slope.acc <= 10 && s->slope.prev_rtt < 1500){
+				s->target_bitrate = s->target_bitrate + SU_MAX(32000, SU_MIN(400000, s->target_bitrate / 32));
+			}
+		}
 
 		s->target_bitrate = SU_MIN(s->max_bitrate, SU_MAX(s->min_bitrate, s->target_bitrate));
 

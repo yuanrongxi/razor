@@ -299,8 +299,10 @@ void sim_session_calculate_rtt(sim_session_t* s, uint32_t keep_rtt)
 		s->rtt = 10;
 
 	/*通知RTT更新*/
-	if (s->sender != NULL)
+	if (s->sender != NULL){
 		sim_sender_update_rtt(s, s->sender);
+		s->sender->cc->update_rtt(s->sender->cc, keep_rtt);
+	}
 
 	if (s->receiver != NULL)
 		sim_receiver_update_rtt(s, s->receiver);
