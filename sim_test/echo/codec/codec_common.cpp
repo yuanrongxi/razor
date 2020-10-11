@@ -191,7 +191,7 @@ void VideoEncoder::try_change_resolution()
 		up_ts_ = GET_SYS_MS();
 	}
 	else if (frame_index >= (KEY_FRAME_SEC * frame_rate_ / 2) && res.max_rate < bitrate_kbps_ && curr_resolution_ + 1 <= max_resolution_
-		&& up_ts_ + 12000 < GET_SYS_MS()){
+		&& up_ts_ + 10000 < GET_SYS_MS()){
 		/*升高一层分辨率*/
 		curr_resolution_ = find_resolution(bitrate_kbps_);
 		close_encoder();
@@ -205,7 +205,7 @@ void VideoEncoder::try_change_resolution()
 }
 
 /***********************************************************************************************************/
-#define BUFF_SIZE (1024 * 1024)
+#define BUFF_SIZE (256 * 1024)
 VideoDecoder::VideoDecoder()
 {
 	inited_ = false;
