@@ -658,6 +658,11 @@ static void sim_session_send_ping(sim_session_t* s, int64_t now_ts)
 	s->resend++;
 
 	/*网络超时3秒了，不进行发送报文*/
+	if (s->resend >= 4){
+		if (s->sender != NULL && s->sender->cc != NULL)
+			s->sender->cc->update_rtt(s->sender->cc, s->rtt + 20 * s->resend);
+	}
+
 	if (s->resend > 12){
 		s->interrupt = net_interrupt;
 		s->notify_cb(s->event, net_interrupt_notify, 0);

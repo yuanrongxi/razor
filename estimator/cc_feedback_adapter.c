@@ -97,7 +97,7 @@ int cc_feedback_on_feedback(feedback_adapter_t* adapter, feedback_msg_t* msg)
 			if (adapter->min_feedback_rtt > adapter->rtts[i] && adapter->rtts[i] > 0)
 				adapter->min_feedback_rtt = adapter->rtts[i];
 		}
-	}
+	} 
 
 	/*进行按到达时间的先后顺序进行排序*/
 	feedback_qsort(adapter);
