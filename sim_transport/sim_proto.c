@@ -1,5 +1,5 @@
 /*-
-* Copyright (c) 2017-2018 wenba, Inc.
+* Copyright (c) 2017-2018 Razor, Inc.
 *	All rights reserved.
 *
 * See the file LICENSE for redistribution information.
