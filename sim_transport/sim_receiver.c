@@ -242,7 +242,7 @@ static int real_video_cache_put(sim_session_t* s, sim_frame_cache_t* c, sim_segm
 		c->max_fid = seg->fid;
 	}
 
-	/*sim_debug("buffer put video frame, frame = %u, packet_id = %u, ts = %u\n", seg->fid, seg->packet_id, seg->timestamp);*/
+	sim_debug("buffer put video frame, frame = %u, packet_id = %u\n", seg->fid, seg->packet_id);
 
 	frame = &(c->frames[INDEX(seg->fid)]);
 	frame->fid = seg->fid;
@@ -595,6 +595,9 @@ static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32
 	skiplist_iter_t* iter;
 	int64_t now_ts;
 
+	key.u32 = seq;
+	skiplist_remove(r->loss, key);
+
 	now_ts = GET_SYS_MS();
 	if (r->max_ts + 3000 < ts){
 		skiplist_clear(r->loss);
@@ -610,8 +613,6 @@ static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32
 		else
 			space = s->rtt;
 
-		key.u32 = seq;
-		skiplist_remove(r->loss, key);
 		for (i = r->max_seq + 1; i < seq; ++i){
 			key.u32 = i;
 			iter = skiplist_search(r->loss, key);
@@ -624,6 +625,7 @@ static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32
 
 				skiplist_insert(r->loss, key, val);
 			}
+			sim_debug("add loss, seq = %u\n", key.u32);
 		}
 	}
 }
@@ -675,7 +677,7 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 				continue;
 
 			space_factor = SU_MAX(10, s->rtt + s->rtt_var) + l->count * SU_MIN(100, SU_MAX(10, s->rtt_var)); /*用于简单的拥塞限流，防止GET洪水*/
-			if (l->count < 15 && l->loss_ts + MIN_EVICT_DELAY_MS / 2 > cur_ts){
+			if (l->count >= 15 || l->loss_ts + MIN_EVICT_DELAY_MS / 2 < cur_ts){
 				if (evict_count < NACK_NUM)
 					numbers[evict_count++] = iter->key.u32;
 			}

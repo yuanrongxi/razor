@@ -282,7 +282,9 @@ int sim_session_network_send(sim_session_t* s, bin_stream_t* strm)
 	
 	s->sbandwidth += strm->used;
 	s->scount++;
+	//if (rand() % 100 < 80)
 	return su_udp_send(s->s, &s->peer, strm->data, strm->used);
+	//return 0;
 }
 
 void sim_session_calculate_rtt(sim_session_t* s, uint32_t keep_rtt)

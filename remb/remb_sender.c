@@ -145,7 +145,7 @@ void remb_sender_on_feedback(remb_sender_t* s, uint8_t* feedback, int feedback_s
 
 		if (msg.remb > bitrate * 1.4142f || s->slope.acc > SU_MIN(50, s->slope.var_rtt))
 				s->target_bitrate = SU_MIN(s->target_bitrate, msg.remb);
-		else if (s->loss_fraction <= 0 && s->slope.prev_rtt < 1500)
+		else if (s->slope.prev_rtt < 1500)
 			s->target_bitrate = SU_MAX(s->target_bitrate, msg.remb);
 		else
 			s->target_bitrate = msg.remb;
@@ -154,7 +154,7 @@ void remb_sender_on_feedback(remb_sender_t* s, uint8_t* feedback, int feedback_s
 			s->target_bitrate = s->target_bitrate * 7 / 8;
 		}
 		else{
-			if (s->loss_fraction < 2 && s->slope.acc <= 20 && s->slope.prev_rtt < 1500){
+			if (s->loss_fraction < 52 && s->slope.acc <= 20 && s->slope.prev_rtt < 1500){
 				s->target_bitrate = s->target_bitrate + SU_MAX(32000, SU_MIN(400000, s->target_bitrate / 32));
 			}
 		}

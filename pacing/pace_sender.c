@@ -10,7 +10,7 @@
 
 #define k_min_packet_limit_ms		5			/*发包最小间隔*/
 #define k_max_interval_ms			50			/*发包最大时间差，长时间不发送报文一次发送很多数据出去造成网络风暴*/
-#define k_default_pace_factor		1.2
+#define k_default_pace_factor		3
 #define k_min_pacing_bitrate		(50 * 1000 * 8)
 
 pace_sender_t* pace_create(void* handler, pace_send_func send_cb, uint32_t que_ms)

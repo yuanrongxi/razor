@@ -3,7 +3,7 @@
 
 #define DEFAULT_SIZE 32
 #define FEC_REPAIR_WINDOW 500
-#define FEC_LOSS_THROLD 52
+#define FEC_LOSS_THROLD 10
 
 flex_fec_sender_t* flex_fec_sender_create()
 {
