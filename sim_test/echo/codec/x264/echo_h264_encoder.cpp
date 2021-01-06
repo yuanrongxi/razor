@@ -127,7 +127,7 @@ void H264Encoder::config_param()
 	en_param_.rc.i_vbv_max_bitrate = res.max_rate;
 	en_param_.i_bframe = 0;
 
-	 
+	en_param_.i_frame_reference = 3;
 	en_param_.i_keyint_min = frame_rate_ * KEY_FRAME_SEC;
 	en_param_.i_keyint_max = frame_rate_ * KEY_FRAME_SEC;
 
