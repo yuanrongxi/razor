@@ -625,7 +625,7 @@ static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32
 
 				skiplist_insert(r->loss, key, val);
 			}
-			sim_debug("add loss, seq = %u\n", key.u32);
+			/*sim_debug("add loss, seq = %u\n", key.u32);*/
 		}
 	}
 }
