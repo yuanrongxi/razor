@@ -67,7 +67,7 @@ void trendline_update(trendline_estimator_t* est, double recv_delta_ms, double s
 
 	est->num_of_deltas++;
 	if (est->num_of_deltas > TRENDLINE_MAX_COUNT)
-		est->num_of_deltas = est->num_of_deltas;
+		est->num_of_deltas = TRENDLINE_MAX_COUNT;
 
 	if (est->first_arrival_ts == -1)
 		est->first_arrival_ts = arrival_ts;
