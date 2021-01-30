@@ -11,7 +11,7 @@ razor是一个GCC算法实现项目，主体算法来源于webRTC的CC实现，�
  ### 编译
       用visual studio 2013打开project目录下的工程就可以直接编译，这个工程环境下有单元测试文件，可以进行代码选择修改，
       进行单元测试。
- 
+
 ## 测试
  要进行razor的整体测试，需要编译sim transport模块，这里有两个工程，是sim_test下sim_sender和sim_receiver，用visual studio就可以直接进行编译运行。这
  两个工程需要配合起来使用，在sim_sender工程代码中填写sim receiver的IP地址和端口，就可以进行通信测试了。如果需要模拟网络，需要relay配合。假如运行sim sender
@@ -23,13 +23,13 @@ razor是一个GCC算法实现项目，主体算法来源于webRTC的CC实现，�
   ### 运行sender
       在visual studio中修改sim sender中的sim_sender_test.cpp
     	if (sim_connect(1000, "192.168.1.200", 6009) != 0){
-		    printf("sim connect failed!\n");
-		    goto err;
-	    }
+    	    printf("sim connect failed!\n");
+    	    goto err;
+        }
       修改后直接编译运行即可.
- 
+
  PS:也可以在linux下运行sim sender和sim receiver,直接在他们的目录下make即可编译。
- 
+
  ## echo
    echo是一个windows下的测试程序，它据有视频传输的所有功能，需要在windows下进行编译，依赖于dshow，它同样需要relay来配合。测试步骤如下：
  ### 运行relay
@@ -38,16 +38,18 @@ razor是一个GCC算法实现项目，主体算法来源于webRTC的CC实现，�
     在visual studio下打开sim_test目录下的echo工程，直接编译
  ### 运行echo
     在echo UI上将receiver ip地址填写为：192.168.1.200：6009，点击start echo按钮即可
-    
+
  # GCC与BBR的对比（来自nkcubert的贡献）
  ## 测试条件
   操作系统环境：VMWare虚拟机(win10)限定网速
-  
+
   最大视频编码码率：400kBps
  ## 测试结果 
 ![avatar](https://github.com/yuanrongxi/razor/blob/master/doc/BBR1.jpg)
 
  # 微信交流 
-  入群交流请加微信zerok775
+  入群交流请加微信**zerok775**
 
-    
+
+
+​    
