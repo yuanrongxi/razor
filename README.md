@@ -46,5 +46,7 @@ razor是一个GCC算法实现项目，主体算法来源于webRTC的CC实现，�
   最大视频编码码率：400kBps
  ## 测试结果 
 ![avatar](https://github.com/yuanrongxi/razor/blob/master/doc/BBR1.jpg)
+##微信交流
+ ###入群交流请加微信zerok775
 
     
