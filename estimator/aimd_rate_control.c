@@ -111,15 +111,16 @@ static uint32_t multiplicative_rate_increase(int64_t cur_ts, int64_t last_ts, ui
 	return (uint32_t)(SU_MAX(curr_bitrate * (alpha - 1.0), 1000.0));
 }
 
+#define kDefaultPacketSize (1000 * 8)
 int aimd_get_near_max_inc_rate(aimd_rate_controller_t* aimd)
 {
 	double bits_per_frame = aimd->curr_rate / 30.0;
-	double packets_per_frame = ceil(bits_per_frame / (8.0 * 1000.0));
+	double packets_per_frame = ceil(bits_per_frame / kDefaultPacketSize);
 	double avg_packet_size_bits = bits_per_frame / packets_per_frame;
 
 	/*Approximate the over-use estimator delay to 100 ms*/
 	const int64_t response_time = (aimd->rtt + 100) * 2;
-	return (int)(SU_MAX(4000, (avg_packet_size_bits * 1000) / response_time));
+	return (int)(SU_MAX(8000, (avg_packet_size_bits * 1000) / response_time));
 }
 
 /*计算一个在稳定期间的带宽增量*/
