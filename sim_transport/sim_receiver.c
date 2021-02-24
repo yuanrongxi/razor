@@ -25,7 +25,7 @@ static sim_frame_cache_t* open_real_video_cache(sim_session_t* s)
 	cache->frame_timer = 100;
 	cache->f = 1.0f;
 	cache->size = CACHE_SIZE;
-	cache->frames = calloc(CACHE_SIZE, sizeof(sim_frame_cache_t));
+	cache->frames = calloc(CACHE_SIZE, sizeof(sim_frame_t));
 
 	cache->discard_loss = skiplist_create(idu32_compare, NULL, NULL);
 	return cache;
