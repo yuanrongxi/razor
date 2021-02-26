@@ -187,6 +187,10 @@ static inline void sim_segment_ack_encode(bin_stream_t* strm, sim_segment_ack_t*
 	mach_uint8_write(strm, body->nack_num);
 	for (i = 0; i < body->nack_num; ++i)
 		mach_uint16_write(strm, body->nack[i]);
+
+	mach_uint8_write(strm, body->ack_num);
+	for (i = 0; i < body->ack_num; ++i)
+		mach_uint16_write(strm, body->acked[i]);
 }
 
 static inline int sim_segment_ack_decode(bin_stream_t* strm, sim_segment_ack_t* body)
@@ -199,6 +203,11 @@ static inline int sim_segment_ack_decode(bin_stream_t* strm, sim_segment_ack_t* 
 	body->nack_num = SU_MIN(body->nack_num, NACK_NUM);
 	for (i = 0; i < body->nack_num; ++i)
 		mach_uint16_read(strm, &body->nack[i]);
+
+	mach_uint8_read(strm, &body->ack_num);
+	body->ack_num = SU_MIN(body->ack_num, ACK_NUM);
+	for (i = 0; i < body->ack_num; ++i)
+		mach_uint16_read(strm, &body->acked[i]);
 	return 0;
 }
 

@@ -69,6 +69,9 @@ struct __sim_receiver
 	uint64_t			cache_ts;
 	uint64_t			active_ts;
 
+	uint8_t				acked_count;
+	uint32_t			ackeds[ACK_NUM];
+
 	uint64_t			fir_ts;
 
 	int					actived;

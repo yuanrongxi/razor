@@ -550,6 +550,8 @@ void sim_receiver_reset(sim_session_t* s, sim_receiver_t* r, int transport_type)
 
 	r->cc_type = transport_type;
 	r->cc = razor_receiver_create(r->cc_type, MIN_BITRATE, MAX_BITRATE, SIM_SEGMENT_HEADER_SIZE, r, send_sim_feedback);
+
+	r->acked_count = 0;
 }
 
 int sim_receiver_active(sim_session_t* s, sim_receiver_t* r, uint32_t uid)
@@ -630,14 +632,45 @@ static void sim_receiver_update_loss(sim_session_t* s, sim_receiver_t* r, uint32
 	}
 }
 
-static inline void sim_receiver_send_ack(sim_session_t* s, sim_segment_ack_t* ack)
+static inline void sim_receiver_send_ack(sim_session_t* s, sim_receiver_t* r, sim_segment_ack_t* ack)
 {
+	uint32_t count, i;
 	sim_header_t header;
 	INIT_SIM_HEADER(header, SIM_SEG_ACK, s->uid);
+
+	ack->ack_num = 0;
+
+	if (r->base_seq < r->max_seq){
+		count = r->acked_count >= ACK_NUM ? ACK_NUM : r->acked_count;
+		for (i = 0; i < count; ++i){
+			if (r->base_seq < r->ackeds[i])
+				ack->acked[ack->ack_num++] = (uint16_t)(r->ackeds[i] - r->base_seq);
+		}
+	}
+
+	r->acked_count = 0;
 
 	sim_encode_msg(&s->sstrm, &header, ack);
 	sim_session_network_send(s, &s->sstrm);
 	/*sim_debug("send SEG_ACK, base = %u, ack_id = %u\n", ack->base_packet_id, ack->acked_packet_id);*/
+}
+
+static void video_real_update_base(sim_session_t* s, sim_receiver_t* r)
+{
+	skiplist_iter_t* iter;
+	skiplist_item_t key;
+	uint32_t min_seq;
+
+	min_seq = real_video_cache_get_min_seq(s, r->cache);
+	for (key.u32 = r->base_seq + 1; key.u32 <= min_seq; ++key.u32)
+		skiplist_remove(r->loss, key);
+
+	if (skiplist_size(r->loss) == 0)
+			r->base_seq = r->max_seq;
+	else{
+		iter = skiplist_first(r->loss);
+		r->base_seq = (iter->key.u32 > 0) ? (iter->key.u32 - 1) : r->base_seq;
+	}
 }
 
 /*进行ack和nack确认，并计算缓冲区的等待时间*/
@@ -650,7 +683,7 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 	skiplist_iter_t* iter;
 	skiplist_item_t key;
 	sim_loss_t* l;
-	uint32_t min_seq, delay, space_factor;
+	uint32_t delay, space_factor;
 	int max_count = 0;
 
 	uint32_t numbers[NACK_NUM];
@@ -661,12 +694,8 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 	if ((hb == 0 && r->ack_ts + ACK_REAL_TIME < cur_ts) || (r->ack_ts + ACK_HB_TIME < cur_ts)){
 
 		ack.acked_packet_id = seq;
-		min_seq = real_video_cache_get_min_seq(s, r->cache);
-		if (min_seq > r->base_seq){
-			for (key.u32 = r->base_seq + 1; key.u32 <= min_seq; ++key.u32)
-				skiplist_remove(r->loss, key);
-			r->base_seq = min_seq;
-		}
+
+		video_real_update_base(s, r);
 
 		ack.base_packet_id = r->base_seq;
 		ack.nack_num = 0;
@@ -700,7 +729,7 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 			ack.nack_num = 0;
 		}
 		
-		sim_receiver_send_ack(s, &ack);
+		sim_receiver_send_ack(s, r, &ack);
 
 		r->ack_ts = cur_ts;
 
@@ -745,11 +774,10 @@ static int sim_receiver_internal_put(sim_session_t* s, sim_receiver_t* r, sim_se
 	if (seg->ftype == 1)
 		r->fir_state = fir_normal;
 
-	if (seq == r->base_seq + 1)
-		r->base_seq = seq;
-
 	r->max_seq = SU_MAX(r->max_seq, seq);
 	r->max_ts = SU_MAX(r->max_ts, seg->timestamp);
+
+	r->ackeds[r->acked_count++ % ACK_NUM] = seg->packet_id;
 
 	return 0;
 }

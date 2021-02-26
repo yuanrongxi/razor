@@ -53,7 +53,8 @@ typedef struct
 #define SIM_HEADER_SIZE			6
 #define SIM_VIDEO_SIZE			1000
 #define SIM_TOKEN_SIZE			128
-#define NACK_NUM				80
+#define NACK_NUM				20
+#define ACK_NUM					NACK_NUM
 #define SIM_FEEDBACK_SIZE		1000
 typedef struct
 {
@@ -106,6 +107,9 @@ typedef struct
 	/*重传的序列*/
 	uint8_t		nack_num;
 	uint16_t	nack[NACK_NUM];
+
+	uint8_t		ack_num;
+	uint16_t	acked[ACK_NUM];
 }sim_segment_ack_t;
 
 typedef struct

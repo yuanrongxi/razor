@@ -374,8 +374,20 @@ int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t payload_type,
 
 static inline void sim_sender_update_base(sim_session_t* s, sim_sender_t* sender, uint32_t base_packet_id)
 {
-	if (base_packet_id > sender->base_packet_id)
+	skiplist_iter_t* iter;
+	sim_segment_t* seg;
+
+	if (base_packet_id > sender->base_packet_id){
 		sender->base_packet_id = base_packet_id;
+		while (skiplist_size(sender->ack_cache) > 0) {
+			iter = skiplist_first(sender->ack_cache);
+			seg = iter->val.ptr;
+			if (seg->packet_id <= sender->base_packet_id)
+				skiplist_remove(sender->ack_cache, iter->key);
+			else
+				break;
+		}
+	}
 }
 
 /*处理nack消息*/
@@ -393,6 +405,11 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 		return -1;
 	/*推进窗口*/
 	sim_sender_update_base(s, sender, ack->base_packet_id);
+	//确定已经接收到的报文，防止重发
+	for (i = 0; i < ack->ack_num; i++){
+		key.u32 = ack->base_packet_id + ack->acked[i];
+		iter = skiplist_remove(sender->ack_cache, key);
+	}
 
 	now_ts = GET_SYS_MS();
 
@@ -420,7 +437,7 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 
 	/*计算RTT*/
 	key.u32 = ack->acked_packet_id;
-	iter = skiplist_search(sender->ack_cache, key);
+	iter = skiplist_search(sender->segs_cache, key);
 	if (iter != NULL){
 		seg = (sim_segment_t*)iter->val.ptr;
 		if (now_ts > seg->timestamp + seg->send_ts + sender->first_ts)
