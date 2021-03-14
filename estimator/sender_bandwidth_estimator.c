@@ -56,7 +56,7 @@ void sender_estimation_destroy(sender_estimation_t* estimator)
 
 uint32_t sender_estimation_get_min_bitrate(sender_estimation_t* est)
 {
-	return est->max_conf_bitrate;
+	return est->min_conf_bitrate;
 }
 
 void sender_estimation_set_minmax_bitrate(sender_estimation_t* estimation, uint32_t min_bitrate, uint32_t max_bitrate)
