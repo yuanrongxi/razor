@@ -666,7 +666,7 @@ static void video_real_update_base(sim_session_t* s, sim_receiver_t* r)
 		skiplist_remove(r->loss, key);
 
 	if (skiplist_size(r->loss) == 0)
-			r->base_seq = r->max_seq;
+		r->base_seq = r->max_seq;
 	else{
 		iter = skiplist_first(r->loss);
 		r->base_seq = (iter->key.u32 > 0) ? (iter->key.u32 - 1) : r->base_seq;

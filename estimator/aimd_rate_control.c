@@ -182,7 +182,7 @@ static uint32_t aimd_change_bitrate(aimd_rate_controller_t* aimd, uint32_t new_b
 	if (input->incoming_bitrate == 0)
 		input->incoming_bitrate = aimd->curr_rate;
 
-	if (aimd->inited == -1 && input->state == kBwOverusing)
+	if (aimd->inited == -1 && input->state != kBwOverusing) 
 		return aimd->curr_rate;
 
 	aimd_change_state(aimd, input, cur_ts);
