@@ -74,7 +74,7 @@ void bbr_receive_on_received(bbr_receiver_t* cc, uint16_t seq, uint32_t timestam
 	if (skiplist_size(cc->cache) >= 2){
 		cc->feedback_ts = now_ts;
 		/*判断proxy estimator是否可以发送报告*/
-		msg.flag |= bbr_acked_msg;
+		msg.flag = bbr_acked_msg;
 		msg.sampler_num = 0;
 
 		SKIPLIST_FOREACH(cc->cache, iter){
@@ -90,6 +90,7 @@ void bbr_receive_on_received(bbr_receiver_t* cc, uint16_t seq, uint32_t timestam
 				bbr_feedback_msg_encode(&cc->strm, &msg);
 				cc->send_cb(cc->handler, cc->strm.data, cc->strm.used);
 				msg.sampler_num = 0;
+				msg.flag = bbr_acked_msg;
 			}
 		}
 

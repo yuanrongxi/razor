@@ -401,7 +401,7 @@ bbr_network_ctrl_update_t bbr_on_feedback(bbr_controller_t* bbr, bbr_feedback_t*
 		data_acked_size = sampler_total_data_acked(bbr->sampler) - total_data_acked_before;
 		bbr_update_ack_aggregation_bytes(bbr, feedback_recv_time, data_acked_size);
 		if (bbr->max_aggregation_bytes_multiplier > 0){
-			if (feedback->data_in_flight <= 1.25 * bbr_get_target_congestion_window(bbr, bbr->pacing_rate))
+			if (feedback->data_in_flight <= 1.25 * bbr_get_target_congestion_window(bbr, bbr->pacing_gain))
 				bbr->bytes_acked_since_queue_drained = 0;
 			else
 				bbr->bytes_acked_since_queue_drained += data_acked_size;
