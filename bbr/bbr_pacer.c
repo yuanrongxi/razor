@@ -49,14 +49,14 @@ void bbr_pacer_destroy(bbr_pacer_t* pace)
 void bbr_pacer_set_estimate_bitrate(bbr_pacer_t* pace, uint32_t bitrate_bps)
 {
 	pace->estimated_bitrate = bitrate_bps;
-	pace->pacing_bitrate_kpbs = SU_MAX(bitrate_bps / 1000, pace->min_sender_bitrate_kpbs) * pace->factor;
+	pace->pacing_bitrate_kpbs = SU_MAX(bitrate_bps * pace->factor / 1000, pace->min_sender_bitrate_kpbs);
 	razor_debug("set pacer bitrate, bitrate = %uKB/s\n", pace->pacing_bitrate_kpbs / 8);
 }
 
 void bbr_pacer_set_bitrate_limits(bbr_pacer_t* pace, uint32_t min_bitrate)
 {
 	pace->min_sender_bitrate_kpbs = min_bitrate / 1000;
-	pace->pacing_bitrate_kpbs = SU_MAX(pace->estimated_bitrate / 1000, pace->min_sender_bitrate_kpbs) * pace->factor;
+	pace->pacing_bitrate_kpbs = SU_MAX(pace->estimated_bitrate * pace->factor / 1000, pace->min_sender_bitrate_kpbs);
 	/*razor_info("set pacer min bitrate, bitrate = %ubps\n", min_bitrate);*/
 }
 

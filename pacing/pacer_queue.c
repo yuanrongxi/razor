@@ -58,11 +58,17 @@ int pacer_queue_push(pacer_queue_t* que, packet_event_t* ev)
 
 		/*将发送的packet按时间顺序压入list*/
 		list_push(que->l, packet);
-
 		/*增加字节统计*/
 		que->total_size += packet->size;
-
 		ret = 0;
+	}
+	else{
+		packet = iter->val.ptr;
+		if (packet->sent == 1){ /*有可能包已经被发送了，但是没有删除，这个时候进行重传需要重新成设置未发送标记*/
+			packet->sent = 0;
+			que->total_size += packet->size;
+			ret = 0;
+		}
 	}
 
 	if (que->oldest_ts == -1 || que->oldest_ts > ev->que_ts)
