@@ -85,10 +85,7 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 	/*如果拥塞窗口满了，进行带宽递减*/
 	if (fill > 1.0){
 		s->encoding_rate_ratio = 0.9f;
-		if (acked_bitrate > 0)
-			s->target_bitrate = acked_bitrate * s->encoding_rate_ratio;
-		else
-			s->target_bitrate = s->target_bitrate * s->encoding_rate_ratio;
+		s->target_bitrate = s->target_bitrate * s->encoding_rate_ratio;
 	}
 	else {
 		s->encoding_rate_ratio = 1;
@@ -149,7 +146,6 @@ void bbr_sender_send_packet(bbr_sender_t* s, uint16_t seq, size_t size)
 	bbr_feedback_add_packet(&s->feedback, seq, size, &info);
 	if (s->bbr != NULL){
 		bbr_on_send_packet(s->bbr, &info);
-		/*bbr_on_network_invalidation(s);*/
 	}
 } 
 

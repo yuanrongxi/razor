@@ -6,7 +6,7 @@
 */
 #include "bbr_feedback_adpater.h"
 
-#define k_history_cache_ms		5000
+#define k_history_cache_ms		2000
 #define k_rate_window_size 1000
 #define k_rate_scale 8000
 

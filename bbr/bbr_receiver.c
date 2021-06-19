@@ -54,6 +54,7 @@ void bbr_receive_on_received(bbr_receiver_t* cc, uint16_t seq, uint32_t timestam
 	int64_t sequence, now_ts;
 	skiplist_iter_t* iter;
 	skiplist_item_t key, val;
+	int64_t start_seq;
 
 	now_ts = GET_SYS_MS();
 	/*统计丢包*/
@@ -71,18 +72,23 @@ void bbr_receive_on_received(bbr_receiver_t* cc, uint16_t seq, uint32_t timestam
 		skiplist_insert(cc->cache, key, val);
 	}
 
+
 	if (skiplist_size(cc->cache) >= 2){
 		cc->feedback_ts = now_ts;
 		/*判断proxy estimator是否可以发送报告*/
 		msg.flag = bbr_acked_msg;
 		msg.sampler_num = 0;
-
+		start_seq = 0;
 		SKIPLIST_FOREACH(cc->cache, iter){
-			msg.samplers[msg.sampler_num].seq = iter->key.i64 & 0xffff;
-			msg.samplers[msg.sampler_num].delta_ts = now_ts > iter->val.i64 ? (now_ts - iter->val.i64) : 0; 
-			msg.sampler_num++;
+			if (start_seq == 0)
+				start_seq = iter->key.i64;
 
-			if (msg.sampler_num >= MAX_BBR_FEELBACK_COUNT){
+			if (start_seq + MAX_BBR_FEELBACK_COUNT - 1 > iter->key.i64){
+				msg.samplers[msg.sampler_num].seq = iter->key.i64 & 0xffff;
+				msg.samplers[msg.sampler_num].delta_ts = now_ts > iter->val.i64 ? (now_ts - iter->val.i64) : 0;
+				msg.sampler_num++;
+			}
+			else{
 				/*判断丢包消息*/
 				if (loss_statistics_calculate(&cc->loss_stat, now_ts, &msg.fraction_loss, &msg.packet_num) == 0)
 					msg.flag |= bbr_loss_info_msg;
@@ -91,6 +97,11 @@ void bbr_receive_on_received(bbr_receiver_t* cc, uint16_t seq, uint32_t timestam
 				cc->send_cb(cc->handler, cc->strm.data, cc->strm.used);
 				msg.sampler_num = 0;
 				msg.flag = bbr_acked_msg;
+
+				start_seq = iter->key.i64;
+				msg.samplers[msg.sampler_num].seq = iter->key.i64 & 0xffff;
+				msg.samplers[msg.sampler_num].delta_ts = now_ts > iter->val.i64 ? (now_ts - iter->val.i64) : 0;
+				msg.sampler_num++;
 			}
 		}
 

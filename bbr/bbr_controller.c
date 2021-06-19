@@ -266,7 +266,7 @@ bbr_network_ctrl_update_t bbr_on_target_rate_constraints(bbr_controller_t* bbr, 
 	return bbr_create_rate_upate(bbr, msg->at_time);
 }
 
-bbr_network_ctrl_update_t bbr_on_send_packet(bbr_controller_t* bbr, bbr_packet_info_t* packet)
+void bbr_on_send_packet(bbr_controller_t* bbr, bbr_packet_info_t* packet)
 {
 	bbr->last_sent_packet = packet->seq;
 	if (packet->data_in_flight == 0 && sampler_is_app_limited(bbr->sampler) == 1)
@@ -277,8 +277,6 @@ bbr_network_ctrl_update_t bbr_on_send_packet(bbr_controller_t* bbr, bbr_packet_i
 
 	/*记录发送的包序列信息*/
 	sampler_on_packet_sent(bbr->sampler, packet->send_time, packet->seq, packet->size, packet->data_in_flight);
-
-	return bbr_create_rate_upate(bbr, packet->send_time);
 }
 
 static int64_t bbr_get_min_rtt(bbr_controller_t* bbr)
