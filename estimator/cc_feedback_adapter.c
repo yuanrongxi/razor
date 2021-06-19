@@ -9,7 +9,7 @@
 #include "cc_feedback_adapter.h"
 #include "razor_log.h"
 
-#define k_history_cache_ms		60000
+#define k_history_cache_ms		2000
 void cc_feedback_adapter_init(feedback_adapter_t* adapter)
 {  
 	int i; 
@@ -78,26 +78,11 @@ int cc_feedback_on_feedback(feedback_adapter_t* adapter, feedback_msg_t* msg)
 	for (i = 0; i < msg->samples_num; i++){
 		/*根据反馈的SEQ获取对应的报文发送信息，计算反馈RTT,更新报文到达时刻*/
 		if (sender_history_get(adapter->hist, msg->samples[i].seq, &adapter->packets[adapter->num], 1) == 0){
-			/*计算反馈RTT*/
-			if (adapter->packets[adapter->num].send_ts > 0){
-				feedback_rtt = SU_MAX(now_ts - adapter->packets[adapter->num].send_ts, feedback_rtt);
-				adapter->rtts[adapter->index++ % FEEDBACK_RTT_WIN_SIZE] = feedback_rtt;
-			}
-
 			/*更新到达的值*/
 			adapter->packets[adapter->num].arrival_ts = msg->samples[i].ts;
 			adapter->num++;
 		}
 	}
-	
-	/*更新报文与反馈的rtt最小值*/
-	if (feedback_rtt > 0){
-		adapter->min_feedback_rtt = adapter->rtts[0];
-		for (i = 1; i < FEEDBACK_RTT_WIN_SIZE; i++){
-			if (adapter->min_feedback_rtt > adapter->rtts[i] && adapter->rtts[i] > 0)
-				adapter->min_feedback_rtt = adapter->rtts[i];
-		}
-	} 
 
 	/*进行按到达时间的先后顺序进行排序*/
 	feedback_qsort(adapter);
