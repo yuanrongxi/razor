@@ -73,7 +73,8 @@ static void sim_send_packet(void* handler, uint32_t send_id, int fec, size_t siz
 		pad.data_size = SU_MIN(size, SIM_VIDEO_SIZE);
 
 		/*将发送记录送入拥塞对象中进行bwe对象做延迟估算*/
-		sender->cc->on_send(sender->cc, pad.transport_seq, pad.data_size + SIM_SEGMENT_HEADER_SIZE);
+		if (sender->cc != NULL)
+			sender->cc->on_send(sender->cc, pad.transport_seq, pad.data_size + SIM_SEGMENT_HEADER_SIZE);
 
 		INIT_SIM_HEADER(header, SIM_PAD, s->uid);
 		sim_encode_msg(&s->sstrm, &header, &pad);
@@ -97,7 +98,8 @@ static void sim_send_packet(void* handler, uint32_t send_id, int fec, size_t siz
 		/*send_ts是相对当前帧产生的时间之差，用于接收端计算发送时间间隔*/
 		seg->send_ts = (uint16_t)(now_ts - sender->first_ts - seg->timestamp);
 		/*将发送记录送入拥塞对象中进行bwe对象做延迟估算*/
-		sender->cc->on_send(sender->cc, seg->transport_seq, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
+		if (sender->cc != NULL)
+			sender->cc->on_send(sender->cc, seg->transport_seq, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
 
 		INIT_SIM_HEADER(header, SIM_SEG, s->uid);
 		sim_encode_msg(&s->sstrm, &header, seg);
@@ -119,7 +121,8 @@ static void sim_send_packet(void* handler, uint32_t send_id, int fec, size_t siz
 		fec_packet->send_ts = (uint32_t)(now_ts - sender->first_ts);
 
 		/*将发送记录送入拥塞对象中进行bwe对象做延迟估算*/
-		sender->cc->on_send(sender->cc, fec_packet->transport_seq, fec_packet->fec_data_size + SIM_SEGMENT_HEADER_SIZE);
+		if (sender->cc != NULL)
+			sender->cc->on_send(sender->cc, fec_packet->transport_seq, fec_packet->fec_data_size + SIM_SEGMENT_HEADER_SIZE);
 
 		INIT_SIM_HEADER(header, SIM_FEC, s->uid);
 		sim_encode_msg(&s->sstrm, &header, fec_packet);
@@ -307,6 +310,9 @@ int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t payload_type,
 	skiplist_item_t key, val;
 	uint32_t timestamp;
 	int segment_size;
+
+	if (sender->cc == NULL)
+		return -1;
 
 	assert((size / SIM_VIDEO_SIZE) < SPLIT_NUMBER);
 	if (ftype == 1)

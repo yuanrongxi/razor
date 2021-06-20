@@ -275,7 +275,7 @@ int main(int argc, const char* argv[])
 	sim_init(16000, NULL, log_win_write, notify_callback, notify_change_bitrate, notify_state);
 	sim_set_bitrates(MIN_SEND_BITRATE, START_SEND_BITRATE, MAX_SEND_BITRATE * 5/4);
 
-	if (sim_connect(1000, "172.16.32.242", 16001, remb_transport, 0, 0) != 0){
+	if (sim_connect(1000, "192.168.1.7", 16001, remb_transport, 0, 0) != 0){
 		printf("sim connect failed!\n");
 		goto err;
 	}
