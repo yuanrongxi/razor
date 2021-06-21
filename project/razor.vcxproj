@@ -101,7 +101,6 @@
     <ClCompile Include="..\estimator\delay_base_bwe.c" />
     <ClCompile Include="..\estimator\estimator_common.c" />
     <ClCompile Include="..\estimator\cc_feedback_adapter.c" />
-    <ClCompile Include="..\estimator\cc_feedback_adapter.h" />
     <ClCompile Include="..\estimator\inter_arrival.c" />
     <ClCompile Include="..\estimator\kalman_filter.c" />
     <ClCompile Include="..\estimator\overuse_detector.c" />

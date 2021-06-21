@@ -135,7 +135,7 @@ static void test_run_simulation(test_bbr_controller_t* ctrl, int64_t duration,
 				sent_packet.data_in_flight += packet->size;
 			}
 
-			ctrl->update = bbr_on_send_packet(ctrl->bbr, &sent_packet);
+			bbr_on_send_packet(ctrl->bbr, &sent_packet);
 
 			/*计算发送的间隔时间值*/
 			time_in_flight = sent_packet.size / actual_bandwidth;
