@@ -39,6 +39,9 @@ struct __sim_sender
 
 	flex_fec_sender_t*			flex;				/*flex FEC¶ÔÏó*/
 	base_list_t*				out_fecs;
+
+	size_t						splits_size;
+	uint16_t*					splits;
 };
 
 

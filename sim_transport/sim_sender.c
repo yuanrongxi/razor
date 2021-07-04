@@ -10,6 +10,7 @@
 
 /*单个报文发送的最大次数*/
 #define MAX_SEND_COUNT		10
+#define DEFAULT_SPLITS_SIZE 128
 
 /*处理来自razor的码率调节通告,这个函数需要剥离FEC和重传需要的码率*/
 static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction_loss, uint32_t rtt)
@@ -49,6 +50,8 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction
 	/*sim_info("loss = %f, bitrate = %u, video_bitrate_kbps = %u\n", loss, bitrate, video_bitrate_kbps);*/
 	/*通知上层进行码率调整*/
 	s->change_bitrate_cb(s->event, video_bitrate_kbps, loss > 0 ? 1 : 0);
+
+	sim_debug("bitrate = %ukb/s, video_bitrate_kbps = %uknb/s\n", bitrate / 8000, video_bitrate_kbps / 8);
 }
 
 static void sim_send_packet(void* handler, uint32_t send_id, int fec, size_t size, int padding)
@@ -160,6 +163,9 @@ sim_sender_t* sim_sender_create(sim_session_t* s, int transport_type, int paddin
 
 	sender->out_fecs = create_list();
 
+	sender->splits_size = DEFAULT_SPLITS_SIZE;
+	sender->splits = (uint16_t*)malloc(sender->splits_size * sizeof(uint16_t));
+
 	return sender;
 }
 
@@ -198,11 +204,15 @@ void sim_sender_destroy(sim_session_t* s, sim_sender_t* sender)
 		sender->out_fecs = NULL;
 	}
 
+	if (sender->splits != NULL) {
+		free(sender->splits);
+		sender->splits = NULL;
+	}
+
 	free(sender);
 }
 
 #define MAX_PACE_QUEUE_DELAY 300
-
 void sim_sender_reset(sim_session_t* s, sim_sender_t* sender, int transport_type, int padding, int fec)
 {
 	int cc_type;
@@ -241,6 +251,8 @@ void sim_sender_reset(sim_session_t* s, sim_sender_t* sender, int transport_type
 
 	if (fec == 1)
 		sender->flex = flex_fec_sender_create();
+
+
 }
 
 int sim_sender_active(sim_session_t* s, sim_sender_t* sender)
@@ -253,28 +265,32 @@ int sim_sender_active(sim_session_t* s, sim_sender_t* sender)
 }
 
 /*视频分片*/
-#define SPLIT_NUMBER	1024
-static uint16_t sim_split_frame(sim_session_t* s, uint16_t splits[], size_t size, int segment_size)
+static uint16_t sim_split_frame(sim_session_t* s, sim_sender_t* sender, size_t size, int segment_size)
 {
-	uint16_t ret, i;
+	uint32_t ret, i;
 	uint16_t remain_size, packet_size;
 
 	if (size <= segment_size){
 		ret = 1;
-		splits[0] = size;
+		sender->splits[0] = size;
 	}
 	else{
 		ret = (size + segment_size - 1) / segment_size;
+		if (ret > sender->splits_size){
+			while (ret > sender->splits_size)
+				sender->splits_size *= 2;
+			sender->splits = (uint16_t*)realloc(sender->splits, sender->splits_size * sizeof(uint16_t));
+		}
 		packet_size = size / ret;
 		remain_size = size % ret;
 
 		for (i = 0; i < ret; i++){
 			if (remain_size > 0){
-				splits[i] = packet_size + 1;
+				sender->splits[i] = packet_size + 1;
 				remain_size--;
 			}
 			else
-				splits[i] = packet_size;
+				sender->splits[i] = packet_size;
 		}
 	}
 
@@ -305,7 +321,7 @@ int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t payload_type,
 {
 	sim_segment_t* seg;
 	int64_t now_ts;
-	uint16_t splits[SPLIT_NUMBER], total, i;
+	uint16_t total, i;
 	uint8_t* pos;
 	skiplist_item_t key, val;
 	uint32_t timestamp;
@@ -314,13 +330,12 @@ int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t payload_type,
 	if (sender->cc == NULL)
 		return -1;
 
-	assert((size / SIM_VIDEO_SIZE) < SPLIT_NUMBER);
 	if (ftype == 1)
 		sim_debug("sender put video frame, data size = %d\n", size);
 	now_ts = GET_SYS_MS();
 	/*帧分包*/
-	segment_size = SIM_VIDEO_SIZE / 2;
-	total = sim_split_frame(s, splits, size, segment_size);
+	segment_size = SIM_VIDEO_SIZE;
+	total = sim_split_frame(s, sender, size, segment_size);
 
 	/*计算时间戳*/
 	if (sender->first_ts == -1){
@@ -349,9 +364,9 @@ int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t payload_type,
 		seg->send_ts = 0;
 		seg->transport_seq = 0;
 
-		seg->data_size = splits[i];
+		seg->data_size = sender->splits[i];
 		memcpy(seg->data, pos, seg->data_size);
-		pos += splits[i];
+		pos += sender->splits[i];
 
 		if (sender->flex != NULL){
 			seg->fec_id = sender->flex->fec_id;					/*确定fec id*/
