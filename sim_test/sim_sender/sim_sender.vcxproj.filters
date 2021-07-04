@@ -18,10 +18,10 @@
     <ClCompile Include="sim_sender_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\win_log\audio_log.cpp">
+    <ClCompile Include="..\win_log\audio_log.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\win_log\gettimeofday.cpp">
+    <ClCompile Include="..\win_log\gettimeofday.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

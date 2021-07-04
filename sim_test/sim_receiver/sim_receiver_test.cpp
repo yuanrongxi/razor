@@ -96,7 +96,7 @@ static int64_t play_video(uint8_t* video_frame, size_t size)
 	return frame_ts;
 }
 
-#define FRAME_SIZE (1024 * 1024)
+#define FRAME_SIZE (1024 * 1024 * 10)
 
 static void main_loop_event()
 {

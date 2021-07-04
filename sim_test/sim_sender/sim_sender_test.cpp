@@ -101,7 +101,7 @@ static void notify_state(void* event, const char* info)
 	strcpy(g_info, info);
 }
 
-#define MAX_SEND_BITRATE (6000 * 8 * 1000)
+#define MAX_SEND_BITRATE (10000 * 8 * 1000)
 #define MIN_SEND_BITRATE (20 * 8 * 1000)
 #define START_SEND_BITRATE (140 * 8 * 1000)
 
@@ -119,6 +119,9 @@ typedef struct
 
 }video_sender_t;
 
+#define FRAME_SIZE (1024 * 1024 * 2)
+#define MAX_DATA_SIZE 1024 * 1024
+
 static void try_send_video(video_sender_t* sender)
 {
 	uint8_t* pos = sender->frame, ftype;
@@ -133,20 +136,12 @@ static void try_send_video(video_sender_t* sender)
 		frame_size = sender->bitrate_kbps / 8 * space;
 
 		sender->prev_ts = now_ts;
-
-		/*限制下模拟包的大小*/
-		if (frame_size > 800 * 1000){
-			sender->frame_rate *= 2;
-			if (sender->frame_rate > 128)
-				sender->frame_rate = 128;
-
-			frame_size = 800 * 1000;
-		}
-
 		if (frame_size > 200){
 			frame_size -= 200;
 			frame_size = frame_size + rand() % 400;
 		}
+
+		frame_size = frame_size > MAX_DATA_SIZE ? MAX_DATA_SIZE : frame_size;
 
 		memcpy(pos, &frame_size, sizeof(frame_size));
 		pos += sizeof(frame_size);
@@ -160,13 +155,14 @@ static void try_send_video(video_sender_t* sender)
 			ftype = 1;
 
 		sim_send_video(0, ftype, sender->frame, frame_size);
+
+		++sender->index;
 		/*只发送一帧试一试*/
-		if (++sender->index > 20000)
-			sender->record_flag = 0;
+		/*if (++sender->index > 20000)
+			sender->record_flag = 0;*/
 	}
 }
 
-#define FRAME_SIZE (1024 * 1024)
 static void main_loop_event()
 {
 	video_sender_t sender = {0};
@@ -250,7 +246,7 @@ static void main_loop_event()
 			prev_ts = now_ts;
 		}
 
-		su_sleep(0, 10000);
+		su_sleep(0, 5000);
 		if (sender.index >= 20000 && disconnecting == 0){
 			sim_disconnect();
 			disconnecting = 1;
@@ -275,7 +271,7 @@ int main(int argc, const char* argv[])
 	sim_init(16000, NULL, log_win_write, notify_callback, notify_change_bitrate, notify_state);
 	sim_set_bitrates(MIN_SEND_BITRATE, START_SEND_BITRATE, MAX_SEND_BITRATE * 5/4);
 
-	if (sim_connect(1000, "192.168.1.7", 16001, remb_transport, 0, 0) != 0){
+	if (sim_connect(1000, "127.0.0.1", 16001, gcc_transport, 0, 0) != 0){
 		printf("sim connect failed!\n");
 		goto err;
 	}

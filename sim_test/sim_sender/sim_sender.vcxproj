@@ -70,17 +70,19 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../common;../../sim_transport;../win_log;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>ws2_32.lib;winmm.lib;wldap32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\win_log\audio_log.cpp" />
-    <ClCompile Include="..\win_log\gettimeofday.cpp" />
+    <ClCompile Include="..\win_log\audio_log.c" />
+    <ClCompile Include="..\win_log\gettimeofday.c" />
     <ClCompile Include="sim_sender_test.cpp" />
   </ItemGroup>
   <ItemGroup>
