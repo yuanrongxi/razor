@@ -323,7 +323,8 @@ int su_addr_eq(su_addr* srcAddr, su_addr* dstAddr)
 
 void su_sleep(uint64_t seconds, uint64_t micro_seconds)
 {
-	Sleep(seconds * 1000 + micro_seconds / 1000);
+	struct timeval timeout = { seconds, micro_seconds };
+	select(0, NULL, NULL, NULL, &timeout);
 }
 
 #define ARRAY_SIZE(x) (((sizeof(x)/sizeof(x[0]))))

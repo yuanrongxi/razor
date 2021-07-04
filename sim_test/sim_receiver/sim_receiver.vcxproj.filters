@@ -17,7 +17,7 @@
     <ClCompile Include="..\win_log\audio_log.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="sim_receiver_test.cpp">
+    <ClCompile Include="sim_receiver_test.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

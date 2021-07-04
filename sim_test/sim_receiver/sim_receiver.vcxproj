@@ -82,7 +82,7 @@
   <ItemGroup>
     <ClCompile Include="..\win_log\audio_log.c" />
     <ClCompile Include="..\win_log\gettimeofday.c" />
-    <ClCompile Include="sim_receiver_test.cpp" />
+    <ClCompile Include="sim_receiver_test.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\project\razor.vcxproj">
