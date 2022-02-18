@@ -9,6 +9,7 @@
 #define __inter_arrival_h_
 
 #include <stdint.h>
+#include <stddef.h>
 
 /*一组网络报文的收发时间戳, 这个间隔统计算法是移植了webRTC中的GCC,这里的时间戳都是用毫秒数计算，没有采用webRTC中的AST和RTP时间戳来计算*/
 typedef struct

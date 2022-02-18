@@ -109,7 +109,7 @@ int su_udp_create(const char* ip, uint16_t port, su_socket* fd)
 {
 	SOCKET s;
 	SOCKADDR_IN addr;
-	int buf_size = 1024 * 256;
+	int buf_size = 1024 * 512;
 	s = socket(AF_INET,SOCK_DGRAM,0);
 
 	setsockopt(s, SOL_SOCKET, SO_RCVBUF, (void *)&buf_size, sizeof(int));
@@ -323,7 +323,8 @@ int su_addr_eq(su_addr* srcAddr, su_addr* dstAddr)
 
 void su_sleep(uint64_t seconds, uint64_t micro_seconds)
 {
-	Sleep(seconds * 1000 + micro_seconds / 1000);
+	struct timeval timeout = { seconds, micro_seconds };
+	select(0, NULL, NULL, NULL, &timeout);
 }
 
 #define ARRAY_SIZE(x) (((sizeof(x)/sizeof(x[0]))))

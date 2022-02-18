@@ -694,15 +694,15 @@ static void sim_session_state_timer(sim_session_t* s, int64_t now_ts, sim_sessio
 
 		if (s->state_cb != NULL){
 			sprintf(info, "video rate = %ukb/s, send = %ukb/s, recv = %ukb/s, rtt = %d + %dms, max frame = %u, pacer delay = %ums, cache delay = %ums",
-				s->video_bytes * 1000 / delay, (uint32_t)(s->sbandwidth * 1000 / delay), (uint32_t)(s->rbandwidth * 1000 / delay), 
+				(uint32_t)(s->video_bytes * 1000 / delay), (uint32_t)(s->sbandwidth * 1000 / delay), (uint32_t)(s->rbandwidth * 1000 / delay), 
 				s->rtt, s->rtt_var, s->max_frame_size, pacer_ms, cache_delay);
 			s->state_cb(s->event, info);
 		}
 
 		if (s->sender != NULL){
 			sim_info("sim transport, send count = %u, recv count = %u, send bandwidth = %ukb/s, recv bandwidth = %ukb/s, rtt = %d, video rate = %ukb/s, pacer delay = %ums, loss=%u\n",
-				(uint32_t)(s->scount / 3), (uint32_t)(s->rcount / 3), (uint32_t)(s->sbandwidth * 1000 / delay),
-				(uint32_t)(s->rbandwidth * 1000 / delay), s->rtt + s->rtt_var, s->video_bytes * 1000 / delay, pacer_ms, s->loss_fraction);
+				(uint32_t)(s->scount), (uint32_t)(s->rcount), (uint32_t)(s->sbandwidth * 1000 / delay),
+				(uint32_t)(s->rbandwidth * 1000 / delay), s->rtt + s->rtt_var, (uint32_t)(s->video_bytes * 1000 / delay), pacer_ms, s->loss_fraction);
 		}
 
 		s->rbandwidth = 0;

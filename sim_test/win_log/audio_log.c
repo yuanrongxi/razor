@@ -5,24 +5,23 @@
 * See the file LICENSE for redistribution information.
 */
 
-#include <windows.h>
+#if WIN32
+#include <direct.h>
+#pragma warning(disable: 4996)
+#endif
+
+#include "cf_platform.h"
 #include <time.h>
 #include "audio_log.h"
 #include "gettimeofday.h"
-#include <direct.h>
-#include <string>
-
-using namespace std;
 
 #define PATH_MAX_SIZE 1024
-
-#pragma warning(disable: 4996)
 
 typedef struct log_file_s
 {
 	FILE*							fp;
 	char							filename[PATH_MAX_SIZE];
-	CRITICAL_SECTION				mutex;
+	su_mutex						mutex;
 }log_file_t;
 
 static log_file_t* log_file = NULL;
@@ -36,7 +35,7 @@ const char* get_time_str(char *date_str)
 	gettimeofday(&tv, NULL);
 
 	time_t now = tv.tv_sec;
-	::localtime_s(&tm_now, &now);
+	localtime_s(&tm_now, &now);
 
 
 	sprintf(date_str, "%04d-%02d-%02d %02d:%02d:%02d.%3ld", tm_now.tm_year + 1900, tm_now.tm_mon + 1, tm_now.tm_mday,
@@ -45,12 +44,10 @@ const char* get_time_str(char *date_str)
 	return date_str;
 }
 
-static void get_fullexepath(string path)
+static char* get_fullexepath()
 {
-	char buffer[MAX_PATH];
-	char* ptr = _getcwd(buffer, MAX_PATH);
-	path = ptr;
-	path += "\\";
+	static char buffer[MAX_PATH] = { 0 };
+	return _getcwd(buffer, MAX_PATH);
 }
 
 int open_win_log(const char* filename)
@@ -60,12 +57,12 @@ int open_win_log(const char* filename)
 
 	log_file = (log_file_t *)calloc(1, sizeof(log_file_t));
 
-	string path;
-	get_fullexepath(path);
+	char* path = get_fullexepath();
+	if (path == NULL)
+		return -1;
 
-	path += filename;
+	sprintf(log_file->filename, "%s\\%s", path, filename);
 
-	strcpy(log_file->filename, path.c_str());
 	log_file->fp = fopen(log_file->filename, "w");
 	if (log_file->fp == NULL){
 		printf("open %s failed!\r\n", log_file->filename);
@@ -73,7 +70,7 @@ int open_win_log(const char* filename)
 	}
 
 	/*³õÊ¼»¯spin mutexËø*/
-	InitializeCriticalSectionAndSpinCount(&(log_file->mutex), WT_SPIN_COUNT);
+	log_file->mutex = su_create_mutex();
 	return 0;
 }
 
@@ -84,7 +81,10 @@ void close_win_log()
 		fclose(log_file->fp);
 		log_file->fp = NULL;
 
-		DeleteCriticalSection(&(log_file->mutex));
+		if (log_file->mutex != NULL) {
+			su_destroy_mutex(log_file->mutex);
+			log_file->mutex = NULL;
+		}
 
 		free(log_file);
 		log_file = NULL;
@@ -113,10 +113,10 @@ int log_win_write(int level, const char* file, int line, const char* fmt, va_lis
 {
 	char date_str[DATE_STR_SIZE];
 	if (log_file != NULL && log_file->fp != NULL){
-		EnterCriticalSection(&(log_file->mutex));
+		su_mutex_lock(log_file->mutex);
 		fprintf(log_file->fp, "%s %s:%d ", get_time_str(date_str), get_file_name(file), line);
 		vfprintf(log_file->fp, fmt, vl);
-		LeaveCriticalSection(&(log_file->mutex));
+		su_mutex_unlock(log_file->mutex);
 		fflush(log_file->fp);
 	}
 

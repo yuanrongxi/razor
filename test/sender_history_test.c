@@ -21,7 +21,7 @@ static void add_remove_one()
 
 	init_packet_feedback(received_packet);
 	assert(sender_history_get(hist, seq_no, &received_packet, 1) == 0);
-	EXPECT_EQ(k_packet.create_ts, received_packet.create_ts, 1);
+	EXPECT_EQ(k_packet.create_ts, received_packet.create_ts);
 
 	init_packet_feedback(received_packet2);
 	assert(sender_history_get(hist, seq_no, &received_packet2, 1) != 0);

@@ -7,8 +7,18 @@
 
 #ifndef __GETTIMEOFDAY_H
 #define __GETTIMEOFDAY_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef WIN32
 //ÉêÃ÷ÒıÓÃ
 int gettimeofday(struct timeval *tv, void *tz);
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

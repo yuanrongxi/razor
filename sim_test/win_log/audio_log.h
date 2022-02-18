@@ -12,6 +12,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*windows系统下简单的log模块*/
 int			open_win_log(const char* filename);
 
@@ -19,6 +23,9 @@ int			log_win_write(int level, const char* file, int line, const char* fmt, va_l
 
 void		close_win_log();
 
+#ifdef __cplusplus
+}
+#endif
 #endif
 
 

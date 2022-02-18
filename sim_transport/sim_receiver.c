@@ -53,6 +53,7 @@ static inline void real_video_clean_frame(sim_session_t* session, sim_frame_cach
 	frame->ts = 0;
 	frame->frame_type = 0;
 	frame->seg_number = 0;
+	frame->seg_count = 0;
 
 	c->min_fid = frame->fid;
 
@@ -96,15 +97,7 @@ static int evict_gop_frame(sim_session_t* s, sim_frame_cache_t* c)
 
 static inline int real_video_cache_check_frame_full(sim_session_t* s, sim_frame_t* frame)
 {
-	int i;
-	if (frame->seg_number <= 0)
-		return -1;
-
-	for (i = 0; i < frame->seg_number; ++i)
-		if (frame->segments[i] == NULL)
-			return -1;
-
-	return 0;
+	return (frame->seg_number == frame->seg_count) ? 0 : -1;
 }
 
 static void real_video_cache_evict_discard(sim_session_t* s, sim_frame_cache_t* c)
@@ -250,6 +243,7 @@ static int real_video_cache_put(sim_session_t* s, sim_frame_cache_t* c, sim_segm
 	frame->ts = seg->timestamp;
 
 	if (frame->seg_number == 0){
+		frame->seg_count = 1;
 		frame->seg_number = seg->total;
 		frame->segments = calloc(frame->seg_number, sizeof(seg));
 		frame->segments[seg->index] = seg;
@@ -259,6 +253,7 @@ static int real_video_cache_put(sim_session_t* s, sim_frame_cache_t* c, sim_segm
 	else{
 		if (frame->segments[seg->index] == NULL){
 			frame->segments[seg->index] = seg;
+			frame->seg_count++;
 			ret = 0;
 		}
 	}
@@ -305,7 +300,7 @@ static uint32_t real_video_ready_ms(sim_session_t* s, sim_frame_cache_t* c)
 	max_ready_ts = 0;
 	for (i = c->min_fid + 1; i <= c->max_fid; ++i){
 		frame = &c->frames[INDEX(i)];
-		if (real_video_cache_check_frame_full(s, frame) == 0){
+		if (frame->seg_count == frame->seg_number){
 			if (min_ready_ts == 0)
 				min_ready_ts = frame->ts;
 			max_ready_ts = frame->ts;
@@ -386,7 +381,7 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 		evict_gop_frame(s, c);
 	}
 
-	real_video_cache_evict_discard(s, c);
+	//real_video_cache_evict_discard(s, c);
 
 	pos = INDEX(c->min_fid + 1);
 	frame = &c->frames[pos];
@@ -742,11 +737,11 @@ static void video_real_ack(sim_session_t* s, sim_receiver_t* r, int hb, uint32_t
 		r->cache->wait_timer = (r->cache->wait_timer * 7 + delay) / 8;
 		r->cache->wait_timer = SU_MAX(r->cache->frame_timer, r->cache->wait_timer);
 
-		for (i = 0; i < evict_count; i++){
+		/*for (i = 0; i < evict_count; i++){
 			key.u32 = numbers[i];
 			skiplist_remove(r->loss, key);
 			real_video_cache_discard(s, r->cache, key.u32);
-		}
+		}*/
 	}
 }
 

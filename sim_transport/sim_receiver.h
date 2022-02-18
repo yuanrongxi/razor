@@ -17,6 +17,7 @@ typedef struct
 	uint32_t			ts;
 	int					frame_type;
 
+	int					seg_count;
 	int					seg_number;
 	sim_segment_t**		segments;
 }sim_frame_t;
