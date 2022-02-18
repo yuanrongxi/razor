@@ -8,10 +8,10 @@
 #include "sim_internal.h"
 #include <assert.h>
 
-/*µ¥¸ö±¨ÎÄ·¢ËÍµÄ×î´ó´ÎÊı*/
+/*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä·ï¿½ï¿½Íµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
 #define MAX_SEND_COUNT		10
 
-/*´¦ÀíÀ´×ÔrazorµÄÂëÂÊµ÷½ÚÍ¨¸æ,Õâ¸öº¯ÊıĞèÒª°şÀëFECºÍÖØ´«ĞèÒªµÄÂëÂÊ*/
+/*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½razorï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½ï¿½Í¨ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½FECï¿½ï¿½ï¿½Ø´ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
 static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction_loss, uint32_t rtt)
 {
 	sim_session_t* s = (sim_session_t*)trigger;
@@ -21,14 +21,14 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction
 	double loss;
 	uint32_t packet_size_bit = (SIM_SEGMENT_HEADER_SIZE + SIM_VIDEO_SIZE) * 8;
 
-	/*¼ÆËãÕâ¸öÂëÂÊÏÂÃ¿ÃëÄÜ·¢ËÍ¶àÉÙ¸ö±¨ÎÄ*/
+	/*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½Ü·ï¿½ï¿½Í¶ï¿½ï¿½Ù¸ï¿½ï¿½ï¿½ï¿½ï¿½*/
 	per_packets_second = (bitrate + packet_size_bit - 1) / packet_size_bit;
-	/*¼ÆËã´«ÊäĞ­ÒéÍ·ĞèÒªÕ¼ÓÃµÄÂëÂÊ*/
+	/*ï¿½ï¿½ï¿½ã´«ï¿½ï¿½Ğ­ï¿½ï¿½Í·ï¿½ï¿½ÒªÕ¼ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½*/
 	overhead_bitrate = per_packets_second * SIM_SEGMENT_HEADER_SIZE * 8;
-	/*¼ÆËãÊÓÆµÊı¾İ¿ÉÀûÓÃµÄÂëÂÊ*/
+	/*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½ï¿½İ¿ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½*/
 	payload_bitrate = bitrate - overhead_bitrate;
 
-	/*¼ÆËã¶ª°üÂÊ£¬ÓÃÆ½»¬ÒÅÍüËã·¨½øĞĞ±Æ½ü£¬webRTCÓÃµÄÊÇµ¥Î»Ê±¼äÄÚ×î´óºÍÊ±¼ä¶ÎÆ½»¬*/
+	/*ï¿½ï¿½ï¿½ã¶ªï¿½ï¿½ï¿½Ê£ï¿½ï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ã·¨ï¿½ï¿½ï¿½Ğ±Æ½ï¿½ï¿½ï¿½webRTCï¿½Ãµï¿½ï¿½Çµï¿½Î»Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½Æ½ï¿½ï¿½*/
 	if (fraction_loss < s->loss_fraction)
 		s->loss_fraction = (s->loss_fraction * 15 + fraction_loss) / 16;
 	else
@@ -36,18 +36,18 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction
 
 	loss = s->loss_fraction / 255.0;
 
-	/*Áô³ö7%ÂëÂÊ×önackºÍfeedback*/
-	if (loss > 0.5) /*ÖØ´«µÄ´ø¿í²»ÄÜ´óÓÚ°ë*/
+	/*ï¿½ï¿½ï¿½ï¿½7%ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½nackï¿½ï¿½feedback*/
+	if (loss > 0.5) /*ï¿½Ø´ï¿½ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü´ï¿½ï¿½Ú°ï¿½*/
 		loss = 0.5;
 
-	/*¼ÆËãÊÓÆµ±àÂëÆ÷µÄÂëÂÊ,µ¥Î»kbps*/
+	/*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½Î»kbps*/
 	video_bitrate_kbps = (uint32_t)((1.0 - loss) * payload_bitrate) / 1000;
 
 	if (sender->flex != NULL)
 		video_bitrate_kbps = video_bitrate_kbps * 4 / 5;
 
 	/*sim_info("loss = %f, bitrate = %u, video_bitrate_kbps = %u\n", loss, bitrate, video_bitrate_kbps);*/
-	/*Í¨ÖªÉÏ²ã½øĞĞÂëÂÊµ÷Õû*/
+	/*Í¨Öªï¿½Ï²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½ï¿½*/
 	s->change_bitrate_cb(s->event, video_bitrate_kbps, loss > 0 ? 1 : 0);
 }
 
@@ -72,7 +72,7 @@ static void sim_send_packet(void* handler, uint32_t send_id, int fec, size_t siz
 		pad.send_ts = (uint32_t)(now_ts - sender->first_ts);
 		pad.data_size = SU_MIN(size, SIM_VIDEO_SIZE);
 
-		/*½«·¢ËÍ¼ÇÂ¼ËÍÈëÓµÈû¶ÔÏóÖĞ½øĞĞbwe¶ÔÏó×öÑÓ³Ù¹ÀËã*/
+		/*ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½Â¼ï¿½ï¿½ï¿½ï¿½Óµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ½ï¿½ï¿½ï¿½bweï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³Ù¹ï¿½ï¿½ï¿½*/
 		if (sender->cc != NULL)
 			sender->cc->on_send(sender->cc, pad.transport_seq, pad.data_size + SIM_SEGMENT_HEADER_SIZE);
 
@@ -93,11 +93,11 @@ static void sim_send_packet(void* handler, uint32_t send_id, int fec, size_t siz
 		}
 
 		seg = it->val.ptr;
-		/*Ã¿·¢ËÍÒ»´Î£¬¾Í½øĞĞ´«ÊäĞòºÅ+1*/
+		/*Ã¿ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Î£ï¿½ï¿½Í½ï¿½ï¿½Ğ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½+1*/
 		seg->transport_seq = sender->transport_seq_seed++;
-		/*send_tsÊÇÏà¶Ôµ±Ç°Ö¡²úÉúµÄÊ±¼äÖ®²î£¬ÓÃÓÚ½ÓÊÕ¶Ë¼ÆËã·¢ËÍÊ±¼ä¼ä¸ô*/
+		/*send_tsï¿½ï¿½ï¿½ï¿½Ôµï¿½Ç°Ö¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ö®ï¿½î£¬ï¿½ï¿½ï¿½Ú½ï¿½ï¿½Õ¶Ë¼ï¿½ï¿½ã·¢ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½*/
 		seg->send_ts = (uint16_t)(now_ts - sender->first_ts - seg->timestamp);
-		/*½«·¢ËÍ¼ÇÂ¼ËÍÈëÓµÈû¶ÔÏóÖĞ½øĞĞbwe¶ÔÏó×öÑÓ³Ù¹ÀËã*/
+		/*ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½Â¼ï¿½ï¿½ï¿½ï¿½Óµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ½ï¿½ï¿½ï¿½bweï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³Ù¹ï¿½ï¿½ï¿½*/
 		if (sender->cc != NULL)
 			sender->cc->on_send(sender->cc, seg->transport_seq, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
 
@@ -120,7 +120,7 @@ static void sim_send_packet(void* handler, uint32_t send_id, int fec, size_t siz
 		fec_packet->transport_seq = sender->transport_seq_seed++;
 		fec_packet->send_ts = (uint32_t)(now_ts - sender->first_ts);
 
-		/*½«·¢ËÍ¼ÇÂ¼ËÍÈëÓµÈû¶ÔÏóÖĞ½øĞĞbwe¶ÔÏó×öÑÓ³Ù¹ÀËã*/
+		/*ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½Â¼ï¿½ï¿½ï¿½ï¿½Óµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ½ï¿½ï¿½ï¿½bweï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³Ù¹ï¿½ï¿½ï¿½*/
 		if (sender->cc != NULL)
 			sender->cc->on_send(sender->cc, fec_packet->transport_seq, fec_packet->fec_data_size + SIM_SEGMENT_HEADER_SIZE);
 
@@ -146,7 +146,7 @@ sim_sender_t* sim_sender_create(sim_session_t* s, int transport_type, int paddin
 	sender->fecs_cache = skiplist_create(idu32_compare, free_video_seg, s);
 	sender->segs_cache = skiplist_create(idu32_compare, free_video_seg, s);
 	sender->ack_cache = skiplist_create(idu32_compare, NULL, s);
-	/*pacer queueµÄÑÓ³Ù²»´óÓÚ250ms*/
+	/*pacer queueï¿½ï¿½ï¿½Ó³Ù²ï¿½ï¿½ï¿½ï¿½ï¿½250ms*/
 	cc_type = transport_type;
 	if (cc_type < gcc_transport || cc_type > remb_transport)
 		cc_type = gcc_congestion;
@@ -222,7 +222,7 @@ void sim_sender_reset(sim_session_t* s, sim_sender_t* sender, int transport_type
 
 	list_clear(sender->out_fecs);
 
-	/*ÖØÖÃÓµÈû¶ÔÏó*/
+	/*ï¿½ï¿½ï¿½ï¿½Óµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
 	if (sender->cc != NULL){
 		razor_sender_destroy(sender->cc);
 		sender->cc = NULL;
@@ -252,7 +252,7 @@ int sim_sender_active(sim_session_t* s, sim_sender_t* sender)
 	return 0;
 }
 
-/*ÊÓÆµ·ÖÆ¬*/
+/*ï¿½ï¿½Æµï¿½ï¿½Æ¬*/
 #define SPLIT_NUMBER	1024
 static uint16_t sim_split_frame(sim_session_t* s, uint16_t splits[], size_t size, int segment_size)
 {
@@ -305,24 +305,25 @@ int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t payload_type,
 {
 	sim_segment_t* seg;
 	int64_t now_ts;
-	uint16_t splits[SPLIT_NUMBER], total, i;
+	uint16_t splits[SPLIT_NUMBER];
+	uint16_t total, i;
 	uint8_t* pos;
 	skiplist_item_t key, val;
 	uint32_t timestamp;
 	int segment_size;
 
-	if (sender->cc == NULL)
+	if (sender->cc == NULL || (size / SIM_VIDEO_SIZE) > SPLIT_NUMBER)
 		return -1;
 
 	assert((size / SIM_VIDEO_SIZE) < SPLIT_NUMBER);
 	if (ftype == 1)
 		sim_debug("sender put video frame, data size = %d\n", size);
 	now_ts = GET_SYS_MS();
-	/*Ö¡·Ö°ü*/
-	segment_size = SIM_VIDEO_SIZE / 2;
+	/*Ö¡ï¿½Ö°ï¿½*/
+	segment_size = SIM_VIDEO_SIZE;
 	total = sim_split_frame(s, splits, size, segment_size);
 
-	/*¼ÆËãÊ±¼ä´Á*/
+	/*ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½*/
 	if (sender->first_ts == -1){
 		timestamp = 0;
 		sender->first_ts = now_ts;
@@ -354,11 +355,11 @@ int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t payload_type,
 		pos += splits[i];
 
 		if (sender->flex != NULL){
-			seg->fec_id = sender->flex->fec_id;					/*È·¶¨fec id*/
+			seg->fec_id = sender->flex->fec_id;					/*È·ï¿½ï¿½fec id*/
 			flex_fec_sender_add_segment(sender->flex, seg);
 		}
 
-		/*½«±¨ÎÄ¼ÓÈëµ½·¢ËÍ»º³å¶ÓÁĞµ±ÖĞ*/
+		/*ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ëµ½ï¿½ï¿½ï¿½Í»ï¿½ï¿½ï¿½ï¿½ï¿½Ğµï¿½ï¿½ï¿½*/
 		key.u32 = seg->send_id;
 		val.ptr = seg;
 		skiplist_insert(sender->segs_cache, key, val);
@@ -366,7 +367,7 @@ int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t payload_type,
 		key.u32 = seg->packet_id;
 		skiplist_insert(sender->ack_cache, key, val);
 
-		/*½«±¨ÎÄ¼ÓÈëµ½ccµÄpacerÖĞ*/
+		/*ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ëµ½ccï¿½ï¿½pacerï¿½ï¿½*/
 		sender->cc->add_packet(sender->cc, seg->send_id, 0, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
 
 		if (sender->flex != NULL && sender->flex->segs_count >= 100)
@@ -396,7 +397,7 @@ static inline void sim_sender_update_base(sim_session_t* s, sim_sender_t* sender
 	}
 }
 
-/*´¦ÀínackÏûÏ¢*/
+/*ï¿½ï¿½ï¿½ï¿½nackï¿½ï¿½Ï¢*/
 int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ack)
 {
 	int i;
@@ -406,12 +407,12 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 
 	int64_t now_ts;
 
-	/*¼ì²é·Ç·¨Êı¾İ*/
+	/*ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½*/
 	if (ack->acked_packet_id > sender->packet_id_seed || ack->base_packet_id > sender->packet_id_seed)
 		return -1;
-	/*ÍÆ½ø´°¿Ú*/
+	/*ï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½*/
 	sim_sender_update_base(s, sender, ack->base_packet_id);
-	//È·¶¨ÒÑ¾­½ÓÊÕµ½µÄ±¨ÎÄ£¬·ÀÖ¹ÖØ·¢
+	//È·ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½Õµï¿½ï¿½Ä±ï¿½ï¿½Ä£ï¿½ï¿½ï¿½Ö¹ï¿½Ø·ï¿½
 	for (i = 0; i < ack->ack_num; i++){
 		key.u32 = ack->base_packet_id + ack->acked[i];
 		iter = skiplist_remove(sender->ack_cache, key);
@@ -428,20 +429,20 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 		if (iter != NULL){
 			seg = (sim_segment_t*)iter->val.ptr;
 
-			/*·ÀÖ¹µ¥¸ö±¨ÎÄ²¹³¥¹ı¿ì,·ÀÖ¹Í»·¢ĞÔÓµÈû*/
+			/*ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½Ö¹Í»ï¿½ï¿½ï¿½ï¿½Óµï¿½ï¿½*/
 			if (seg->send_ts + sender->first_ts + SU_MIN(200, SU_MAX(30, s->rtt / 4)) > now_ts)
 				continue;
 
 			if (seg->timestamp + CACHE_MAX_DELAY + sender->first_ts < now_ts)
 				continue;
 
-			/*½«±¨ÎÄ¼ÓÈëµ½ccµÄpacCACHE_MAX_DELAYerÖĞ½øĞĞÖØ·¢*/
+			/*ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ëµ½ccï¿½ï¿½pacCACHE_MAX_DELAYerï¿½Ğ½ï¿½ï¿½ï¿½ï¿½Ø·ï¿½*/
 			if (s->rtt < CACHE_MAX_DELAY)
 				sender->cc->add_packet(sender->cc, seg->send_id, 0, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
 		}
 	}
 
-	/*¼ÆËãRTT*/
+	/*ï¿½ï¿½ï¿½ï¿½RTT*/
 	key.u32 = ack->acked_packet_id;
 	iter = skiplist_search(sender->segs_cache, key);
 	if (iter != NULL){
@@ -458,7 +459,7 @@ void sim_clean_ack_cache(sim_session_t* s, sim_sender_t* sender)
 	skiplist_clear(sender->ack_cache);
 }
 
-/*´¦Àí½ÓÊÕ¶ËÀ´µÄfeedbackÏûÏ¢*/
+/*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¶ï¿½ï¿½ï¿½ï¿½ï¿½feedbackï¿½ï¿½Ï¢*/
 void sim_sender_feedback(sim_session_t* s, sim_sender_t* sender, sim_feedback_t* feedback)
 {
 	sim_sender_update_base(s, s->sender, feedback->base_packet_id);
@@ -489,7 +490,7 @@ static void sim_sender_evict_cache(sim_session_t* s, sim_sender_t* sender, int64
 	sim_segment_t* seg;
 	sim_fec_t* fec;
 
-	/*½øĞĞÖ¡·ÖÆ¬ÌÔÌ­*/
+	/*ï¿½ï¿½ï¿½ï¿½Ö¡ï¿½ï¿½Æ¬ï¿½ï¿½Ì­*/
 	while (skiplist_size(sender->segs_cache) > 0){
 		iter = skiplist_first(sender->segs_cache);
 		seg = iter->val.ptr;
