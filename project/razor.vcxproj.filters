@@ -147,9 +147,6 @@
     <ClCompile Include="..\bbr\bbr_sender.c">
       <Filter>bbr</Filter>
     </ClCompile>
-    <ClCompile Include="..\estimator\cc_feedback_adapter.h">
-      <Filter>estimator</Filter>
-    </ClCompile>
     <ClCompile Include="..\estimator\cc_feedback_adapter.c">
       <Filter>estimator</Filter>
     </ClCompile>

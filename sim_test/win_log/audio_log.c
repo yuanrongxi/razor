@@ -93,10 +93,11 @@ void close_win_log()
 
 static const char* get_file_name(const char* pathname)
 {
+	size_t size;
 	if (pathname == NULL)
 		return pathname;
 
-	int32_t size = strlen(pathname);
+	size = strlen(pathname);
 
 	char *pos = (char *)pathname + size;
 	while (*pos != '\\' && pos != pathname)

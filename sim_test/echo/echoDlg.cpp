@@ -187,7 +187,7 @@ BOOL CechoDlg::OnInitDialog()
 	InitVideoDevices();
 
 	m_frame = new SimFramework(GetSafeHwnd());
-	m_frame->init(rand() % 1000 + 2000, MIN_VIDEO_BITARE, START_VIDEO_BITRATE, MAX_VIDEO_BITRAE);
+	m_frame->init(SIM_PORT, MIN_VIDEO_BITARE, START_VIDEO_BITRATE, MAX_VIDEO_BITRAE);
 
 	SetTimer(1000, 1000, NULL);
 

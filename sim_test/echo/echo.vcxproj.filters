@@ -81,12 +81,6 @@
     <ClInclude Include="video_view.h">
       <Filter>device</Filter>
     </ClInclude>
-    <ClInclude Include="..\win_log\audio_log.h">
-      <Filter>win_log</Filter>
-    </ClInclude>
-    <ClInclude Include="..\win_log\gettimeofday.h">
-      <Filter>win_log</Filter>
-    </ClInclude>
     <ClInclude Include="sim_object.h">
       <Filter>sim_framework</Filter>
     </ClInclude>
@@ -116,6 +110,12 @@
     </ClInclude>
     <ClInclude Include="codec\x265\echo_h265_decoder.h">
       <Filter>codec\h265</Filter>
+    </ClInclude>
+    <ClInclude Include="..\win_log\audio_log.h">
+      <Filter>win_log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\win_log\gettimeofday.h">
+      <Filter>win_log</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -152,12 +152,6 @@
     <ClCompile Include="video_view.cpp">
       <Filter>device</Filter>
     </ClCompile>
-    <ClCompile Include="..\win_log\audio_log.cpp">
-      <Filter>win_log</Filter>
-    </ClCompile>
-    <ClCompile Include="..\win_log\gettimeofday.cpp">
-      <Filter>win_log</Filter>
-    </ClCompile>
     <ClCompile Include="sim_object.cpp">
       <Filter>sim_framework</Filter>
     </ClCompile>
@@ -181,6 +175,12 @@
     </ClCompile>
     <ClCompile Include="codec\x265\echo_h265_decoder.cpp">
       <Filter>codec\h265</Filter>
+    </ClCompile>
+    <ClCompile Include="..\win_log\audio_log.c">
+      <Filter>win_log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\win_log\gettimeofday.c">
+      <Filter>win_log</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
