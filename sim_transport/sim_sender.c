@@ -8,11 +8,9 @@
 #include "sim_internal.h"
 #include <assert.h>
 
-/*�������ķ��͵�������*/
 #define MAX_SEND_COUNT		10
 #define DEFAULT_SPLITS_SIZE 128
 
-/*��������razor�����ʵ���ͨ��,���������Ҫ����FEC���ش���Ҫ������*/
 static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction_loss, uint32_t rtt)
 {
 	sim_session_t* s = (sim_session_t*)trigger;
@@ -22,14 +20,11 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction
 	double loss;
 	uint32_t packet_size_bit = (SIM_SEGMENT_HEADER_SIZE + SIM_VIDEO_SIZE) * 8;
 
-	/*�������������ÿ���ܷ��Ͷ��ٸ�����*/
 	per_packets_second = (bitrate + packet_size_bit - 1) / packet_size_bit;
-	/*���㴫��Э��ͷ��Ҫռ�õ�����*/
+
 	overhead_bitrate = per_packets_second * SIM_SEGMENT_HEADER_SIZE * 8;
-	/*������Ƶ���ݿ����õ�����*/
 	payload_bitrate = bitrate - overhead_bitrate;
 
-	/*���㶪���ʣ���ƽ�������㷨���бƽ���webRTC�õ��ǵ�λʱ��������ʱ���ƽ��*/
 	if (fraction_loss < s->loss_fraction)
 		s->loss_fraction = (s->loss_fraction * 15 + fraction_loss) / 16;
 	else
@@ -37,18 +32,15 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction
 
 	loss = s->loss_fraction / 255.0;
 
-	/*����7%������nack��feedback*/
-	if (loss > 0.5) /*�ش��Ĵ������ܴ��ڰ�*/
+	if (loss > 0.5) 
 		loss = 0.5;
 
-	/*������Ƶ������������,��λkbps*/
 	video_bitrate_kbps = (uint32_t)((1.0 - loss) * payload_bitrate) / 1000;
 
 	if (sender->flex != NULL)
 		video_bitrate_kbps = video_bitrate_kbps * 4 / 5;
 
 	/*sim_info("loss = %f, bitrate = %u, video_bitrate_kbps = %u\n", loss, bitrate, video_bitrate_kbps);*/
-	/*֪ͨ�ϲ�������ʵ���*/
 	s->change_bitrate_cb(s->event, video_bitrate_kbps, loss > 0 ? 1 : 0);
 
 	sim_debug("bitrate = %ukb/s, video_bitrate_kbps = %uknb/s\n", bitrate / 8000, video_bitrate_kbps / 8);
@@ -75,7 +67,6 @@ static void sim_send_packet(void* handler, uint32_t send_id, int fec, size_t siz
 		pad.send_ts = (uint32_t)(now_ts - sender->first_ts);
 		pad.data_size = SU_MIN(size, SIM_VIDEO_SIZE);
 
-		/*�����ͼ�¼����ӵ�������н���bwe�������ӳٹ���*/
 		if (sender->cc != NULL)
 			sender->cc->on_send(sender->cc, pad.transport_seq, pad.data_size + SIM_SEGMENT_HEADER_SIZE);
 
@@ -96,11 +87,9 @@ static void sim_send_packet(void* handler, uint32_t send_id, int fec, size_t siz
 		}
 
 		seg = it->val.ptr;
-		/*ÿ����һ�Σ��ͽ��д������+1*/
 		seg->transport_seq = sender->transport_seq_seed++;
-		/*send_ts����Ե�ǰ֡������ʱ��֮����ڽ��ն˼��㷢��ʱ����*/
 		seg->send_ts = (uint16_t)(now_ts - sender->first_ts - seg->timestamp);
-		/*�����ͼ�¼����ӵ�������н���bwe�������ӳٹ���*/
+
 		if (sender->cc != NULL)
 			sender->cc->on_send(sender->cc, seg->transport_seq, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
 
@@ -123,7 +112,6 @@ static void sim_send_packet(void* handler, uint32_t send_id, int fec, size_t siz
 		fec_packet->transport_seq = sender->transport_seq_seed++;
 		fec_packet->send_ts = (uint32_t)(now_ts - sender->first_ts);
 
-		/*�����ͼ�¼����ӵ�������н���bwe�������ӳٹ���*/
 		if (sender->cc != NULL)
 			sender->cc->on_send(sender->cc, fec_packet->transport_seq, fec_packet->fec_data_size + SIM_SEGMENT_HEADER_SIZE);
 
@@ -149,7 +137,7 @@ sim_sender_t* sim_sender_create(sim_session_t* s, int transport_type, int paddin
 	sender->fecs_cache = skiplist_create(idu32_compare, free_video_seg, s);
 	sender->segs_cache = skiplist_create(idu32_compare, free_video_seg, s);
 	sender->ack_cache = skiplist_create(idu32_compare, NULL, s);
-	/*pacer queue���ӳٲ�����250ms*/
+
 	cc_type = transport_type;
 	if (cc_type < gcc_transport || cc_type > remb_transport)
 		cc_type = gcc_congestion;
@@ -232,7 +220,6 @@ void sim_sender_reset(sim_session_t* s, sim_sender_t* sender, int transport_type
 
 	list_clear(sender->out_fecs);
 
-	/*����ӵ������*/
 	if (sender->cc != NULL){
 		razor_sender_destroy(sender->cc);
 		sender->cc = NULL;
@@ -264,7 +251,6 @@ int sim_sender_active(sim_session_t* s, sim_sender_t* sender)
 	return 0;
 }
 
-/*��Ƶ��Ƭ*/
 static uint16_t sim_split_frame(sim_session_t* s, sim_sender_t* sender, size_t size, int segment_size)
 {
 	uint32_t ret, i;
@@ -334,11 +320,9 @@ int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t payload_type,
 		sim_debug("sender put video frame, data size = %d\n", size);
 	now_ts = GET_SYS_MS();
 
-	/*֡�ְ�*/
 	segment_size = SIM_VIDEO_SIZE;
 	total = sim_split_frame(s, sender, size, segment_size);
 
-	/*����ʱ���*/
 	if (sender->first_ts == -1){
 		timestamp = 0;
 		sender->first_ts = now_ts;
@@ -370,11 +354,10 @@ int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t payload_type,
 		pos += sender->splits[i];
 
 		if (sender->flex != NULL){
-			seg->fec_id = sender->flex->fec_id;					/*ȷ��fec id*/
+			seg->fec_id = sender->flex->fec_id;
 			flex_fec_sender_add_segment(sender->flex, seg);
 		}
 
-		/*�����ļ��뵽���ͻ�����е���*/
 		key.u32 = seg->send_id;
 		val.ptr = seg;
 		skiplist_insert(sender->segs_cache, key, val);
@@ -382,7 +365,6 @@ int sim_sender_put(sim_session_t* s, sim_sender_t* sender, uint8_t payload_type,
 		key.u32 = seg->packet_id;
 		skiplist_insert(sender->ack_cache, key, val);
 
-		/*�����ļ��뵽cc��pacer��*/
 		sender->cc->add_packet(sender->cc, seg->send_id, 0, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
 
 		if (sender->flex != NULL && sender->flex->segs_count >= 100)
@@ -412,7 +394,6 @@ static inline void sim_sender_update_base(sim_session_t* s, sim_sender_t* sender
 	}
 }
 
-/*����nack��Ϣ*/
 int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ack)
 {
 	int i;
@@ -422,12 +403,11 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 
 	int64_t now_ts;
 
-	/*���Ƿ�����*/
 	if (ack->acked_packet_id > sender->packet_id_seed || ack->base_packet_id > sender->packet_id_seed)
 		return -1;
-	/*�ƽ�����*/
+
 	sim_sender_update_base(s, sender, ack->base_packet_id);
-	//ȷ���Ѿ����յ��ı��ģ���ֹ�ط�
+
 	for (i = 0; i < ack->ack_num; i++){
 		key.u32 = ack->base_packet_id + ack->acked[i];
 		iter = skiplist_remove(sender->ack_cache, key);
@@ -444,20 +424,17 @@ int sim_sender_ack(sim_session_t* s, sim_sender_t* sender, sim_segment_ack_t* ac
 		if (iter != NULL){
 			seg = (sim_segment_t*)iter->val.ptr;
 
-			/*��ֹ�������Ĳ�������,��ֹͻ����ӵ��*/
 			if (seg->send_ts + sender->first_ts + SU_MIN(200, SU_MAX(30, s->rtt / 4)) > now_ts)
 				continue;
 
 			if (seg->timestamp + CACHE_MAX_DELAY + sender->first_ts < now_ts)
 				continue;
 
-			/*�����ļ��뵽cc��pacCACHE_MAX_DELAYer�н����ط�*/
 			if (s->rtt < CACHE_MAX_DELAY)
 				sender->cc->add_packet(sender->cc, seg->send_id, 0, seg->data_size + SIM_SEGMENT_HEADER_SIZE);
 		}
 	}
 
-	/*����RTT*/
 	key.u32 = ack->acked_packet_id;
 	iter = skiplist_search(sender->segs_cache, key);
 	if (iter != NULL){
@@ -474,7 +451,6 @@ void sim_clean_ack_cache(sim_session_t* s, sim_sender_t* sender)
 	skiplist_clear(sender->ack_cache);
 }
 
-/*�������ն�����feedback��Ϣ*/
 void sim_sender_feedback(sim_session_t* s, sim_sender_t* sender, sim_feedback_t* feedback)
 {
 	sim_sender_update_base(s, s->sender, feedback->base_packet_id);
@@ -505,7 +481,6 @@ static void sim_sender_evict_cache(sim_session_t* s, sim_sender_t* sender, int64
 	sim_segment_t* seg;
 	sim_fec_t* fec;
 
-	/*����֡��Ƭ��̭*/
 	while (skiplist_size(sender->segs_cache) > 0){
 		iter = skiplist_first(sender->segs_cache);
 		seg = iter->val.ptr;

@@ -10,10 +10,6 @@
 
 #ifdef _MSC_VER	/* MSVC */
 #pragma warning(disable: 4996)
-#define snprintf	_snprintf
-#define vsnprintf	_vsnprintf
-#define strcasecmp	stricmp
-#define strncasecmp strnicmp
 #endif
 
 #include <stdint.h>

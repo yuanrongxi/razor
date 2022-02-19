@@ -90,7 +90,7 @@ void rate_stat_update(rate_stat_t* rate, size_t count, int64_t now_ts)
 		rate->oldest_ts = now_ts;
 	}
 
-	ts_offset = (int64_t)(now_ts - rate->oldest_ts);
+	ts_offset = (int)(now_ts - rate->oldest_ts);
 	index = (rate->oldest_index + ts_offset) % rate->wnd_size;
 
 	rate->sample_num++;
@@ -110,7 +110,7 @@ int rate_stat_rate(rate_stat_t* rate, int64_t now_ts)
 
 	rate_stat_erase(rate, now_ts);
 
-	active_wnd_size = (int64_t)(now_ts - rate->oldest_ts + 1);
+	active_wnd_size = (int)(now_ts - rate->oldest_ts + 1);
 	if (rate->sample_num == 0 || active_wnd_size <= 1 || (active_wnd_size < rate->wnd_size))
 		return -1;
 

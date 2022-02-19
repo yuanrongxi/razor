@@ -239,7 +239,7 @@ int CFVideoRecorder::read(void* data, uint32_t data_size, int& key_frame, uint8_
 
 	key_frame = 0;
 
-	static time_point<system_clock> begin = steady_clock::now();
+	//static time_point<system_clock> begin = steady_clock::now();
 
 	LARGE_INTEGER cur_timer;
 	QueryPerformanceCounter(&cur_timer);
@@ -252,8 +252,8 @@ int CFVideoRecorder::read(void* data, uint32_t data_size, int& key_frame, uint8_
 	if (frame_intval_ > elapsed_million_seconds.QuadPart)
 		return ret;
 
-	uint64_t dur = duration_cast<milliseconds>(steady_clock::now() - begin).count();
-	begin = steady_clock::now();
+	//uint64_t dur = duration_cast<milliseconds>(steady_clock::now() - begin).count();
+	//begin = steady_clock::now();
 	prev_timer_ = cur_timer;
 
 	data_size = 0;

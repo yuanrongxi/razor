@@ -138,7 +138,7 @@ typedef struct
 	uint32_t	send_ts;				/*发送时刻相对帧产生时刻的时间戳*/
 	uint16_t	transport_seq;			/*传输通道序号，这个是传输通道每发送一个报文，它就自增长1，而且重发报文也会增长*/
 
-	uint16_t	data_size;
+	size_t		data_size;
 	uint8_t		data[PADDING_DATA_SIZE];
 }sim_pad_t;
 

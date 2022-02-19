@@ -76,7 +76,7 @@ void bbr_receive_on_received(bbr_receiver_t* cc, uint16_t seq, uint32_t timestam
 
 	if (skiplist_size(cc->cache) >= BBR_FEEDBACK_THROLD || (skiplist_size(cc->cache) > 0 && now_ts > cc->feedback_ts + BBR_FEEDBACK_WINDOW)){
 		cc->feedback_ts = now_ts;
-		/*�ж�proxy estimator�Ƿ���Է��ͱ���*/
+
 		msg.flag = bbr_acked_msg;
 		msg.sampler_num = 0;
 		start_seq = 0;
@@ -90,7 +90,6 @@ void bbr_receive_on_received(bbr_receiver_t* cc, uint16_t seq, uint32_t timestam
 				msg.sampler_num++;
 			}
 			else{
-				/*�ж϶�����Ϣ*/
 				if (loss_statistics_calculate(&cc->loss_stat, now_ts, &msg.fraction_loss, &msg.packet_num) == 0)
 					msg.flag |= bbr_loss_info_msg;
 

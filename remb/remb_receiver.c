@@ -44,7 +44,7 @@ void remb_receive_heartbeat(remb_receiver_t* r)
 {
 	int64_t now_ts;
 	feedback_msg_t msg;
-	int32_t bitrate, num, rec_rate;
+	int32_t bitrate, num;
 	uint8_t loss;
 
 	now_ts = GET_SYS_MS();

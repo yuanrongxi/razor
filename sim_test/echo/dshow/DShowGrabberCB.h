@@ -11,8 +11,8 @@
 
 #include <memory>
 #include <qedit.h>
-using namespace std::tr1;
 
+using namespace std;
 
 struct SGrabberSample
 {
