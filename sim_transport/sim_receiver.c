@@ -295,7 +295,7 @@ static uint32_t real_video_ready_ms(sim_session_t* s, sim_frame_cache_t* c)
 	sim_frame_t* frame;
 	uint32_t i, min_ready_ts, max_ready_ts, ret;
 
-	ret = 0;
+	ret = c->frame_timer;
 	min_ready_ts = 0;
 	max_ready_ts = 0;
 	for (i = c->min_fid + 1; i <= c->max_fid; ++i){
@@ -357,7 +357,7 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 	else
 		real_video_cache_check_waiting(s, c);
 
-	if (c->state != buffer_playing || c->min_fid == c->max_fid)
+	if (c->state != buffer_playing)
 		goto err;
 
 	space = SU_MAX(c->wait_timer, c->frame_timer);
@@ -375,6 +375,9 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 		c->f = 1.2f;
 
 	real_video_cache_sync_timestamp(s, c);
+
+	 if (c->min_fid == c->max_fid)
+		goto err;
 
 	/*计算能播放的帧时间*/
 	if (c->play_frame_ts + SU_MAX(MIN_EVICT_DELAY_MS, SU_MIN(MAX_EVICT_DELAY_MS, 4 * c->wait_timer)) < c->max_ts){
@@ -401,11 +404,8 @@ static int real_video_cache_get(sim_session_t* s, sim_frame_cache_t* c, uint8_t*
 					break;
 				}
 			}
-			/*等待缓冲的时间*/
-			if (c->frame_timer * 2 < play_ready_ts)
-				c->frame_ts = frame->ts + 5;
-			else
-				c->frame_ts = frame->ts;
+
+			c->frame_ts = frame->ts;
 
 			real_video_clean_frame(s, c, frame);
 			ret = 0;
