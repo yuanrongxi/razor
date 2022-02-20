@@ -26,7 +26,8 @@ typedef struct
 	/*收包信息*/
 	int64_t						feedback_ts;		/*feedbak时间戳，UNIX绝对时间，毫秒为单位*/
 
-	int64_t						base_seq;			/*窗口反馈的起始ID*/
+	int64_t						base_seq;			/*base id of window*/
+	int64_t						max_seq;			/*max id of window*/
 	skiplist_t*					cache;
 
 	cf_unwrapper_t				unwrapper;			/*ID恢复器*/

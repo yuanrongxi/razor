@@ -18,6 +18,7 @@ bbr_receiver_t* bbr_receive_create(void* handler, send_feedback_func cb)
 	cc->send_cb = cb;
 
 	cc->base_seq = -1;
+	cc->max_seq = -1;
 
 	cc->feedback_ts = -1;
 
@@ -49,44 +50,48 @@ void bbr_receive_destroy(bbr_receiver_t* cc)
 
 #define BBR_FEEDBACK_WINDOW 10
 #define BBR_FEEDBACK_THROLD 16
+#define BBR_FEEDBACK_ID_SPACE 32767
 void bbr_receive_on_received(bbr_receiver_t* cc, uint16_t seq, uint32_t timestamp, size_t size, int remb)
 {
 	bbr_feedback_msg_t msg;
-	int64_t sequence, now_ts;
+	int64_t sequence, start_seq, now_ts;
 	skiplist_iter_t* iter;
 	skiplist_item_t key, val;
-	int64_t start_seq;
 
 	now_ts = GET_SYS_MS();
-	/*ͳ�ƶ���*/
+
 	loss_statistics_incoming(&cc->loss_stat, seq, now_ts);
 
 	sequence = wrap_uint16(&cc->unwrapper, seq);
-	if (sequence > cc->base_seq + 32767)
-		return;
-
-	cc->base_seq = SU_MAX(cc->base_seq, sequence);
-
 	key.i64 = sequence;
-	if (skiplist_search(cc->cache, key) == NULL){
-		val.i64 = now_ts;
-		skiplist_insert(cc->cache, key, val);
+	
+	if (cc->max_seq < sequence) {
+		cc->max_seq = sequence;
+
+		if (sequence > cc->max_seq + BBR_FEEDBACK_ID_SPACE || cc->base_seq == -1) { /*reset feedback window*/
+			cc->base_seq = sequence;
+			skiplist_clear(cc->cache);
+		}
+	}
+	else if (skiplist_search(cc->cache, key) != NULL){
+		return;
 	}
 
+	val.i64 = now_ts;
+	skiplist_insert(cc->cache, key, val);
 
-	if (skiplist_size(cc->cache) >= BBR_FEEDBACK_THROLD || (skiplist_size(cc->cache) > 0 && now_ts > cc->feedback_ts + BBR_FEEDBACK_WINDOW)){
+	if (skiplist_size(cc->cache) >= BBR_FEEDBACK_THROLD || (skiplist_size(cc->cache) > 2 && now_ts > cc->feedback_ts + BBR_FEEDBACK_WINDOW)){
 		cc->feedback_ts = now_ts;
 
 		msg.flag = bbr_acked_msg;
 		msg.sampler_num = 0;
-		start_seq = 0;
-		SKIPLIST_FOREACH(cc->cache, iter){
-			if (start_seq == 0)
-				start_seq = iter->key.i64;
+		start_seq = skiplist_first(cc->cache)->key.i64;
 
+		SKIPLIST_FOREACH(cc->cache, iter){
+			
 			if (start_seq + MAX_BBR_FEELBACK_COUNT - 1 > iter->key.i64){
 				msg.samplers[msg.sampler_num].seq = iter->key.i64 & 0xffff;
-				msg.samplers[msg.sampler_num].delta_ts = now_ts > iter->val.i64 ? (now_ts - iter->val.i64) : 0;
+				msg.samplers[msg.sampler_num].delta_ts = (uint16_t)(now_ts > iter->val.i64 ? (now_ts - iter->val.i64) : 0);
 				msg.sampler_num++;
 			}
 			else{
@@ -97,10 +102,10 @@ void bbr_receive_on_received(bbr_receiver_t* cc, uint16_t seq, uint32_t timestam
 				cc->send_cb(cc->handler, cc->strm.data, cc->strm.used);
 				msg.sampler_num = 0;
 				msg.flag = bbr_acked_msg;
-
 				start_seq = iter->key.i64;
+
 				msg.samplers[msg.sampler_num].seq = iter->key.i64 & 0xffff;
-				msg.samplers[msg.sampler_num].delta_ts = now_ts > iter->val.i64 ? (now_ts - iter->val.i64) : 0;
+				msg.samplers[msg.sampler_num].delta_ts = (uint16_t)(now_ts > iter->val.i64 ? (now_ts - iter->val.i64) : 0);
 				msg.sampler_num++;
 			}
 		}
