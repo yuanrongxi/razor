@@ -99,7 +99,7 @@ static void notify_state(void* event, const char* info)
 	strcpy(g_info, info);
 }
 
-#define MAX_SEND_BITRATE (2000 * 8 * 1000)
+#define MAX_SEND_BITRATE (4000 * 8 * 1000)
 #define MIN_SEND_BITRATE (20 * 8 * 1000)
 #define START_SEND_BITRATE (140 * 8 * 1000)
 
@@ -186,7 +186,7 @@ static void main_loop_event()
 					printf("connect success!\n");
 					sender.record_flag = 1;
 					sender.total_bytes = 0;
-					sender.frame_rate = 16;
+					sender.frame_rate = 60;
 					sender.hb_ts = sender.prev_ts = GET_SYS_MS();
 					sender.bitrate_kbps = START_SEND_BITRATE / 1000;
 				}

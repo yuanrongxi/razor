@@ -90,12 +90,11 @@ static void bbr_on_network_invalidation(bbr_sender_t* s)
 	else {
 		s->encoding_rate_ratio = 1;
 		if (fill < 0.9)
-			s->target_bitrate = s->target_bitrate + SU_MIN(32 * 1000, SU_MAX(s->min_bitrate / 32, 4 * 8000));
+			s->target_bitrate = s->target_bitrate + SU_MAX(s->target_bitrate / 16, 4 * 8000);
 	}
 
 	bbr_pacer_set_pacing_rate(s->pacer, pacing_rate_kbps * 8);
 
-	s->target_bitrate = SU_MIN(target_rate_bps, s->target_bitrate);
 	s->target_bitrate = SU_MAX(s->target_bitrate, s->min_bitrate);
 	s->target_bitrate = SU_MIN(s->max_bitrate, s->target_bitrate);
 

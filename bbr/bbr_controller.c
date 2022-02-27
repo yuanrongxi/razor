@@ -209,14 +209,14 @@ static bbr_network_ctrl_update_t bbr_create_rate_upate(bbr_controller_t* bbr, in
 	/*返回target_rate信息*/
 	ret.target_rate.at_time = at_time;
 	ret.target_rate.bandwidth = bandwidth;
-	ret.target_rate.rtt = SU_MAX(rtt, 8);
+	ret.target_rate.rtt = SU_MAX(rtt, 1);
 	ret.target_rate.loss_rate_ratio = bbr_loss_filter_get(&bbr->loss_rate);
 	ret.target_rate.bwe_period = rtt * kGainCycleLength;
 	ret.target_rate.target_rate = target_rate;
 
 	/*返回pacer信息*/
 	ret.pacer_config.at_time = at_time;
-	ret.pacer_config.time_window = rtt > 20 ? (rtt / 4) : 5;
+	ret.pacer_config.time_window = rtt > 10 ? (rtt / 4) : 2;
 	ret.pacer_config.data_window = (size_t)(ret.pacer_config.time_window * pacing_rate);
 	if (bbr_is_probing_for_more_bandwidth(bbr) == 1)
 		ret.pacer_config.pad_window = ret.pacer_config.time_window * target_rate;
