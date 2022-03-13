@@ -152,6 +152,7 @@ void bbr_sender_on_feedback(bbr_sender_t* s, uint8_t* feedback, int feedback_siz
 {
 	bbr_feedback_msg_t msg;
 	uint32_t acked_bitrate;
+	int64_t now_ts;
 
 	if (feedback_size <= 0)
 		return;
@@ -166,16 +167,17 @@ void bbr_sender_on_feedback(bbr_sender_t* s, uint8_t* feedback, int feedback_siz
 	if ((msg.flag & bbr_loss_info_msg) == bbr_loss_info_msg)
 		s->loss_fraction = msg.fraction_loss;
 
-	bbr_feedback_on_feedback(&s->feedback, &msg);
+	now_ts = GET_SYS_MS();
+	bbr_feedback_on_feedback(&s->feedback, &msg, now_ts);
 	if (s->feedback.feedback.packets_num <= 0)
 		return;
 
 	if (s->bbr != NULL){
 		acked_bitrate = bbr_feedback_get_birate(&s->feedback) / 8000;
 		s->info = bbr_on_feedback(s->bbr, &s->feedback.feedback, acked_bitrate);
-		if (s->notify_ts + k_bbr_heartbeat_timer < GET_SYS_MS()){
+		if (s->notify_ts + k_bbr_heartbeat_timer < now_ts){
 			bbr_on_network_invalidation(s);
-			s->notify_ts = GET_SYS_MS();
+			s->notify_ts = now_ts;
 		}
 	}
 }

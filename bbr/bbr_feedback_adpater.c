@@ -77,14 +77,11 @@ void bbr_feedback_add_packet(bbr_fb_adapter_t* adapter, uint16_t seq, size_t siz
 	info->seq = wrap_uint16(&adapter->hist->wrapper, seq);
 }
 
-void bbr_feedback_on_feedback(bbr_fb_adapter_t* adapter, bbr_feedback_msg_t* msg)
+void bbr_feedback_on_feedback(bbr_fb_adapter_t* adapter, bbr_feedback_msg_t* msg, int64_t now_ts)
 {
 	uint16_t seq;
 	int i;
-	int64_t now_ts;
 	packet_feedback_t p;
-
-	now_ts = GET_SYS_MS();
 
 	adapter->feedback.packets_num = 0;
 	adapter->feedback.feedback_time = now_ts;

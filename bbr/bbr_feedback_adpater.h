@@ -38,7 +38,7 @@ void						bbr_feedback_adapter_destroy(bbr_fb_adapter_t* adapter);
 
 /*添加一个网络发送报文的记录*/
 void						bbr_feedback_add_packet(bbr_fb_adapter_t* adapter, uint16_t seq, size_t size, bbr_packet_info_t* info);
-void						bbr_feedback_on_feedback(bbr_fb_adapter_t* adapter, bbr_feedback_msg_t* msg);
+void						bbr_feedback_on_feedback(bbr_fb_adapter_t* adapter, bbr_feedback_msg_t* msg, int64_t now_ts);
 
 size_t						bbr_feedback_get_in_flight(bbr_fb_adapter_t* adapter);
 int32_t						bbr_feedback_get_birate(bbr_fb_adapter_t* adapter);
