@@ -29,7 +29,7 @@ void				cc_feedback_adapter_destroy(feedback_adapter_t* adapter);
 void				cc_feedback_add_packet(feedback_adapter_t* adapter, uint16_t seq, size_t size);
 
 /*解码网络来的feedback，并解析成packet_feedback结构序列，这个数据是remote estimator proxy反馈过来的*/
-int					cc_feedback_on_feedback(feedback_adapter_t* adapter, feedback_msg_t* msg);
+int					cc_feedback_on_feedback(feedback_adapter_t* adapter, feedback_msg_t* msg, int64_t now_ts);
 
 
 #endif

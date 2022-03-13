@@ -133,7 +133,7 @@ void sender_on_feedback(sender_cc_t* cc, uint8_t* feedback, int feedback_size)
 
 	/*处理proxy estimate的信息*/
 	if ((msg.flag & proxy_ts_msg) == proxy_ts_msg){
-		if (cc_feedback_on_feedback(&cc->adapter, &msg) <= 0)
+		if (cc_feedback_on_feedback(&cc->adapter, &msg, now_ts) <= 0)
 			return;
 
 		cur_alr = pace_get_limited_start_time(cc->pacer) > 0 ? 0 : -1;

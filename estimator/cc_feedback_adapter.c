@@ -65,13 +65,10 @@ static inline void feedback_qsort(feedback_adapter_t* adapter)
 	qsort(adapter->packets, adapter->num, sizeof(packet_feedback_t), feedback_packet_comp);
 }
 
-int cc_feedback_on_feedback(feedback_adapter_t* adapter, feedback_msg_t* msg)
+int cc_feedback_on_feedback(feedback_adapter_t* adapter, feedback_msg_t* msg, int64_t now_ts)
 {
 	int32_t i, feedback_rtt;
 
-	int64_t now_ts;
-
-	now_ts = GET_SYS_MS();
 	feedback_rtt = -1;
 	 
 	adapter->num = 0;
