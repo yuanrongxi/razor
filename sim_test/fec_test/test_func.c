@@ -35,7 +35,7 @@ void test_fec_xor()
 	}
 
 	if (fec.fec_data_size > strlen(data_info)){
-		printf("fec data size is error, fec data size = %d, max data size = %d\n", fec.fec_data_size, strlen(data_info));
+		printf("fec data size is error, fec data size = %d, max data size = %ld\n", fec.fec_data_size, strlen(data_info));
 		goto free_segments;
 	}
 
@@ -177,7 +177,7 @@ void test_flex_sender(uint8_t protect_fraction)
 	/*single row FEC*/
 	flex_fec_sender_update(flex, protect_fraction, fec_list);
 
-	printf("%s, segment count = %d, protect = %u, fec num = %d\n", protect_fraction > 52 ? "multiFEC":"singleFEC", FLEX_SEG_NUM, 80, list_size(fec_list));
+	printf("%s, segment count = %d, protect = %u, fec num = %ld\n", protect_fraction > 52 ? "multiFEC":"singleFEC", FLEX_SEG_NUM, 80, list_size(fec_list));
 	if (list_size(fec_list) > 0){
 		fec_packet = list_front(fec_list);
 		printf("fec col = %d, row = %d\n", fec_packet->col, fec_packet->row);
@@ -319,7 +319,7 @@ void test_flex_receiver(uint8_t protect_fraction, uint8_t loss_num)
 
 	/*single row FEC*/
 	flex_fec_sender_update(sender, protect_fraction, fec_list);
-	printf("%s, segment count = %d, protect = %u, fec num = %d\n", protect_fraction > 52 ? "multiFEC" : "singleFEC", FLEX_SEG_NUM, 80, list_size(fec_list));
+	printf("%s, segment count = %d, protect = %u, fec num = %ld\n", protect_fraction > 52 ? "multiFEC" : "singleFEC", FLEX_SEG_NUM, 80, list_size(fec_list));
 
 	/*¶Ôflex receiver½øÐÐ²âÊÔ*/
 	if (list_size(fec_list) > 0){
