@@ -271,7 +271,6 @@ static void test_first_round_trip()
 	sample_tester_init(&test);
 
 	int delta_time = 1, i, last;
-	int expected_bandwidth = kRegularPacketSizeBytes / delta_time;
 
 	int64_t rtt = 800;
 	int packets_of_num = 10;

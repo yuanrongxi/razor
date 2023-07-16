@@ -90,6 +90,7 @@ void wnd_filter_update(windowed_filter_t* filter, int64_t new_sample, int64_t ne
 	if (filter->estimates[0].sample == filter->estimates[1].sample
 		&& new_ts - filter->estimates[1].ts > (filter->wnd_size >> 2)){/*0号位上最大的值和1号位上的值相等，但1号位的时间戳点距离当前时间点超过窗口的1/4,意味着1 2号位的需要更新到最新值上来*/
 		filter->estimates[1] = filter->estimates[2] = sample;
+		return;
 	}
 
 	/*同上原理，对2号位上的值进行更新*/

@@ -10,10 +10,9 @@
 
 static void test_no_crach()
 {
-	int i, bitrate;
+	int i;
 	int64_t now_ts;
-	uint32_t timestamp;
-	bin_stream_t strm;
+	uint32_t timestamp, remb, bitrate;
 
 	remote_bitrate_estimator_t* est = rbe_create();
 
@@ -28,7 +27,7 @@ static void test_no_crach()
 		rbe_incoming_packet(est, timestamp, now_ts, k_payload_size, now_ts);
 		now_ts += 100;
 		timestamp += 100;
-		rbe_heartbeat(est, now_ts, &strm);
+		rbe_heartbeat(est, now_ts, &remb);
 	}
 
 	assert(rbe_last_estimate(est, &bitrate) == 0);
@@ -38,10 +37,9 @@ static void test_no_crach()
 
 static void test_overuse_bitrate()
 {
-	int i, bitrate;
+	int i;
 	int64_t now_ts;
-	uint32_t timestamp;
-	bin_stream_t strm;
+	uint32_t timestamp, remb, bitrate;
 	remote_bitrate_estimator_t* est = rbe_create();
 
 	now_ts = GET_SYS_MS();
@@ -55,7 +53,7 @@ static void test_overuse_bitrate()
 		rbe_incoming_packet(est, timestamp, now_ts, k_payload_size, now_ts);
 		now_ts += 52;
 		timestamp += 50;
-		rbe_heartbeat(est, now_ts, &strm);
+		rbe_heartbeat(est, now_ts, &remb);
 	}
 
 	assert(rbe_last_estimate(est, &bitrate) == 0);
@@ -68,10 +66,9 @@ static void test_overuse_bitrate()
 
 static void test_normal_bitrate()
 {
-	int i, bitrate;
+	int i;
 	int64_t now_ts;
-	uint32_t timestamp;
-	bin_stream_t strm;
+	uint32_t timestamp, remb, bitrate;
 
 	remote_bitrate_estimator_t* est = rbe_create();
 
@@ -90,7 +87,7 @@ static void test_normal_bitrate()
 			now_ts += 49;
 
 		timestamp += 50;
-		rbe_heartbeat(est, now_ts, &strm);
+		rbe_heartbeat(est, now_ts, &remb);
 	}
 
 	assert(rbe_last_estimate(est, &bitrate) == 0);

@@ -15,6 +15,8 @@ extern "C" {
 #ifdef WIN32
 //ÉêÃ÷ÒıÓÃ
 int gettimeofday(struct timeval *tv, void *tz);
+#else
+#include <sys/time.h>
 #endif
 
 #ifdef __cplusplus

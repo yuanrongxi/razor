@@ -41,7 +41,8 @@ struct __sim_session
 	uint64_t		sbandwidth;			/*发送带宽*/
 	uint64_t		rcount;				/*接收的报文数量*/
 	uint64_t		scount;				/*发送的报文数量*/
-	uint64_t		video_bytes;
+	uint64_t		sent_bytes;
+	uint64_t		recved_bytes;
 	uint32_t		max_frame_size;		/*周期内最大帧*/
 
 	int				min_bitrate;		/*配置的最小码率，单位：bps*/

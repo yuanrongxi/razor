@@ -96,7 +96,7 @@ static int run_100000_samples(over_tester_t* tester, int packets_per_frame, size
 
 		if (kBwOverusing == tester->detector->state){
 			if (last_overuse + 1 != i)
-				unique_overuse;
+				unique_overuse++;
 
 			last_overuse = i;
 		}

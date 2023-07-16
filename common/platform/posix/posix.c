@@ -324,7 +324,7 @@ void su_string_to_addr(su_addr *addr, char *str)
 	do
 	{
 		ip[i++] = *pos++;
-	} while (*pos != ':' && pos != '\0' && i < IP_SIZE - 1);
+	} while (*pos != ':' && *pos != '\0' && i < IP_SIZE - 1);
 
 	if (*pos == ':')
 		pos++;

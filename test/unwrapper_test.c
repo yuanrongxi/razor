@@ -14,7 +14,7 @@ static void test_unwrapper32()
 
 	for (i = 0; i < 6; i++){
 		val = wrap_uint32(&seq_32, vals[i]);
-		printf("src = %llu, dst = %llu\n", vals[i], val);
+		printf("src = %lld, dst = %llu\n", vals[i], val);
 	}
 }
 
@@ -30,7 +30,7 @@ static void test_unwrapper16()
 
 	for (i = 0; i < 6; i++){
 		val = wrap_uint16(&seq_16, vals[i]);
-		printf("src = %u, dst = %u\n", vals[i], val);
+		printf("src = %d, dst = %u\n", vals[i], val);
 	}
 }
 

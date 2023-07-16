@@ -8,6 +8,8 @@
 #if WIN32
 #include <direct.h>
 #pragma warning(disable: 4996)
+#else
+#include <unistd.h>
 #endif
 
 #include "cf_platform.h"
@@ -16,6 +18,10 @@
 #include "gettimeofday.h"
 
 #define PATH_MAX_SIZE 1024
+#ifndef MAX_PATH
+#define MAX_PATH PATH_MAX_SIZE
+#endif
+
 
 typedef struct log_file_s
 {
@@ -26,8 +32,6 @@ typedef struct log_file_s
 
 static log_file_t* log_file = NULL;
 
-#define	WT_SPIN_COUNT 4000
-
 const char* get_time_str(char *date_str)
 {
 	struct tm tm_now;
@@ -35,8 +39,11 @@ const char* get_time_str(char *date_str)
 	gettimeofday(&tv, NULL);
 
 	time_t now = tv.tv_sec;
+#ifdef WIN32
 	localtime_s(&tm_now, &now);
-
+#else
+	localtime_r(&now, &tm_now);
+#endif
 
 	sprintf(date_str, "%04d-%02d-%02d %02d:%02d:%02d.%3ld", tm_now.tm_year + 1900, tm_now.tm_mon + 1, tm_now.tm_mday,
 		tm_now.tm_hour, tm_now.tm_min, tm_now.tm_sec, tv.tv_usec / 1000);
@@ -47,7 +54,11 @@ const char* get_time_str(char *date_str)
 static char* get_fullexepath()
 {
 	static char buffer[MAX_PATH] = { 0 };
+#ifdef WIN32
 	return _getcwd(buffer, MAX_PATH);
+#else 
+	return getcwd(buffer, MAX_PATH);
+#endif
 }
 
 int open_win_log(const char* filename)
@@ -61,13 +72,18 @@ int open_win_log(const char* filename)
 	if (path == NULL)
 		return -1;
 
+#ifdef WIN32
 	sprintf(log_file->filename, "%s\\%s", path, filename);
+#else
+	sprintf(log_file->filename, "%s/%s", path, filename);
+#endif
 
 	log_file->fp = fopen(log_file->filename, "w");
 	if (log_file->fp == NULL){
 		printf("open %s failed!\r\n", log_file->filename);
 		return -1;
 	}
+	printf("open %s succ!\n", log_file->filename);
 
 	/*³õÊ¼»¯spin mutexËø*/
 	log_file->mutex = su_create_mutex();
@@ -100,7 +116,11 @@ static const char* get_file_name(const char* pathname)
 	size = strlen(pathname);
 
 	char *pos = (char *)pathname + size;
+#ifdef WIN32
 	while (*pos != '\\' && pos != pathname)
+#else
+	while (*pos != '/' && pos != pathname)
+#endif
 		pos--;
 
 	if (pos == pathname)

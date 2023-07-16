@@ -127,8 +127,6 @@ static void test_while()
 	int i, num, pos;
 	int64_t now_ts, oldest_ts;
 
-	int array[k_packet_num] = { 0 };
-
 	oldest_ts = now_ts = GET_SYS_MS();
 	pacer_queue_init(&que, k_queue_ms);
 	i = 0;
@@ -161,10 +159,10 @@ static void test_while()
 
 void test_pacer_queue()
 {
-	//test_pacer_queue_push();
-	//test_pacer_queue_sent();
+	test_pacer_queue_push();
+	test_pacer_queue_sent();
 
-	//test_pacer_queue_front();
+	test_pacer_queue_front();
 	test_while();
 }
 

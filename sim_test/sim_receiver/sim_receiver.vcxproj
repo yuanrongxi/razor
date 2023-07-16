@@ -96,6 +96,9 @@
     <ClInclude Include="..\win_log\audio_log.h" />
     <ClInclude Include="..\win_log\gettimeofday.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Makefile" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

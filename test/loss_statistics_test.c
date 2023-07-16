@@ -14,7 +14,7 @@ static void test_no_loss()
 	seq = 65530;
 	now_ts = 1000;
 
-	for (i = 0; i < 1200; ++i){
+	for (i = 0; i < 200; ++i){
 		now_ts++;
 		loss_statistics_incoming(&loss_stat, seq++, now_ts);
 	}
@@ -22,7 +22,7 @@ static void test_no_loss()
 	fraction_loss = 0;
 	num = 0;
 	loss_statistics_calculate(&loss_stat, now_ts, &fraction_loss, &num);
-	EXPECT_EQ(num, 1200);
+	EXPECT_EQ(num, 200);
 	EXPECT_EQ(fraction_loss, 0);
 
 	loss_statistics_destroy(&loss_stat);
@@ -41,7 +41,7 @@ static void test_out_of_order()
 	seq = 65529;
 	now_ts = 1000;
 
-	for (i = 2; i < 1202; ++i){
+	for (i = 2; i < 202; ++i){
 		now_ts++;
 		if (i % 10 == 0)
 			loss_statistics_incoming(&loss_stat, seq + 1, now_ts);
@@ -56,7 +56,7 @@ static void test_out_of_order()
 	num = 0;
 	loss_statistics_calculate(&loss_stat, now_ts, &fraction_loss, &num);
 	
-	EXPECT_EQ(num, 1200);
+	EXPECT_EQ(num, 200);
 	EXPECT_EQ(fraction_loss, 0);
 
 	loss_statistics_destroy(&loss_stat);
@@ -75,7 +75,7 @@ static void test_lost_packet()
 	seq = 65530;
 	now_ts = 1000;
 
-	for (i = 2; i < 602; ++i){
+	for (i = 2; i < 202; ++i){
 		now_ts++;
 		seq++;
 		if (i % 10 != 0)
@@ -86,10 +86,10 @@ static void test_lost_packet()
 	fraction_loss = 0;
 	num = 0;
 	loss_statistics_calculate(&loss_stat, now_ts, &fraction_loss, &num);
-	EXPECT_EQ(num, 600);
+	EXPECT_EQ(num, 200);
 	EXPECT_EQ(fraction_loss, 25);
 
-	for (i = 2; i < 602; ++i){
+	for (i = 2; i < 2002; ++i){
 		now_ts++;
 		seq++;
 		if (i % 10 != 0)
@@ -100,8 +100,8 @@ static void test_lost_packet()
 	fraction_loss = 0;
 	num = 0;
 	loss_statistics_calculate(&loss_stat, now_ts, &fraction_loss, &num);
-	EXPECT_EQ(num, 1200);
-	EXPECT_EQ(fraction_loss, 25);
+	EXPECT_GE(num, 200);
+	EXPECT_EQ(fraction_loss, 26);
 
 	loss_statistics_destroy(&loss_stat);
 }

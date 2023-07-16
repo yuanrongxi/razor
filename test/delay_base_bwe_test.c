@@ -133,10 +133,10 @@ static void overuse_detection()
 
 void test_delay_base_bwe()
 {
-	//no_crash_empty_feedback();
-	//no_crash_only_lost_feedback();
+	no_crash_empty_feedback();
+	no_crash_only_lost_feedback();
 
-	//probe_detection();
+	probe_detection();
 
 	overuse_detection();
 }

@@ -61,6 +61,8 @@ sim_session_t* sim_session_create(uint16_t port, void* event, sim_notify_fn noti
 		goto err;
 	}
 
+	sim_info("start session, bind udp port:%u succ!\n", port);
+
 	su_socket_noblocking(session->s);
 
 	session->mutex = su_create_mutex();
@@ -94,6 +96,8 @@ void sim_session_destroy(sim_session_t* s)
 	bin_stream_destroy(&s->sstrm);
 	su_socket_destroy(s->s);
 
+	sim_info("close session\n");
+
 	free(s);
 }
 
@@ -110,7 +114,8 @@ static void sim_session_reset(sim_session_t* s)
 	s->sbandwidth = 0;
 	s->rcount = 0;
 	s->scount = 0;
-	s->video_bytes = 0;
+	s->recved_bytes = 0;
+	s->sent_bytes = 0;
 	s->max_frame_size = 0;
 
 	s->stat_ts = GET_SYS_MS();
@@ -241,7 +246,7 @@ int sim_session_send_video(sim_session_t* s, uint8_t payload_type, uint8_t ftype
 	if (s->interrupt == net_interrupt) /*ÍøÂçÖÐ¶Ï£¬½øÐÐÖ¡¶ªÆú*/
 		goto err;
 
-	s->video_bytes += size;
+	s->sent_bytes += size;
 	if (s->sender != NULL)
 		ret = sim_sender_put(s, s->sender, payload_type, ftype, data, size);
 
@@ -255,9 +260,11 @@ int sim_session_recv_video(sim_session_t* s, uint8_t* data, size_t* sizep, uint8
 {
 	int ret = -1;
 	su_mutex_lock(s->mutex);
-
+ 
 	if (s->receiver != NULL)
 		ret = sim_receiver_get(s, s->receiver, data, sizep, payload_type);
+	
+	s->recved_bytes += *sizep;
 
 	su_mutex_unlock(s->mutex);
 	return ret;
@@ -693,23 +700,25 @@ static void sim_session_state_timer(sim_session_t* s, int64_t now_ts, sim_sessio
 			cache_delay = sim_receiver_cache_delay(s, s->receiver);
 
 		if (s->state_cb != NULL){
-			sprintf(info, "video rate = %ukb/s, send = %ukb/s, recv = %ukb/s, rtt = %d + %dms, max frame = %u, pacer delay = %ums, cache delay = %ums",
-				(uint32_t)(s->video_bytes * 1000 / delay), (uint32_t)(s->sbandwidth * 1000 / delay), (uint32_t)(s->rbandwidth * 1000 / delay), 
+			sprintf(info, "sent video = %ukb/s, recved video = %ukb/s, send = %ukb/s, recv = %ukb/s, rtt = %d + %dms, max frame = %u, pacer delay = %ums, cache delay = %ums",
+				(uint32_t)(s->sent_bytes * 1000 / delay), (uint32_t)(s->recved_bytes * 1000 / delay),
+				(uint32_t)(s->sbandwidth * 1000 / delay), (uint32_t)(s->rbandwidth * 1000 / delay),
 				s->rtt, s->rtt_var, s->max_frame_size, pacer_ms, cache_delay);
 			s->state_cb(s->event, info);
 		}
 
 		if (s->sender != NULL){
-			sim_info("sim transport, send count = %u, recv count = %u, send bandwidth = %ukb/s, recv bandwidth = %ukb/s, rtt = %d, video rate = %ukb/s, pacer delay = %ums, loss=%u\n",
+			sim_info("sim transport, send count = %u, recv count = %u, send bandwidth = %ukb/s, recv bandwidth = %ukb/s, rtt = %d, sent video = %ukb/s, recved video = %ukb/s, pacer delay = %ums, loss=%u\n",
 				(uint32_t)(s->scount), (uint32_t)(s->rcount), (uint32_t)(s->sbandwidth * 1000 / delay),
-				(uint32_t)(s->rbandwidth * 1000 / delay), s->rtt + s->rtt_var, (uint32_t)(s->video_bytes * 1000 / delay), pacer_ms, s->loss_fraction);
+				(uint32_t)(s->rbandwidth * 1000 / delay), s->rtt + s->rtt_var, (uint32_t)(s->sent_bytes * 1000 / delay), (uint32_t)(s->recved_bytes * 1000 / delay), pacer_ms, s->loss_fraction);
 		}
 
 		s->rbandwidth = 0;
 		s->sbandwidth = 0;
 		s->scount = 0;
 		s->rcount = 0;
-		s->video_bytes = 0;
+		s->sent_bytes = 0;
+		s->recved_bytes = 0;
 		s->max_frame_size = 0;
 	}
 

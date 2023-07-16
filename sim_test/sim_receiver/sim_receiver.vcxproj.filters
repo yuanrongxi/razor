@@ -25,4 +25,7 @@
     <ClInclude Include="..\win_log\audio_log.h" />
     <ClInclude Include="..\win_log\gettimeofday.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Makefile" />
+  </ItemGroup>
 </Project>

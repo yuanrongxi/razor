@@ -221,7 +221,7 @@ static void bbr_test_update_send_rate()
 	EXPECT_GE(test.update.target_rate.target_rate, 300 * kMinDataRateFactor);
 	EXPECT_LE(test.update.target_rate.target_rate, 300 * kMaxDataRateFactor);
 
-	printf("accumulated_buffer = %ums\n", test.accumulated_buffer);
+	printf("accumulated_buffer = %lums\n", test.accumulated_buffer);
 	test_run_simulation(&test, 30000, 10, 500, 100);
 	rate = wnd_filter_best(&test.bbr->max_bandwidth);
 	printf("rate = %ukbps\n", rate);
@@ -232,7 +232,7 @@ static void bbr_test_update_send_rate()
 	EXPECT_GE(test.update.target_rate.target_rate, 200 * kMinDataRateFactor);
 	EXPECT_LE(test.update.target_rate.target_rate, 200 * kMaxDataRateFactor);
 
-	printf("accumulated_buffer = %ums\n", test.accumulated_buffer);
+	printf("accumulated_buffer = %lums\n", test.accumulated_buffer);
 	test_run_simulation(&test, 30000, 10, 100, 200);
 	rate = wnd_filter_best(&test.bbr->max_bandwidth);
 	printf("rate = %ukbps\n", rate);
@@ -240,7 +240,7 @@ static void bbr_test_update_send_rate()
 	EXPECT_GE(test.update.target_rate.target_rate, 100 * kMinDataRateFactor);
 	EXPECT_LE(test.update.target_rate.target_rate, 100 * kMaxDataRateFactor);
 
-	printf("accumulated_buffer = %ums\n", test.accumulated_buffer);
+	printf("accumulated_buffer = %lums\n", test.accumulated_buffer);
 	test_run_simulation(&test, 30000, 10, 50, 400);
 	rate = wnd_filter_best(&test.bbr->max_bandwidth);
 	printf("rate = %ukbps\n", rate);
@@ -248,7 +248,7 @@ static void bbr_test_update_send_rate()
 	EXPECT_GE(test.update.target_rate.target_rate, 50 * kMinDataRateFactor);
 	EXPECT_LE(test.update.target_rate.target_rate, 50 * kMaxDataRateFactor);
 
-	printf("accumulated_buffer = %ums\n", test.accumulated_buffer);
+	printf("accumulated_buffer = %lums\n", test.accumulated_buffer);
 
 	test_bbr_controller_destroy(&test);
 }

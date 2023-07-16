@@ -3,7 +3,6 @@
 
 static int kMinBwePeriodMs = 2000;
 static int kMaxBwePeriodMs = 50000;
-static int kDefaultPeriodMs = 3000;
 
 static double kFractionAfterOveruse = 0.85;
 
@@ -54,14 +53,14 @@ static void near_max_increate_100ms_rtt()
 	aimd_destroy(aimd);
 }
 
-static inline near_expect(uint32_t src, uint32_t dst, uint32_t delta)
+static inline void near_expect(uint32_t src, uint32_t dst, uint32_t delta)
 {
 	assert(dst <= src + delta && dst >= src - delta);
 }
 
 static void get_increate_rate_period()
 {
-	uint32_t near_rate;
+	int near_rate;
 	aimd_rate_controller_t* aimd = aimd_create(aimd_max_rate, aimd_min_rate);
 
 	aimd_set_estimate(aimd, 300000, GET_SYS_MS());

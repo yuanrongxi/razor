@@ -49,7 +49,7 @@ static void test_min_bitrate()
 
 		su_sleep(0, 1000);
 		if (i++ % 1000 == 0){
-			printf("alr time = %lld, delay = %lld\n", pace_get_limited_start_time(pace), pace_expected_queue_ms(pace));
+			printf("alr time = %ld, delay = %ld\n", pace_get_limited_start_time(pace), pace_expected_queue_ms(pace));
 		}
 
 		pace_try_transmit(pace, GET_SYS_MS());
@@ -89,7 +89,7 @@ static void test_max_bitrate()
 		su_sleep(0, 1000);
 
 		if (i++ % 1000 == 0)
-			printf("alr time = %lld, delay ms = %lld\n", pace_get_limited_start_time(pace), pace_expected_queue_ms(pace));
+			printf("alr time = %ld, delay ms = %ld\n", pace_get_limited_start_time(pace), pace_expected_queue_ms(pace));
 
 		pace_try_transmit(pace, GET_SYS_MS());
 	}
@@ -99,8 +99,8 @@ static void test_max_bitrate()
 
 void test_pace()
 {
-	//test_min_bitrate();
-	//test_max_bitrate();
+	test_min_bitrate();
+	test_max_bitrate();
 }
 
 
