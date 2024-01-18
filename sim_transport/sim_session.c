@@ -58,6 +58,7 @@ sim_session_t* sim_session_create(uint16_t port, void* event, sim_notify_fn noti
 
 	if (su_udp_create(NULL, port, &session->s) != 0){
 		free(session);
+		session = NULL;
 		goto err;
 	}
 
