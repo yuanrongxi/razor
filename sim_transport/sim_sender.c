@@ -43,7 +43,7 @@ static void sim_bitrate_change(void* trigger, uint32_t bitrate, uint8_t fraction
 	/*sim_info("loss = %f, bitrate = %u, video_bitrate_kbps = %u\n", loss, bitrate, video_bitrate_kbps);*/
 	s->change_bitrate_cb(s->event, video_bitrate_kbps, loss > 0 ? 1 : 0);
 
-	sim_debug("bitrate = %ukb/s, video_bitrate_kbps = %uknb/s\n", bitrate / 8000, video_bitrate_kbps / 8);
+	sim_debug("bitrate = %ukb/s, video_bitrate_kbps = %ukb/s\n", bitrate / 8000, video_bitrate_kbps / 8);
 }
 
 static void sim_send_packet(void* handler, uint32_t send_id, int fec, size_t size, int padding)

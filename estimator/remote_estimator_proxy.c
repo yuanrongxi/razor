@@ -66,7 +66,10 @@ void estimator_proxy_incoming(estimator_proxy_t* proxy, int64_t arrival_ts, uint
 		num = 0;
 		/*删除过期的到达时间统计，因为UDP会乱序，这里只会删除时间超过500毫秒且是当前报文之前的报文的记录*/
 		SKIPLIST_FOREACH(proxy->arrival_times, iter){
-			if (iter->key.i64 < sequence && arrival_ts >= iter->val.i64 + BACK_WINDOWS_MS && num < MAX_IDS_NUM)
+			if (num >= MAX_IDS_NUM)
+				break;
+
+			if (iter->key.i64 < sequence && arrival_ts >= iter->val.i64 + BACK_WINDOWS_MS)
 				ids[num++] = iter->key.i64;
 		}
 
