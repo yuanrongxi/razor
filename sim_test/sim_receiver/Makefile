@@ -29,7 +29,7 @@ INCLUDE_DIR :=	$(CURRENT_DIR) \
 				$(CURRENT_DIR)/../win_log \
 				/usr/local/include
 
-CC_FLAGS	=  -Wall -std=c99 -g -fPIC $(addprefix -I, $(INCLUDE_DIR)) \
+CC_FLAGS	=  -Wall -std=c99 -O -g -fPIC $(addprefix -I, $(INCLUDE_DIR)) \
 			  -DSU_SERVER -D_POSIX_C_SOURCE=200809L
 LD_FLAGS	=  -lpthread -lm
 CC_DEPFLAGS	=-MMD -MF $(@:.o=.d) -MT $@
