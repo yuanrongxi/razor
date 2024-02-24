@@ -95,6 +95,7 @@ void estimator_proxy_incoming(estimator_proxy_t* proxy, int64_t arrival_ts, uint
 static int proxy_bulid_feelback_packet(estimator_proxy_t* proxy, feedback_msg_t* msg)
 {
 	skiplist_iter_t* iter;
+	skiplist_item_t lower_key;
 	int64_t new_start_seq = -1;
 
 	if (proxy->max_arrival_seq <= proxy->wnd_start_seq &&  skiplist_size(proxy->arrival_times) > 2)
@@ -104,23 +105,21 @@ static int proxy_bulid_feelback_packet(estimator_proxy_t* proxy, feedback_msg_t*
 	msg->samples_num = 0;
 	msg->base_seq = proxy->wnd_start_seq;
 
-	SKIPLIST_FOREACH(proxy->arrival_times, iter){
+	lower_key.i64 = proxy->wnd_start_seq;
+	SKIPLIST_BOUND_FOR(proxy->arrival_times, iter, lower_key){
+		/*找到最早到达的报文时间戳*/
+		if (msg->min_ts == -1 || msg->min_ts > iter->val.i64)
+			msg->min_ts = iter->val.i64;
 
-		if (iter->key.i64 >= proxy->wnd_start_seq){
-			/*找到最早到达的报文时间戳*/
-			if (msg->min_ts == -1 || msg->min_ts > iter->val.i64)
-				msg->min_ts = iter->val.i64;
+		msg->samples[msg->samples_num].seq = (iter->key.i64 & 0xffff);
+		msg->samples[msg->samples_num].ts = iter->val.i64;
+		msg->samples_num++;
 
-			msg->samples[msg->samples_num].seq = (iter->key.i64 & 0xffff);
-			msg->samples[msg->samples_num].ts = iter->val.i64;
-			msg->samples_num++;
+		/*更新下一个feelback的起始位置*/
+		new_start_seq = iter->key.i64 + 1;
 
-			/*更新下一个feelback的起始位置*/
-			new_start_seq = iter->key.i64 + 1;
-
-			if (msg->samples_num >= MAX_FEELBACK_COUNT)
-				break;
-		}
+		if (msg->samples_num >= MAX_FEELBACK_COUNT)
+			break;
 	}
 
 	/*进行到达时间序列编码*/
