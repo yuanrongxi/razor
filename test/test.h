@@ -21,6 +21,7 @@ void test_bbr_transfer_tracker();
 void test_bandwidth_sampler();
 void test_bbr_proc();
 void test_bbr_receiver();
+void test_skiplist();
 
 #endif
 

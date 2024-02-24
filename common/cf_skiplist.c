@@ -186,7 +186,7 @@ skiplist_iter_t* skiplist_remove(skiplist_t* sl, skiplist_item_t key)
 	return ret;
 }
 
-static skiplist_iter_t* skiplist_search_iter(skiplist_t* sl, skiplist_item_t key)
+static skiplist_iter_t* skiplist_search_iter(skiplist_t* sl, skiplist_item_t key, int cmp_flag)
 {
 	int i, cmp;
 	skiplist_iter_t** iterp;
@@ -213,16 +213,21 @@ static skiplist_iter_t* skiplist_search_iter(skiplist_t* sl, skiplist_item_t key
 		}
 	}
 
-	return NULL;
+	return (cmp_flag == 1 ? NULL : iter);
 }
 
 skiplist_iter_t* skiplist_search(skiplist_t* sl, skiplist_item_t key)
 {
-	return skiplist_search_iter(sl, key);
+	return skiplist_search_iter(sl, key, 1);
 }
 
 skiplist_iter_t* skiplist_first(skiplist_t* sl) {
 	return sl->entries[0];
+}
+
+skiplist_iter_t* skiplist_find_start(skiplist_t* sl, skiplist_item_t key)
+{
+	return skiplist_search_iter(sl, key, 0);
 }
 
 size_t skiplist_size(skiplist_t* sl)

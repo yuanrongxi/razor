@@ -63,10 +63,14 @@ skiplist_iter_t*		skiplist_remove(skiplist_t* sl, skiplist_item_t key);
 
 skiplist_iter_t*		skiplist_search(skiplist_t* sl, skiplist_item_t key);
 skiplist_iter_t*		skiplist_first(skiplist_t* sl);
+skiplist_iter_t*		skiplist_find_start(skiplist_t* sl, skiplist_item_t key);
 
 /*traverse skiplist*/
 #define SKIPLIST_FOREACH(sl, iter)	\
 	for(iter = sl->entries[0]; iter != NULL; iter = iter->next[0])
+
+#define SKIPLIST_BOUND_FOR(sl, iter, start_key) \
+	for(iter = skiplist_find_start(sl, start_key); iter != NULL; iter = iter->next[0])
 
 int						id8_compare(skiplist_item_t k1, skiplist_item_t k2);
 int						id16_compare(skiplist_item_t k1, skiplist_item_t k2);

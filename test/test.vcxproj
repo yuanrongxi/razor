@@ -98,6 +98,7 @@
     <ClCompile Include="remote_bitrate_estimator_test.c" />
     <ClCompile Include="sender_bandwidth_estimator_test.c" />
     <ClCompile Include="sender_history_test.c" />
+    <ClCompile Include="skiplist_test.c" />
     <ClCompile Include="trendline_test.c" />
     <ClCompile Include="unwrapper_test.c" />
     <ClCompile Include="windowed_filter_test.c" />
