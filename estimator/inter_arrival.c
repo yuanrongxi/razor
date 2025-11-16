@@ -65,6 +65,8 @@ static int inter_arrival_new_group(inter_arrival_t* arr, uint32_t ts, int64_t ar
 	uint32_t diff;
 	if (arr->cur_ts_group.complete_ts == -1)
 		return -1;
+	else if (arr->cur_ts_group.timestamp >= ts)
+		return -1;
 	else if (belongs_to_burst(arr, ts, arrival_ts) == 0)
 		return -1;
 	else{
