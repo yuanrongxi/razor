@@ -26,7 +26,7 @@ static inline void reset_group_ts(inter_arrival_t* arr)
 	arr->prev_ts_group.last_sys_ts = 0;
 }
 
-/*ÅĞ¶Ï°üÊÇ·ñÊÇÂÒĞò£¬Èç¹û±¨ÎÄÊÇÇ°Ò»¸ögroupµÄĞòÁĞ£¬²»½øĞĞ´¦Àí*/
+/*ï¿½Ğ¶Ï°ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°Ò»ï¿½ï¿½groupï¿½ï¿½ï¿½ï¿½ï¿½Ğ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ´ï¿½ï¿½ï¿½*/
 static inline int inter_arrival_in_order(inter_arrival_t* arr, uint32_t ts)
 {
 	if (arr->cur_ts_group.complete_ts == -1)
@@ -38,7 +38,7 @@ static inline int inter_arrival_in_order(inter_arrival_t* arr, uint32_t ts)
 	return -1;
 }
 
-/*ÅĞ¶Ï±¨ÎÄÍ»·¢·¢ËÍ*/
+/*ï¿½Ğ¶Ï±ï¿½ï¿½ï¿½Í»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
 static inline int belongs_to_burst(inter_arrival_t* arr, uint32_t ts, int64_t arrival_ts)
 {
 	int64_t arrival_ts_delta;
@@ -64,6 +64,8 @@ static int inter_arrival_new_group(inter_arrival_t* arr, uint32_t ts, int64_t ar
 {
 	uint32_t diff;
 	if (arr->cur_ts_group.complete_ts == -1)
+		return -1;
+	else if (arr->cur_ts_group.timestamp >= ts)
 		return -1;
 	else if (belongs_to_burst(arr, ts, arrival_ts) == 0)
 		return -1;
